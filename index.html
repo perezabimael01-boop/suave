@@ -9,53 +9,83 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="site.css">
 <style>
-  body{ --page-width:820px; }
-  .home-head{ margin:8px 0 34px; }
-  .home-head h1{ font-size:40px; line-height:1.1; letter-spacing:-0.8px; margin:0 0 10px; font-weight:700; }
-  .home-head p{ margin:0; color:var(--ink-soft); font-size:16px; max-width:52ch; }
+  body{ --page-width:1040px; }
 
-  .group{ margin:0 0 34px; }
-  .group h2{ font-size:14px; font-weight:600; color:var(--ink-soft); margin:0 0 10px; }
-  .tools{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+  /* Hero */
+  .hero{
+    position:relative; overflow:hidden;
+    margin:0 0 36px; padding:40px 40px 36px;
+    border-radius:20px; color:#fff;
+    background:
+      radial-gradient(520px 260px at 92% 10%, rgba(95,176,240,.45), transparent 70%),
+      radial-gradient(420px 240px at 8% 120%, rgba(242,129,14,.40), transparent 70%),
+      linear-gradient(120deg, #0B2440 0%, #123A63 55%, #0F5D94 100%);
+    box-shadow:0 24px 50px -24px rgba(11,36,64,.65);
+  }
+  .hero::after{ /* faint grid texture */
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background-image:linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size:28px 28px;
+    mask-image:linear-gradient(100deg, transparent 30%, #000 100%);
+  }
+  .hero > *{ position:relative; z-index:1; }
+  .hero-eyebrow{ display:inline-flex; align-items:center; gap:8px; font-size:13px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; color:#BFE0FA; margin:0 0 12px; }
+  .hero-eyebrow::before{ content:""; width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 4px rgba(242,129,14,.25); }
+  .hero h1{ font-size:44px; line-height:1.08; letter-spacing:-1px; margin:0 0 12px; font-weight:700; }
+  .hero p{ margin:0; color:rgba(255,255,255,.82); font-size:16.5px; max-width:56ch; }
+  .hero-stats{ display:flex; flex-wrap:wrap; gap:10px; margin-top:24px; }
+  .hero-stats span{ font-size:13.5px; font-weight:500; padding:6px 12px; border-radius:999px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18); backdrop-filter:blur(4px); }
+  .hero-stats b{ font-weight:700; margin-right:4px; }
 
+  /* Groups */
+  .group{ margin:0 0 36px; }
+  .group h2{ display:flex; align-items:center; gap:12px; font-size:13px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-soft); margin:0 0 14px; }
+  .group h2::after{ content:""; flex:1; height:1px; background:linear-gradient(90deg, var(--line-strong), transparent); }
+  .tools{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px; }
+  .tools > li{ display:flex; }
+
+  /* Cards */
   .tool{
-    --spine:6px;
-    position:relative;
-    display:grid;
-    grid-template-columns:48px 1fr auto;
-    align-items:center;
-    gap:18px;
-    padding:20px 22px 20px calc(var(--spine) + 20px);
+    position:relative; flex:1;
+    display:flex; flex-direction:column; gap:14px;
+    padding:22px 22px 20px;
     background:var(--surface);
-    border:1px solid var(--line);
-    border-radius:var(--radius);
+    border:1px solid color-mix(in srgb, var(--line) 75%, transparent);
+    border-radius:16px;
     color:inherit; text-decoration:none;
     overflow:hidden;
-    transition:border-color .15s ease, background-color .15s ease;
+    box-shadow:var(--shadow-md);
+    transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
   }
-  .tool::before{
-    content:""; position:absolute; left:0; top:0; bottom:0;
-    width:var(--spine); background:var(--tool);
-    transition:width .18s ease;
+  .tool::before{ /* coloured top strip */
+    content:""; position:absolute; left:0; right:0; top:0; height:4px;
+    background:linear-gradient(90deg, var(--tool), color-mix(in srgb, var(--tool) 45%, #fff));
   }
-  .tool:hover, .tool:focus-visible{ border-color:var(--tool); background:color-mix(in srgb, var(--tool-soft) 45%, var(--surface)); }
-  .tool:hover::before, .tool:focus-visible::before{ width:10px; }
+  .tool::after{ /* soft colour glow in the corner */
+    content:""; position:absolute; right:-60px; top:-60px; width:180px; height:180px; border-radius:50%;
+    background:radial-gradient(circle, color-mix(in srgb, var(--tool) 16%, transparent), transparent 70%);
+    transition:transform .3s ease; pointer-events:none;
+  }
+  .tool:hover, .tool:focus-visible{ transform:translateY(-4px); box-shadow:var(--shadow-lg); border-color:color-mix(in srgb, var(--tool) 40%, var(--line)); }
+  .tool:hover::after{ transform:scale(1.25); }
   .tool:focus-visible{ outline:3px solid var(--accent); outline-offset:2px; }
 
+  .tool-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
   .tool-icon{
-    width:48px; height:48px; border-radius:12px;
+    width:52px; height:52px; border-radius:14px; flex:none;
     display:flex; align-items:center; justify-content:center;
-    background:var(--tool-soft); color:var(--tool);
+    color:#fff;
+    background:linear-gradient(140deg, color-mix(in srgb, var(--tool) 75%, #fff), var(--tool));
+    box-shadow:0 8px 18px -8px var(--tool);
   }
-  .tool-title{ display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px; margin:0 0 4px; }
-  .tool-title b{ font-size:19px; font-weight:600; line-height:1.25; }
-  .tool-kind{
-    font-size:12.5px; font-weight:600; color:var(--tool);
-    background:var(--tool-soft); border-radius:999px; padding:1px 9px;
-  }
-  .tool p{ margin:0; font-size:14.5px; color:var(--ink-soft); line-height:1.5; max-width:60ch; }
-  .tool-go{ color:var(--tool); transition:transform .18s ease; }
-  .tool:hover .tool-go{ transform:translateX(3px); }
+  .tool-icon svg{ width:24px; height:24px; }
+  .tool-kind{ font-size:12px; font-weight:600; color:var(--tool); background:var(--tool-soft); border-radius:999px; padding:3px 10px; white-space:nowrap; }
+  .tool-title{ margin:0 0 6px; }
+  .tool-title b{ font-size:19px; font-weight:700; line-height:1.25; letter-spacing:-.2px; }
+  .tool p{ margin:0; font-size:14.5px; color:var(--ink-soft); line-height:1.55; }
+  .tool-foot{ margin-top:auto; padding-top:6px; display:inline-flex; align-items:center; gap:6px; font-size:14px; font-weight:600; color:var(--tool); }
+  .tool-go{ transition:transform .18s ease; }
+  .tool:hover .tool-go{ transform:translateX(4px); }
 
   .tool[data-tool="claim"]    { --tool:var(--t-claim);     --tool-soft:var(--t-claim-soft); }
   .tool[data-tool="statement"]{ --tool:var(--t-statement); --tool-soft:var(--t-statement-soft); }
@@ -64,11 +94,13 @@
   .tool[data-tool="payments"] { --tool:var(--t-payments);  --tool-soft:var(--t-payments-soft); }
   .tool[data-tool="factoring"]{ --tool:var(--t-factoring); --tool-soft:var(--t-factoring-soft); }
 
+  /* Featured first card spans two columns on wide screens */
+  @media (min-width:960px){ .tools > li.featured{ grid-column:span 2; } }
+
   @media (max-width:640px){
-    .home-head h1{ font-size:30px; }
-    .tool{ grid-template-columns:40px 1fr; gap:14px; padding:16px 16px 16px calc(var(--spine) + 14px); }
-    .tool-icon{ width:40px; height:40px; border-radius:10px; }
-    .tool-go{ display:none; }
+    .hero{ padding:28px 22px 24px; border-radius:16px; }
+    .hero h1{ font-size:32px; }
+    .tools{ grid-template-columns:1fr; }
   }
 </style>
 </head>
@@ -80,62 +112,54 @@
 </header>
 
 <main class="page">
-  <div class="home-head">
+  <div class="hero">
+    <p class="hero-eyebrow">Documenten &amp; betalingen</p>
     <h1>Wat wil je aanmaken?</h1>
     <p>Kies een document. Je komt direct in het formulier, en je ziet altijd eerst een voorbeeld voordat je iets downloadt.</p>
+    <div class="hero-stats"><span><b>5</b>documenten</span><span><b>1</b>Suave-koppeling</span><span>Altijd eerst een voorbeeld</span></div>
   </div>
 
   <section class="group" aria-labelledby="g-docs">
     <h2 id="g-docs">Documenten</h2>
     <ul class="tools">
-      <li>
+      <li class="featured">
         <a class="tool" data-tool="statement" href="customer-statement.html">
-          <span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 8H16M8 12H16M8 16H12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-          <span>
-            <span class="tool-title"><b>Customer Statement</b><span class="tool-kind">Overzicht</span></span>
-            <p>Openstaand saldo, te late betalingen en eventueel 15% incassokosten, per contract opgebouwd. Hiervandaan open je ook de lease, final notice en factoring, al ingevuld.</p>
-          </span>
-          <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 8H16M8 12H16M8 16H12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="tool-kind">Overzicht</span></span>
+          <span><span class="tool-title"><b>Customer Statement</b></span>
+          <p>Openstaand saldo, te late betalingen en eventueel 15% incassokosten, per contract opgebouwd. Hiervandaan open je ook de lease, final notice en factoring, al ingevuld.</p></span>
+          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         </a>
       </li>
       <li>
         <a class="tool" data-tool="notice" href="final-notice.html">
-          <span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5C4 4.67 4.67 4 5.5 4H18.5C19.33 4 20 4.67 20 5.5V16.5C20 17.33 19.33 18 18.5 18H5.5C4.67 18 4 17.33 4 16.5V5.5Z" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 5.5L12 12L19.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          <span>
-            <span class="tool-title"><b>Final Notice</b><span class="tool-kind">Aanmaning</span></span>
-            <p>Laatste betalingsherinnering als e-mail, met automatische escalatiedatum. Klaar om als PDF te bewaren.</p>
-          </span>
-          <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5C4 4.67 4.67 4 5.5 4H18.5C19.33 4 20 4.67 20 5.5V16.5C20 17.33 19.33 18 18.5 18H5.5C4.67 18 4 17.33 4 16.5V5.5Z" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 5.5L12 12L19.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="tool-kind">Aanmaning</span></span>
+          <span><span class="tool-title"><b>Final Notice</b></span>
+          <p>Laatste betalingsherinnering als e-mail, met automatische escalatiedatum. Klaar om als PDF te bewaren.</p></span>
+          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         </a>
       </li>
       <li>
         <a class="tool" data-tool="claim" href="bevel-tot-betaling.html">
-          <span class="tool-icon"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M13 19L24 12L35 19V29C35 34 30 37 24 39C18 37 13 34 13 29V19Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M19 25L23 29L30 21" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          <span>
-            <span class="tool-title"><b>Bevel tot Betaling</b><span class="tool-kind">Verzoekschrift</span></span>
-            <p>Verzoekschrift aan het Gerecht om de gedaagde te laten veroordelen tot betaling. Download als Word of PDF.</p>
-          </span>
-          <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="8 8 32 34" fill="none" aria-hidden="true"><path d="M13 19L24 12L35 19V29C35 34 30 37 24 39C18 37 13 34 13 29V19Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M19 25L23 29L30 21" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="tool-kind">Verzoekschrift</span></span>
+          <span><span class="tool-title"><b>Bevel tot Betaling</b></span>
+          <p>Verzoekschrift aan het Gerecht om de gedaagde te laten veroordelen tot betaling. Download als Word of PDF.</p></span>
+          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         </a>
       </li>
       <li>
         <a class="tool" data-tool="lease" href="lease-agreement.html">
-          <span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="11" rx="1.2" stroke="currentColor" stroke-width="1.8"/><path d="M2 18.5H22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.5 15.5L8.7 18.5M14.5 15.5L15.3 18.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
-          <span>
-            <span class="tool-title"><b>Computer Lease Contract</b><span class="tool-kind">Huurovereenkomst</span></span>
-            <p>Huurovereenkomst met koopoptie. Looptijd, einddatum en contractnummer worden automatisch ingevuld.</p>
-          </span>
-          <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="11" rx="1.2" stroke="currentColor" stroke-width="1.8"/><path d="M2 18.5H22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.5 15.5L8.7 18.5M14.5 15.5L15.3 18.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><span class="tool-kind">Huurovereenkomst</span></span>
+          <span><span class="tool-title"><b>Computer Lease Contract</b></span>
+          <p>Huurovereenkomst met koopoptie. Looptijd, einddatum en contractnummer worden automatisch ingevuld.</p></span>
+          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         </a>
       </li>
       <li>
         <a class="tool" data-tool="factoring" href="factoring.html">
-          <span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5H14L18 7.5V20.5H6V3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 14.5H15M15 14.5L12.8 12.3M15 14.5L12.8 16.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          <span>
-            <span class="tool-title"><b>Factoring</b><span class="tool-kind">Invoice of Sale</span></span>
-            <p>Verkoop van facturen aan Suave Solutions LLC. MIMI VENTURE staat standaard als verkoper, de handtekeningen blijven leeg en de PDF krijgt de naam van het abonnement en de klant.</p>
-          </span>
-          <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5H14L18 7.5V20.5H6V3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 14.5H15M15 14.5L12.8 12.3M15 14.5L12.8 16.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="tool-kind">Invoice of Sale</span></span>
+          <span><span class="tool-title"><b>Factoring</b></span>
+          <p>Verkoop van facturen aan Suave Solutions LLC. MIMI VENTURE staat standaard als verkoper, de handtekeningen blijven leeg en de PDF krijgt de naam van het abonnement en de klant.</p></span>
+          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         </a>
       </li>
     </ul>
@@ -146,12 +170,10 @@
     <ul class="tools">
       <li>
         <a class="tool" data-tool="payments" href="betalingen-boeken.html">
-          <span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5H14L18 7.5V20.5H6V3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 14L11.2 16.2L15.2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          <span>
-            <span class="tool-title"><b>Betalingen boeken</b><span class="tool-kind">Betalingen</span></span>
-            <p>Boek de betalingen uit het rapport van de deurwaarder automatisch in Suave, met een lijst van wat wel en niet geboekt is.</p>
-          </span>
-          <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5H14L18 7.5V20.5H6V3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 14L11.2 16.2L15.2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="tool-kind">Betalingen</span></span>
+          <span><span class="tool-title"><b>Betalingen boeken</b></span>
+          <p>Boek de betalingen uit het rapport van de deurwaarder automatisch in Suave, met een lijst van wat wel en niet geboekt is.</p></span>
+          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         </a>
       </li>
     </ul>
