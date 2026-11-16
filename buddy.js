@@ -13,7 +13,7 @@
   var css = `
   .pip{ position:fixed; left:20px; bottom:20px; z-index:60; display:flex; align-items:flex-end; gap:10px; font-family:var(--font, system-ui, sans-serif); }
   .pip-body{ width:76px; height:84px; cursor:pointer; border:0; padding:0; background:none; position:relative; transform-origin:50% 100%; }
-  .pip-body:focus-visible{ outline:3px solid var(--accent,#C99A2E); outline-offset:4px; border-radius:14px; }
+  .pip-body:focus-visible{ outline:3px solid var(--accent,#F2B33D); outline-offset:4px; border-radius:14px; }
   .pip svg{ display:block; width:100%; height:100%; overflow:visible; }
   .pip-idle{ animation:pip-bob 3.2s ease-in-out infinite; }
   .pip-jump{ animation:pip-jump .6s cubic-bezier(.3,1.6,.5,1); }
@@ -51,16 +51,16 @@
     <ellipse cx="38" cy="81" rx="22" ry="3" fill="rgba(16,32,52,.15)"/>
     <rect x="31" y="66" width="14" height="8" fill="#B4C1CC"/>
     <rect x="22" y="73" width="32" height="6" rx="3" fill="#8C9BA8"/>
-    <g class="pip-arm"><path d="M62 58 L70 50" stroke="#0E3B2E" stroke-width="5" stroke-linecap="round"/><circle cx="71" cy="49" r="4" fill="#C99A2E"/></g>
-    <path d="M14 58 L7 64" stroke="#0E3B2E" stroke-width="5" stroke-linecap="round"/>
-    <rect x="8" y="10" width="60" height="58" rx="12" fill="#0E3B2E"/>
-    <rect x="14" y="16" width="48" height="44" rx="8" fill="#7FCBA8"/>
-    <circle cx="20" cy="47" r="4" fill="#C99A2E" opacity=".55"/><circle cx="56" cy="47" r="4" fill="#C99A2E" opacity=".55"/>
-    <g><circle cx="29" cy="34" r="7" fill="#fff"/><circle class="pip-eye" cx="29" cy="34" r="3.4" fill="#0E3B2E"/></g>
-    <g><circle cx="47" cy="34" r="7" fill="#fff"/><circle class="pip-eye" cx="47" cy="34" r="3.4" fill="#0E3B2E"/></g>
-    <g class="pip-lids"><rect x="21" y="26" width="16" height="16" rx="8" fill="#7FCBA8"/><rect x="39" y="26" width="16" height="16" rx="8" fill="#7FCBA8"/></g>
-    <path class="pip-mouth" d="${SMILE}" stroke="#0E3B2E" stroke-width="3" stroke-linecap="round" fill="#0E3B2E" fill-opacity="0"/>
-    <path d="M38 10 L38 3" stroke="#0E3B2E" stroke-width="3" stroke-linecap="round"/><circle class="pip-light" cx="38" cy="3" r="3.5" fill="#C99A2E"/>
+    <g class="pip-arm"><path d="M62 58 L70 50" stroke="#7A1222" stroke-width="5" stroke-linecap="round"/><circle cx="71" cy="49" r="4" fill="#F2B33D"/></g>
+    <path d="M14 58 L7 64" stroke="#7A1222" stroke-width="5" stroke-linecap="round"/>
+    <rect x="8" y="10" width="60" height="58" rx="12" fill="#7A1222"/>
+    <rect x="14" y="16" width="48" height="44" rx="8" fill="#F6A5B1"/>
+    <circle cx="20" cy="47" r="4" fill="#F2B33D" opacity=".55"/><circle cx="56" cy="47" r="4" fill="#F2B33D" opacity=".55"/>
+    <g><circle cx="29" cy="34" r="7" fill="#fff"/><circle class="pip-eye" cx="29" cy="34" r="3.4" fill="#7A1222"/></g>
+    <g><circle cx="47" cy="34" r="7" fill="#fff"/><circle class="pip-eye" cx="47" cy="34" r="3.4" fill="#7A1222"/></g>
+    <g class="pip-lids"><rect x="21" y="26" width="16" height="16" rx="8" fill="#F6A5B1"/><rect x="39" y="26" width="16" height="16" rx="8" fill="#F6A5B1"/></g>
+    <path class="pip-mouth" d="${SMILE}" stroke="#7A1222" stroke-width="3" stroke-linecap="round" fill="#7A1222" fill-opacity="0"/>
+    <path d="M38 10 L38 3" stroke="#7A1222" stroke-width="3" stroke-linecap="round"/><circle class="pip-light" cx="38" cy="3" r="3.5" fill="#F2B33D"/>
   </svg>`;
 
   var root = document.createElement('div'); root.className = 'pip';

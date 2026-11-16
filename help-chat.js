@@ -62,7 +62,7 @@ const HELP_CHAT_ENDPOINT = "https://abimael-help.perezabimael01.workers.dev";
 
   const css = `
   #mchat-root{
-    --mc-brand:var(--brand,#14684F);--mc-brand-ink:var(--brand-ink,#0E4F3C);--mc-accent:var(--accent,#C99A2E);
+    --mc-brand:var(--brand,#C8102E);--mc-brand-ink:var(--brand-ink,#9E0C24);--mc-accent:var(--accent,#F2B33D);
     --mc-ink:var(--ink,#16202A);--mc-soft:var(--ink-soft,#4E5B68);--mc-line:var(--line,#D2DBE2);--mc-bg:var(--surface-2,#F5F7F9);
     position:fixed;right:20px;bottom:20px;z-index:2147483000;
     font-family:var(--font,"IBM Plex Sans","Segoe UI",system-ui,sans-serif);color:var(--mc-ink);font-size:15px;line-height:1.5;}
@@ -105,7 +105,7 @@ const HELP_CHAT_ENDPOINT = "https://abimael-help.perezabimael01.workers.dev";
   .mchat-form{display:flex;gap:8px;padding:10px 12px 6px;border-top:1px solid var(--mc-line);background:#fff;align-items:flex-end;}
   .mchat-form textarea{flex:1;resize:none;min-height:44px;max-height:120px;border:1px solid #B4C1CC;border-radius:10px;padding:10px 12px;
     font:15px/1.4 inherit;font-family:inherit;color:var(--mc-ink);}
-  .mchat-form textarea:focus{outline:none;border-color:var(--mc-brand);box-shadow:0 0 0 3px rgba(20,104,79,.18);}
+  .mchat-form textarea:focus{outline:none;border-color:var(--mc-brand);box-shadow:0 0 0 3px rgba(200,16,46,.18);}
   .mchat-send{background:var(--mc-brand);color:#fff;border:none;border-radius:10px;width:44px;height:44px;flex:none;cursor:pointer;
     display:flex;align-items:center;justify-content:center;}
   .mchat-send:hover{background:var(--mc-brand-ink);}

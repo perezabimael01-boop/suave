@@ -12,10 +12,10 @@
   --ink-soft:#4E5B68;
   --line:#D2DBE2;
   --line-strong:#B4C1CC;
-  --brand:#14684F;
-  --brand-ink:#0E4F3C;
-  --brand-soft:#E3F2EC;
-  --accent:#C99A2E;           /* gold accent: focus rings + help button */
+  --brand:#C8102E;
+  --brand-ink:#9E0C24;
+  --brand-soft:#FBE7EA;
+  --accent:#F2B33D;           /* gold accent: focus rings + help button */
   --danger:#B42318;
   --danger-soft:#FDEDEB;
   --ok:#22704F;
@@ -23,10 +23,10 @@
   /* document colours, also used on the start page */
   --t-claim:#8A6418;     --t-claim-soft:#F5EEDC;
   --t-statement:#1F6FA8; --t-statement-soft:#E6F0F8;
-  --t-notice:#B0472E;    --t-notice-soft:#F8E9E4;
+  --t-notice:#D9772B;    --t-notice-soft:#FBEEE2;
   --t-lease:#4F5AA8;     --t-lease-soft:#ECEDF8;
   --t-payments:#6B4A86;  --t-payments-soft:#EFE8F4;
-  --t-factoring:#A0592B; --t-factoring-soft:#F7ECE3;
+  --t-factoring:#1F7A6A; --t-factoring-soft:#E1F1EE;
 
   --tool:var(--brand); --tool-soft:var(--brand-soft);
 
@@ -231,9 +231,9 @@ button:disabled, .btn[aria-disabled="true"]{ opacity:.55; cursor:default; }
    Visual refresh — depth, colour and motion (layered on top of the base styles)
    ========================================================================== */
 :root{
-  --bg:#F4F5F1;
-  --navy:#0E3B2E;
-  --navy-2:#155240;
+  --bg:#F7F4F4;
+  --navy:#7A1222;
+  --navy-2:#931A2C;
   --radius:14px;
   --radius-sm:9px;
   --shadow-sm:0 1px 2px rgba(16,32,52,.06), 0 1px 3px rgba(16,32,52,.05);
@@ -247,14 +247,14 @@ body{ background:var(--bg); }
   background:var(--navy);
   border-top:0;
   border-bottom:0;
-  box-shadow:inset 0 -3px 0 var(--tool), 0 6px 20px -10px rgba(14,59,46,.6);
+  box-shadow:inset 0 -3px 0 var(--tool), 0 6px 20px -10px rgba(122,18,34,.6);
   position:sticky; top:0; z-index:20;
 }
 .app-bar-inner{ padding:14px 20px; }
 .app-back{ color:rgba(255,255,255,.78); }
 .app-back:hover{ color:#fff; background:rgba(255,255,255,.1); }
 .app-brand{ color:#fff; font-size:14px; letter-spacing:.1px; }
-.app-mark{ width:12px; height:12px; border-radius:3px; box-shadow:4px 4px 0 #7FCBA8; }
+.app-mark{ width:12px; height:12px; border-radius:3px; box-shadow:4px 4px 0 #F6A5B1; }
 
 /* Page title: soft tinted card */
 .page-head{
@@ -288,9 +288,9 @@ input:focus, select:focus, textarea:focus{ background:var(--surface); }
 .btn, button.btn{ transition:background-color .15s ease, border-color .15s ease, color .15s ease, transform .15s ease, box-shadow .15s ease; }
 .btn-primary{
   background:var(--brand);
-  box-shadow:0 1px 0 rgba(255,255,255,.2) inset, 0 6px 14px -6px rgba(20,104,79,.7);
+  box-shadow:0 1px 0 rgba(255,255,255,.2) inset, 0 6px 14px -6px rgba(200,16,46,.7);
 }
-.btn-primary:hover{ background:var(--brand-ink); transform:translateY(-1px); box-shadow:0 10px 20px -8px rgba(20,104,79,.75); }
+.btn-primary:hover{ background:var(--brand-ink); transform:translateY(-1px); box-shadow:0 10px 20px -8px rgba(200,16,46,.75); }
 .btn-primary:active{ transform:translateY(0); }
 .btn-secondary{ box-shadow:var(--shadow-sm); }
 .btn-secondary:hover{ transform:translateY(-1px); }
