@@ -299,3 +299,8 @@ input:focus, select:focus, textarea:focus{ background:var(--surface); }
   body{ background:#fff !important; }
   .section{ box-shadow:none !important; }
 }
+
+/* David logo in the top bar */
+.app-brand{ text-decoration:none; }
+.app-logo{ display:block; height:40px; width:auto; }
+@media (max-width:640px){ .app-brand{ display:inline-flex !important; } .app-logo{ height:34px; } }
