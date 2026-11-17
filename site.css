@@ -5,17 +5,17 @@
    ========================================================================== */
 
 :root{
-  --bg:#EDF1F4;
+  --bg:#EAF2F9;
   --surface:#FFFFFF;
-  --surface-2:#F5F7F9;
-  --ink:#16202A;
-  --ink-soft:#4E5B68;
-  --line:#D2DBE2;
-  --line-strong:#B4C1CC;
-  --brand:#C8102E;
-  --brand-ink:#9E0C24;
-  --brand-soft:#FBE7EA;
-  --accent:#F2B33D;           /* gold accent: focus rings + help button */
+  --surface-2:#F2F8FC;
+  --ink:#1C2A36;
+  --ink-soft:#5C7286;
+  --line:#CFE0EE;
+  --line-strong:#A9C6DE;
+  --brand:#449BDA;
+  --brand-ink:#2E6FA3;
+  --brand-soft:#E3F1FB;
+  --accent:#FF6B4A;           /* gold accent: focus rings + help button */
   --danger:#B42318;
   --danger-soft:#FDEDEB;
   --ok:#22704F;
@@ -231,14 +231,14 @@ button:disabled, .btn[aria-disabled="true"]{ opacity:.55; cursor:default; }
    Visual refresh — depth, colour and motion (layered on top of the base styles)
    ========================================================================== */
 :root{
-  --bg:#F7F4F4;
-  --navy:#7A1222;
-  --navy-2:#931A2C;
+  --bg:#EAF2F9;
+  --navy:#2E6FA3;
+  --navy-2:#449BDA;
   --radius:14px;
   --radius-sm:9px;
-  --shadow-sm:0 1px 2px rgba(16,32,52,.06), 0 1px 3px rgba(16,32,52,.05);
-  --shadow-md:0 4px 12px -2px rgba(16,32,52,.08), 0 2px 4px rgba(16,32,52,.04);
-  --shadow-lg:0 18px 40px -12px rgba(16,32,52,.22), 0 4px 10px rgba(16,32,52,.06);
+  --shadow-sm:0 1px 2px rgba(28,42,54,.06), 0 1px 3px rgba(28,42,54,.05);
+  --shadow-md:0 4px 12px -2px rgba(28,42,54,.08), 0 2px 4px rgba(28,42,54,.04);
+  --shadow-lg:0 18px 40px -12px rgba(28,42,54,.22), 0 4px 10px rgba(28,42,54,.06);
 }
 body{ background:var(--bg); }
 
@@ -247,14 +247,14 @@ body{ background:var(--bg); }
   background:var(--navy);
   border-top:0;
   border-bottom:0;
-  box-shadow:inset 0 -3px 0 var(--tool), 0 6px 20px -10px rgba(122,18,34,.6);
+  box-shadow:inset 0 -3px 0 var(--tool), 0 6px 20px -10px rgba(46,111,163,.6);
   position:sticky; top:0; z-index:20;
 }
 .app-bar-inner{ padding:14px 20px; }
 .app-back{ color:rgba(255,255,255,.78); }
 .app-back:hover{ color:#fff; background:rgba(255,255,255,.1); }
 .app-brand{ color:#fff; font-size:14px; letter-spacing:.1px; }
-.app-mark{ width:12px; height:12px; border-radius:3px; box-shadow:4px 4px 0 #F6A5B1; }
+.app-mark{ width:12px; height:12px; border-radius:3px; box-shadow:4px 4px 0 #BFE0F6; }
 
 /* Page title: soft tinted card */
 .page-head{
@@ -288,9 +288,9 @@ input:focus, select:focus, textarea:focus{ background:var(--surface); }
 .btn, button.btn{ transition:background-color .15s ease, border-color .15s ease, color .15s ease, transform .15s ease, box-shadow .15s ease; }
 .btn-primary{
   background:var(--brand);
-  box-shadow:0 1px 0 rgba(255,255,255,.2) inset, 0 6px 14px -6px rgba(200,16,46,.7);
+  box-shadow:0 1px 0 rgba(255,255,255,.2) inset, 0 6px 14px -6px rgba(68,155,218,.7);
 }
-.btn-primary:hover{ background:var(--brand-ink); transform:translateY(-1px); box-shadow:0 10px 20px -8px rgba(200,16,46,.75); }
+.btn-primary:hover{ background:var(--brand-ink); transform:translateY(-1px); box-shadow:0 10px 20px -8px rgba(68,155,218,.75); }
 .btn-primary:active{ transform:translateY(0); }
 .btn-secondary{ box-shadow:var(--shadow-sm); }
 .btn-secondary:hover{ transform:translateY(-1px); }

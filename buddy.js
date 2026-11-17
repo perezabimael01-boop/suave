@@ -13,7 +13,7 @@
   var css = `
   .pip{ position:fixed; left:20px; bottom:20px; z-index:60; display:flex; align-items:flex-end; gap:10px; font-family:var(--font, system-ui, sans-serif); }
   .pip-body{ width:76px; height:84px; cursor:pointer; border:0; padding:0; background:none; position:relative; transform-origin:50% 100%; }
-  .pip-body:focus-visible{ outline:3px solid var(--accent,#F2B33D); outline-offset:4px; border-radius:14px; }
+  .pip-body:focus-visible{ outline:3px solid var(--accent,#FF6B4A); outline-offset:4px; border-radius:14px; }
   .pip svg{ display:block; width:100%; height:100%; overflow:visible; }
   .pip-idle{ animation:pip-bob 3.2s ease-in-out infinite; }
   .pip-jump{ animation:pip-jump .6s cubic-bezier(.3,1.6,.5,1); }
@@ -23,16 +23,16 @@
   .pip-lids{ transform-origin:38px 34px; transform:scaleY(0); }
   .pip-blink .pip-lids{ animation:pip-blink .18s ease-in-out; }
   .pip-mouth{ transition:d .2s; }
-  .pip-bubble{ max-width:240px; background:#fff; color:#16202A; border:1px solid #D2DBE2; border-radius:14px 14px 14px 4px;
-    padding:10px 14px; font-size:14px; line-height:1.45; box-shadow:0 10px 24px -10px rgba(16,32,52,.35);
+  .pip-bubble{ max-width:240px; background:#fff; color:#1C2A36; border:1px solid #CFE0EE; border-radius:14px 14px 14px 4px;
+    padding:10px 14px; font-size:14px; line-height:1.45; box-shadow:0 10px 24px -10px rgba(28,42,54,.35);
     margin-bottom:56px; opacity:0; transform:translateY(6px) scale(.96); transform-origin:0 100%;
     transition:opacity .2s ease, transform .2s ease; pointer-events:none; }
   .pip-bubble.on{ opacity:1; transform:none; pointer-events:auto; }
-  .pip-close{ position:absolute; left:58px; top:-4px; width:22px; height:22px; border-radius:50%; border:1px solid #D2DBE2; background:#fff;
-    color:#4E5B68; font-size:13px; line-height:1; cursor:pointer; opacity:0; transition:opacity .15s; }
+  .pip-close{ position:absolute; left:58px; top:-4px; width:22px; height:22px; border-radius:50%; border:1px solid #CFE0EE; background:#fff;
+    color:#5C7286; font-size:13px; line-height:1; cursor:pointer; opacity:0; transition:opacity .15s; }
   .pip:hover .pip-close, .pip-close:focus-visible{ opacity:1; }
-  .pip-wake{ position:fixed; left:16px; bottom:16px; z-index:60; width:40px; height:40px; border-radius:12px; border:1px solid #D2DBE2;
-    background:#fff; cursor:pointer; box-shadow:0 4px 12px -4px rgba(16,32,52,.3); font-size:18px; }
+  .pip-wake{ position:fixed; left:16px; bottom:16px; z-index:60; width:40px; height:40px; border-radius:12px; border:1px solid #CFE0EE;
+    background:#fff; cursor:pointer; box-shadow:0 4px 12px -4px rgba(28,42,54,.3); font-size:18px; }
   .pip-heart{ position:fixed; z-index:61; pointer-events:none; font-size:18px; animation:pip-float 1s ease-out forwards; }
   @keyframes pip-bob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-5px) } }
   @keyframes pip-jump{ 0%{ transform:translateY(0) scale(1,1) } 25%{ transform:translateY(0) scale(1.12,.86) } 55%{ transform:translateY(-26px) scale(.94,1.08) } 100%{ transform:translateY(0) scale(1) } }
@@ -48,19 +48,19 @@
   var SMILE = 'M30 50 Q38 57 46 50', OPEN = 'M30 49 Q38 61 46 49 Z', FLAT = 'M31 52 L45 52';
   var svg = `
   <svg viewBox="0 0 76 84" aria-hidden="true">
-    <ellipse cx="38" cy="81" rx="22" ry="3" fill="rgba(16,32,52,.15)"/>
-    <rect x="31" y="66" width="14" height="8" fill="#B4C1CC"/>
+    <ellipse cx="38" cy="81" rx="22" ry="3" fill="rgba(28,42,54,.15)"/>
+    <rect x="31" y="66" width="14" height="8" fill="#A9C6DE"/>
     <rect x="22" y="73" width="32" height="6" rx="3" fill="#8C9BA8"/>
-    <g class="pip-arm"><path d="M62 58 L70 50" stroke="#7A1222" stroke-width="5" stroke-linecap="round"/><circle cx="71" cy="49" r="4" fill="#F2B33D"/></g>
-    <path d="M14 58 L7 64" stroke="#7A1222" stroke-width="5" stroke-linecap="round"/>
-    <rect x="8" y="10" width="60" height="58" rx="12" fill="#7A1222"/>
-    <rect x="14" y="16" width="48" height="44" rx="8" fill="#F6A5B1"/>
-    <circle cx="20" cy="47" r="4" fill="#F2B33D" opacity=".55"/><circle cx="56" cy="47" r="4" fill="#F2B33D" opacity=".55"/>
-    <g><circle cx="29" cy="34" r="7" fill="#fff"/><circle class="pip-eye" cx="29" cy="34" r="3.4" fill="#7A1222"/></g>
-    <g><circle cx="47" cy="34" r="7" fill="#fff"/><circle class="pip-eye" cx="47" cy="34" r="3.4" fill="#7A1222"/></g>
-    <g class="pip-lids"><rect x="21" y="26" width="16" height="16" rx="8" fill="#F6A5B1"/><rect x="39" y="26" width="16" height="16" rx="8" fill="#F6A5B1"/></g>
-    <path class="pip-mouth" d="${SMILE}" stroke="#7A1222" stroke-width="3" stroke-linecap="round" fill="#7A1222" fill-opacity="0"/>
-    <path d="M38 10 L38 3" stroke="#7A1222" stroke-width="3" stroke-linecap="round"/><circle class="pip-light" cx="38" cy="3" r="3.5" fill="#F2B33D"/>
+    <g class="pip-arm"><path d="M62 58 L70 50" stroke="#2E6FA3" stroke-width="5" stroke-linecap="round"/><circle cx="71" cy="49" r="4" fill="#FF6B4A"/></g>
+    <path d="M14 58 L7 64" stroke="#2E6FA3" stroke-width="5" stroke-linecap="round"/>
+    <rect x="8" y="10" width="60" height="58" rx="12" fill="#2E6FA3"/>
+    <rect x="14" y="16" width="48" height="44" rx="8" fill="#BFE0F6"/>
+    <circle cx="20" cy="47" r="4" fill="#FF6B4A" opacity=".55"/><circle cx="56" cy="47" r="4" fill="#FF6B4A" opacity=".55"/>
+    <g><circle cx="29" cy="34" r="7" fill="#fff"/><circle class="pip-eye" cx="29" cy="34" r="3.4" fill="#2E6FA3"/></g>
+    <g><circle cx="47" cy="34" r="7" fill="#fff"/><circle class="pip-eye" cx="47" cy="34" r="3.4" fill="#2E6FA3"/></g>
+    <g class="pip-lids"><rect x="21" y="26" width="16" height="16" rx="8" fill="#BFE0F6"/><rect x="39" y="26" width="16" height="16" rx="8" fill="#BFE0F6"/></g>
+    <path class="pip-mouth" d="${SMILE}" stroke="#2E6FA3" stroke-width="3" stroke-linecap="round" fill="#2E6FA3" fill-opacity="0"/>
+    <path d="M38 10 L38 3" stroke="#2E6FA3" stroke-width="3" stroke-linecap="round"/><circle class="pip-light" cx="38" cy="3" r="3.5" fill="#FF6B4A"/>
   </svg>`;
 
   var root = document.createElement('div'); root.className = 'pip';
