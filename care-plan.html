@@ -504,7 +504,7 @@
         document.getElementById('totalRevenue').textContent = fmt(revenue);
 
         const markupPct = markups[term];
-        const markupLabel = (markupPct * 100).toString().replace(/\.0$/, '') + '%';
+        const markupLabel = parseFloat((markupPct * 100).toFixed(2)) + '%';
         document.getElementById('markupStamp').textContent = '+' + markupLabel;
         document.getElementById('planMeta').textContent = termNames[term] + ' · ' + markupLabel + ' Markup';
 
