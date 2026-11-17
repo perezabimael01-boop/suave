@@ -156,7 +156,7 @@
 
     .plan-pills {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 8px;
     }
     .plan-pills .pill:last-child { grid-column: span 1; }
@@ -515,14 +515,13 @@
                 <tbody id="ratesBody"></tbody>
             </table>
         </div>
-        <p class="foot">The rate is the one at which the plan's payments, with the first one at signing, pay back exactly the value of the item. The 30-day plan is a single payment after one month, so its monthly rate equals the markup.</p>
+        <p class="foot">The rate is the one at which the plan's payments, with the first one at signing, pay back exactly the value of the item.</p>
     </section>
 </div>
 
 <script>
     // Markups match care-plan.html. Change them here and every rate updates.
     const PLANS = [
-        { term: 1,  label: '30 Days',   name: '30-Day Plan',   markup: 0.07,  before: 76    },
         { term: 4,  label: '4 Months',  name: '4-Month Plan',  markup: 0.22, before: 233.32 },
         { term: 6,  label: '6 Months',  name: '6-Month Plan',  markup: 0.27,  before: 199.77 },
         { term: 12, label: '12 Months', name: '12-Month Plan', markup: 0.465, before: 94.2  },
@@ -550,7 +549,7 @@
     const pct = n => (+n.toFixed(2)).toString() + '%';
     const r4 = n => +n.toFixed(6);
 
-    let plan = PLANS[3];
+    let plan = PLANS.find(p => p.term === 12);
     let customPayment = false;
     let customRate = false;
 
