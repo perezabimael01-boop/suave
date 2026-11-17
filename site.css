@@ -304,3 +304,60 @@ input:focus, select:focus, textarea:focus{ background:var(--surface); }
 .app-brand{ text-decoration:none; }
 .app-logo{ display:block; height:40px; width:auto; }
 @media (max-width:640px){ .app-brand{ display:inline-flex !important; } .app-logo{ height:34px; } }
+
+/* ==========================================================================
+   Suave blue — based on the logo blue #439BDA
+   ========================================================================== */
+:root{
+  --brand:#439BDA;
+  --brand-ink:#2F84C6;
+  --brand-soft:#E6F2FC;
+  --navy:#439BDA;
+  --navy-2:#5AABE3;
+  --bg:#F1F7FD;
+  --grad-bar:linear-gradient(100deg, #3A92D4 0%, #439BDA 50%, #57AAE3 100%);
+  --grad-btn:linear-gradient(180deg, #52A7E2 0%, #3990D2 100%);
+  --grad-btn-hover:linear-gradient(180deg, #439BDA 0%, #2F84C6 100%);
+}
+body{
+  background:
+    radial-gradient(900px 500px at 8% -5%, rgba(67,155,218,.16), transparent 60%),
+    radial-gradient(800px 600px at 100% 100%, rgba(67,155,218,.10), transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+}
+a{ color:var(--brand-ink); }
+
+.app-bar{
+  background:var(--grad-bar);
+  box-shadow:inset 0 -3px 0 var(--tool), 0 10px 28px -14px rgba(47,132,198,.65);
+}
+.app-bar::after{
+  content:""; position:absolute; left:0; right:0; top:0; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
+}
+
+.btn-primary{
+  background:var(--grad-btn);
+  box-shadow:0 1px 0 rgba(255,255,255,.3) inset, 0 8px 18px -8px rgba(57,144,210,.75);
+}
+.btn-primary:hover{
+  background:var(--grad-btn-hover);
+  box-shadow:0 1px 0 rgba(255,255,255,.25) inset, 0 12px 24px -10px rgba(47,132,198,.8);
+}
+
+.section, .page-head{
+  box-shadow:0 1px 2px rgba(47,132,198,.06), 0 10px 28px -16px rgba(47,132,198,.30);
+}
+.section:focus-within{ box-shadow:0 1px 2px rgba(47,132,198,.07), 0 18px 40px -18px rgba(47,132,198,.40); }
+
+input:focus, select:focus, textarea:focus{
+  border-color:var(--brand);
+  box-shadow:0 0 0 3px rgba(67,155,218,.22);
+}
+
+#mchat-root .mchat-btn{
+  background:var(--grad-btn);
+  box-shadow:0 1px 0 rgba(255,255,255,.3) inset, 0 10px 24px -8px rgba(47,132,198,.6);
+}
+#mchat-root .mchat-btn:hover{ background:var(--grad-btn-hover); }
