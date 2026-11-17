@@ -335,6 +335,38 @@
     }
     .back-link { display:inline-block; margin-bottom:14px; font-size:0.85rem; font-weight:700; color: var(--suave-blue-dark); text-decoration:none; }
     .back-link:hover { text-decoration:underline; }
+
+    /* ---- Principal recovery chart ---- */
+    .recovery {
+        margin-top: 22px;
+        background: var(--paper);
+        border: 1px solid var(--rule);
+        border-radius: 14px;
+        padding: 18px 18px 14px;
+        box-shadow: 0 18px 40px -20px rgba(46, 111, 163, 0.35);
+    }
+    .recovery h2 {
+        font-family: 'Baloo 2', 'Segoe UI', sans-serif;
+        font-size: 1.05rem; font-weight: 700; margin: 0; color: var(--ink);
+    }
+    .recovery .headline { font-size: 0.86rem; color: var(--ink-soft); margin: 2px 0 10px; }
+    .recovery .headline b { color: var(--suave-blue-dark); }
+    .recovery-chart { position: relative; }
+    .recovery-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .recovery-chart .bar { transition: opacity .12s ease; }
+    .recovery-chart .hit { fill: transparent; cursor: default; }
+    .recovery-chart .hit:hover + .bar, .recovery-chart .bar.hover { opacity: .75; }
+    .recovery-tip {
+        position: absolute; pointer-events: none; transform: translate(-50%, -100%);
+        background: var(--ink); color: #fff; font-size: 0.72rem; line-height: 1.35;
+        padding: 6px 9px; border-radius: 6px; white-space: nowrap; opacity: 0; transition: opacity .1s;
+        font-variant-numeric: tabular-nums;
+    }
+    .recovery-tip.show { opacity: 1; }
+    .recovery-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.7rem; color: var(--ink-soft); margin-top: 8px; }
+    .recovery-legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .recovery-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+    .recovery-legend i.key-line { height: 2px; width: 14px; border-radius: 0; background: repeating-linear-gradient(90deg, var(--stamp-red) 0 5px, transparent 5px 8px); }
 </style>
 </head>
 <body>
@@ -436,6 +468,19 @@
         <div class="perf"></div>
     </div>
 
+    <section class="recovery" id="recovery" aria-labelledby="recoveryTitle">
+        <h2 id="recoveryTitle">Principal recovery</h2>
+        <p class="headline" id="recoveryHeadline"></p>
+        <div class="recovery-chart" id="recoveryChart">
+            <div class="recovery-tip" id="recoveryTip" role="status"></div>
+        </div>
+        <div class="recovery-legend">
+            <span><i style="background:#B9DBF3"></i>Collected, principal not yet back</span>
+            <span><i style="background:#449BDA"></i>Collected, principal recovered</span>
+            <span><i class="key-line"></i>Principal</span>
+        </div>
+    </section>
+
 </div>
 
 <script>
@@ -470,6 +515,7 @@
 
         if (isNaN(principal) || principal <= 0) {
             updateUI(0, 0, 0, 0, 0, term, principalInput);
+            drawRecovery(0, 0, term);
             return;
         }
 
@@ -494,6 +540,96 @@
         const totalMonthly = productMonthly + carePlanMonthly;
 
         updateUI(productMonthly, carePlanMonthly, totalMonthly, totalMonthly, totalTargetRevenue, term, principal);
+        drawRecovery(principal, totalMonthly, term);
+    }
+
+
+    // ---- Principal recovery chart: cumulative collected per payment vs the principal ----
+    function drawRecovery(principal, totalMonthly, term) {
+        const box = document.getElementById('recovery');
+        const chart = document.getElementById('recoveryChart');
+        const tip = document.getElementById('recoveryTip');
+        const head = document.getElementById('recoveryHeadline');
+        chart.querySelectorAll('svg').forEach(s => s.remove());
+        if (!(principal > 0) || !(totalMonthly > 0)) { box.style.display = 'none'; return; }
+        box.style.display = '';
+
+        // payment 1 is due at checkout (month 0), payment k in month k-1
+        const pts = [];
+        let cum = 0, backAt = null;
+        for (let k = 1; k <= term; k++) {
+            cum = (k === term) ? totalMonthly * term : cum + totalMonthly;
+            pts.push({ k, month: k - 1, cum });
+            if (backAt === null && cum >= principal - 0.005) backAt = k;
+        }
+        const total = totalMonthly * term;
+
+        if (backAt === 1) {
+            head.innerHTML = 'Principal is back <b>at checkout</b> (payment 1).';
+        } else {
+            const m = backAt - 1;
+            head.innerHTML = 'Principal is back after <b>' + backAt + ' of ' + term + ' payments</b> — ' +
+                '<b>' + m + (m === 1 ? ' month' : ' months') + '</b> after checkout.';
+        }
+
+        const W = 400, H = 200, L = 46, R = 8, T = 14, B = 24;
+        const pw = W - L - R, ph = H - T - B;
+        const maxY = Math.max(total, principal) * 1.08;
+        const y = v => T + ph - (v / maxY) * ph;
+        const step = pw / term, gap = Math.min(2, step * 0.25), bw = Math.max(1, step - gap);
+        const NS = 'http://www.w3.org/2000/svg';
+        const el = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+        const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img',
+            'aria-label': `Cumulative amount collected over ${term} payments; the principal of ${fmt(principal)} is recovered at payment ${backAt}.` });
+
+        // gridlines + y labels (4 ticks)
+        const niceStep = (() => { const raw = maxY / 4, p = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / p;
+            return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p; })();
+        for (let v = 0; v <= maxY; v += niceStep) {
+            svg.appendChild(el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: '#E3EDF5', 'stroke-width': 1 }));
+            const t = el('text', { x: L - 6, y: y(v) + 3.5, 'text-anchor': 'end', 'font-size': 10, fill: '#5c7286' });
+            t.textContent = '$' + (v >= 1000 ? (v / 1000).toLocaleString('en-US', { maximumFractionDigits: 1 }) + 'k' : Math.round(v));
+            svg.appendChild(t);
+        }
+
+        // bars
+        const bars = [];
+        pts.forEach((p, i) => {
+            const x = L + i * step + gap / 2, top = y(p.cum), h = Math.max(0, y(0) - top), r = Math.min(4, bw / 2, h);
+            const d = `M${x},${y(0)} V${top + r} Q${x},${top} ${x + r},${top} H${x + bw - r} Q${x + bw},${top} ${x + bw},${top + r} V${y(0)} Z`;
+            const fill = p.k >= backAt ? '#449BDA' : '#B9DBF3';
+            const hit = el('rect', { class: 'hit', x: L + i * step, y: T, width: step, height: ph });
+            const bar = el('path', { class: 'bar', d, fill });
+            hit.addEventListener('mouseenter', () => {
+                bar.classList.add('hover');
+                const rect = chart.getBoundingClientRect(), sx = rect.width / W;
+                tip.innerHTML = `Payment ${p.k} · ${p.month === 0 ? 'checkout' : 'month ' + p.month}<br>Collected ${fmt(p.cum)}` +
+                    (p.cum >= principal - 0.005 ? '' : `<br>Still to recover ${fmt(principal - p.cum)}`);
+                tip.style.left = ((x + bw / 2) * sx) + 'px'; tip.style.top = (top * sx - 6) + 'px'; tip.classList.add('show');
+            });
+            hit.addEventListener('mouseleave', () => { bar.classList.remove('hover'); tip.classList.remove('show'); });
+            svg.appendChild(hit); svg.appendChild(bar); bars.push(bar);
+        });
+
+        // principal reference line + label
+        svg.appendChild(el('line', { x1: L, x2: W - R, y1: y(principal), y2: y(principal), stroke: '#ff6b4a', 'stroke-width': 2, 'stroke-dasharray': '5 4' }));
+        const pl = el('text', { x: L + 4, y: y(principal) - 5, 'font-size': 10, 'font-weight': 700, fill: '#1c2a36' });
+        pl.textContent = 'Principal ' + fmt(principal); svg.appendChild(pl);
+
+        // break-even marker
+        const bx = L + (backAt - 1) * step + step / 2;
+        svg.appendChild(el('circle', { cx: bx, cy: y(pts[backAt - 1].cum), r: 4.5, fill: '#fff', stroke: '#1c2a36', 'stroke-width': 2 }));
+
+        // x labels: first, break-even, last (avoid collisions)
+        const xl = new Set([1, backAt, term]);
+        [...xl].forEach(k => {
+            const t = el('text', { x: L + (k - 1) * step + step / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 10,
+                fill: k === backAt ? '#1c2a36' : '#5c7286', 'font-weight': k === backAt ? 700 : 400 });
+            t.textContent = '#' + k;
+            svg.appendChild(t);
+        });
+
+        chart.insertBefore(svg, tip);
     }
 
     function updateUI(prodPmt, carePmt, totalPmt, checkout, revenue, term, principal) {
