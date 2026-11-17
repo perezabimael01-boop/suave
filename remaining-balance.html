@@ -486,7 +486,7 @@
         <p class="sub">Annual rates follow from the new markups.</p>
         <div class="rates-scroll">
             <table>
-                <thead><tr><th>Plan</th><th class="num">Markup</th><th class="num">Annual rate</th><th class="num">Monthly</th><th class="num">Before</th></tr></thead>
+                <thead><tr><th>Plan</th><th class="num">Markup</th><th class="num">Annual rate</th><th class="num">Monthly</th></tr></thead>
                 <tbody id="ratesBody"></tbody>
             </table>
         </div>
@@ -543,7 +543,6 @@
                 <td class="num">${pct(p.markup * 100)}</td>
                 <td class="num">${pct(p.rate)}</td>
                 <td class="num">${r4(p.rate / 1200).toFixed(6)}</td>
-                <td class="num old">${pct(p.before)}</td>
             </tr>`).join('');
     }
 
