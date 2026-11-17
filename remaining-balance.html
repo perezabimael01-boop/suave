@@ -381,6 +381,31 @@
     .rates .foot { font-size: 0.68rem; color: var(--ink-soft); margin: 10px 0 0; line-height: 1.5; }
 
     @media (max-width: 380px) { .field-row { grid-template-columns: 1fr; } }
+
+    /* ---- Wide screens: sections side by side (phones keep one column) ---- */
+    @media (min-width: 760px) {
+        body { padding-top: 32px; }
+        .desk {
+            max-width: 920px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            column-gap: 24px;
+            align-items: start;
+            align-content: start;
+            align-self: flex-start;
+        }
+        .desk > :not(.console):not(.receipt-wrap):not(section) { grid-column: 1 / -1; }
+        .desk > section { grid-column: 1 / -1; }
+        .desk > .console { margin-bottom: 0; }
+        .storefront { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 16px; align-items: end; text-align: left; margin-bottom: 22px; }
+        .storefront .logo-badge { grid-row: 1 / span 2; width: 56px; height: 56px; border-radius: 15px; margin: 0; align-self: center; }
+        .storefront .eyebrow { align-self: end; }
+        .storefront h1 { margin: 0; align-self: start; }
+    }
+    @media (min-width: 1180px) {
+        .desk { max-width: 1340px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.15fr); }
+        .desk > section { grid-column: auto; margin-top: 0; }
+    }
 </style>
 </head>
 <body>
