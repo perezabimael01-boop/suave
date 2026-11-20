@@ -88,7 +88,7 @@
 
   <section class="section">
     <h2 class="section-title">Fraudegebruikers <span class="tag">Apart</span></h2>
-    <p>Fraudegebruikers staan in een aparte, besloten lijst: <a href="fraude.html"><b>Fraude Contacten</b></a> (opgeslagen in jullie Cloudflare-database). Daar voeg je iemand toe met e-mail, naam, telefoon en maandbedrag. Selecteer wie een bericht moet krijgen, klik <b>Kopieer voor Intercom</b>, en klik in Intercom op <b>2 · Intercom Versturen</b> → <b>Plak lijst</b> → <b>Versturen</b>. Zij krijgen de WhatsApp-template <b>collection_template</b> (of een e-mail met hun maandbedrag als er geen telefoon is). Staan ze nog niet in Intercom, dan worden ze eerst aangemaakt.</p>
+    <p>Fraudegebruikers staan in een aparte, besloten lijst: <a href="fraude.html"><b>Fraude Contacten</b></a> (opgeslagen in jullie Cloudflare-database). Daar voeg je iemand toe met e-mail, naam, telefoon en maandbedrag. Selecteer wie een bericht moet krijgen, klik <b>Kopieer voor Intercom</b>, en klik in Intercom op <b>2 · Intercom Versturen</b> → <b>Plak lijst</b> → <b>Versturen</b>. Zij krijgen de WhatsApp-template <b>collection_template</b> én een e-mail met hun maandbedrag. Staan ze nog niet in Intercom, dan worden ze eerst aangemaakt.</p>
   </section>
 
   <section class="section">
@@ -426,16 +426,26 @@ function intercomVersturen(){
         let c = await findContact(p.email);
         const notes = [];
         if (!c){
-          if (test){ p.status = `Test: nieuw contact aanmaken, daarna ${p.phone ? "WhatsApp " + t.wa : "e-mail"}`; wa++; render(); continue; }
+          if (test){ p.status = `Test: nieuw contact aanmaken, daarna ${t.key === "fraude" ? (p.phone ? "WhatsApp " + t.wa + " + e-mail" : "e-mail") : (p.phone ? "WhatsApp " + t.wa : "e-mail")}`; wa++; render(); continue; }
           c = await createContact(p); c._new = true; notes.push("nieuw contact");
         }
         if (!c._new && !c.name && p.name){ if (!test) await setAttr(c.id, "name", p.name); notes.push("naam"); }
         let phone = c.whatsapp_number || c.phone || "";
         if (!c._new && !c.phone && p.phone){ if (!test) await setAttr(c.id, "phone", p.phone); phone = p.phone; notes.push("telefoon"); }
         const added = notes.length ? ` (${notes.join(", ")}${c._new ? "" : " ingevuld"})` : "";
-        if (test){ p.status = `Test: ${phone ? "WhatsApp " + t.wa : "e-mail"}${added}`; wa++; render(); continue; }
+        if (test){ p.status = `Test: ${t.key === "fraude" ? (phone ? "WhatsApp " + t.wa + " + e-mail" : "e-mail") : (phone ? "WhatsApp " + t.wa : "e-mail")}${added}`; wa++; render(); continue; }
         let how = "";
-        if (phone){
+        if (t.key === "fraude"){
+          // Fraud users get both: the collection_template on WhatsApp (if there is a phone) and an email.
+          const parts = [];
+          if (phone){
+            try { await sendWhatsApp(c.id, t, p); parts.push("WhatsApp"); wa++; }
+            catch(e){ parts.push("WhatsApp mislukt (" + e.message + ")"); }
+            await sleep(500);
+          }
+          await sendEmail(c.id, t, p); parts.push("e-mail"); em++;
+          how = parts.join(" + ");
+        } else if (phone){
           try { await sendWhatsApp(c.id, t, p); how = "WhatsApp"; wa++; }
           catch(e){ await sleep(500); await sendEmail(c.id, t, p); how = "E-mail (WhatsApp mislukt: " + e.message + ")"; em++; }
         } else { await sendEmail(c.id, t, p); how = "E-mail (geen telefoon)"; em++; }
