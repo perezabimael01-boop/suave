@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>To Whom It May Concern – Suave</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="site.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  .field{ margin:0 0 16px; }
+  .upload-box{ border:2px dashed var(--line-strong); border-radius:var(--radius); padding:18px; background:var(--surface-2); }
+  .upload-box input[type=file]{ width:100%; }
+  .status{ margin-top:10px; font-size:14px; }
+  .status.ok{ color:var(--ok); font-weight:600; }
+  .status.bad{ color:var(--danger); font-weight:600; }
+  .c-head, .c-row{ display:grid; grid-template-columns:1.3fr 1.1fr 1fr 1fr .7fr 44px; gap:10px; }
+  .c-head{ font-size:13.5px; font-weight:600; margin:0 0 6px; }
+  .c-row{ margin:0 0 8px; }
+  .c-row .x{ min-height:42px; padding:0; }
+  .check{ display:flex; align-items:center; gap:10px; font-weight:500; margin:6px 0 10px; }
+  .bal-row{ display:none; }
+  .bal-row.show{ display:grid; }
+  .error{ display:none; background:var(--danger-soft); color:var(--danger); border:1px solid #F0C2BC; border-left:4px solid var(--danger); border-radius:var(--radius-sm); padding:11px 14px; font-size:14px; margin-top:14px; }
+
+  #preview{ display:none; }
+  .preview-wrap{ background:#DDE3E8; border-radius:var(--radius); padding:20px; overflow:auto; margin-top:16px; }
+  .doc{ position:relative; background:#fff; width:794px; min-height:1123px; max-width:100%; margin:0 auto; padding:64px 72px 170px; color:#1C2A36;
+        font:14px/1.6 "IBM Plex Sans",Arial,sans-serif; box-shadow:0 1px 4px rgba(0,0,0,.12); }
+  .doc .from{ font-size:13px; color:#5C7286; line-height:1.5; }
+  .doc .from b{ color:#1C2A36; font-size:14px; }
+  .doc .date{ text-align:right; margin:-58px 0 46px; }
+  .doc h3{ font-size:17px; letter-spacing:.06em; margin:0 0 22px; }
+  .doc p{ margin:0 0 14px; }
+  .doc table{ width:100%; border-collapse:collapse; margin:4px 0 18px; font-size:13px; }
+  .doc th{ text-align:left; background:#E6F2FC; color:#1C2A36; font-weight:600; padding:7px 9px; border-bottom:2px solid #439BDA; }
+  .doc td{ padding:7px 9px; border-bottom:1px solid #CFE0EE; }
+  .doc .sign{ margin-top:30px; }
+  .doc .foot{ position:absolute; left:72px; right:72px; bottom:44px; text-align:center; border-top:1px solid #CFE0EE; padding-top:16px; }
+  .doc .foot img{ height:46px; display:block; margin:0 auto 6px; }
+  .doc .foot small{ color:#5C7286; font-size:11.5px; }
+
+  @media (max-width:700px){
+    .c-head{ display:none; }
+    .c-row{ grid-template-columns:1fr 1fr; padding-bottom:10px; border-bottom:1px solid var(--line); }
+    .doc{ padding:32px 24px 150px; min-height:0; }
+    .doc .date{ margin:0 0 24px; text-align:left; }
+    .doc .foot{ left:24px; right:24px; }
+  }
+</style>
+</head>
+<body data-tool="letter">
+<header class="app-bar">
+  <div class="app-bar-inner">
+    <a class="app-back" href="index.html"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>All documents</a>
+    <a class="app-brand" href="index.html" aria-label="Suave – start page"><img class="app-logo" src="logo-white.svg" alt="Suave" width="129" height="40"></a>
+  </div>
+</header>
+
+<main class="page">
+  <div class="page-head">
+    <h1>To Whom It May Concern</h1>
+    <p>Upload the customer statement and get a letter listing the customer's contracts, with the Suave logo, ready as PDF.</p>
+  </div>
+
+  <div id="setup">
+    <div class="section">
+      <h2>Customer statement</h2>
+      <div class="upload-box">
+        <label for="pdfUpload">Customer Statement PDF (from Suave admin)</label>
+        <input type="file" id="pdfUpload" accept="application/pdf">
+        <div class="hint status" id="pdfStatus">Fills in the customer's name, every contract (number, merchant, start date, monthly payment, term) and the outstanding balance (without the legal fee). Everything stays editable.</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Letter</h2>
+      <div class="row">
+        <div class="field">
+          <label for="custName">Customer name</label>
+          <input type="text" id="custName" placeholder="e.g. Anna Balentina">
+        </div>
+        <div class="field">
+          <label for="letterDate">Letter date</label>
+          <input type="date" id="letterDate">
+        </div>
+      </div>
+
+      <label>Contracts</label>
+      <div class="c-head"><span>Contract #</span><span>Merchant</span><span>Start date</span><span>Monthly payment</span><span>Months</span><span></span></div>
+      <div id="contracts"></div>
+      <button type="button" class="btn btn-quiet" id="addContract">+ Add contract</button>
+
+      <label class="check" style="margin-top:18px"><input type="checkbox" id="showBal" checked> Mention the outstanding balance</label>
+      <div class="row bal-row show" id="balRow">
+        <div class="field">
+          <label for="balAmount">Outstanding balance <span class="opt">without legal fee</span></label>
+          <input type="text" id="balAmount" inputmode="decimal" placeholder="e.g. 4,726.05">
+        </div>
+        <div class="field">
+          <label for="balDate">As of (statement date)</label>
+          <input type="date" id="balDate">
+        </div>
+      </div>
+      <div class="field">
+        <label for="currency">Currency</label>
+        <select id="currency"><option>ANG</option><option>AWG</option><option>FL</option><option>USD</option></select>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn-primary" id="createBtn">Create letter</button>
+    </div>
+    <div class="error" id="err" role="alert"></div>
+  </div>
+
+  <div id="preview">
+    <div class="section">
+      <h2>Download</h2>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="pdfBtn">Download PDF</button>
+        <button type="button" class="btn btn-quiet" id="editBtn">Edit details</button>
+      </div>
+    </div>
+    <div class="preview-wrap"><div class="doc" id="doc"></div></div>
+  </div>
+</main>
+
+<script>
+const SUAVE_LOGO = 'data:image/png;base64,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';
+const COMPANY = { name:'Suave Solutions LLC', addr:'9100 S Dadeland Blvd, Ste 912, Miami, Florida', email:'support@paywithsuave.com' };
+const MONTHS = { Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11 };
+const $ = id => document.getElementById(id);
+
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+function todayIso(){ const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+function pdfDateToIso(s){ const m = (s||'').match(/(\d{2})-([A-Za-z]{3})-(\d{4})/); if (!m || MONTHS[m[2]] == null) return ''; return `${m[3]}-${String(MONTHS[m[2]]+1).padStart(2,'0')}-${m[1]}`; }
+function fmtDate(iso){ if (!iso) return ''; const d = new Date(iso + 'T00:00:00'); return d.toLocaleDateString('en-US', { day:'numeric', month:'long', year:'numeric' }); }
+function num(s){ const n = parseFloat(String(s||'').replace(/,/g,'')); return isNaN(n) ? null : n; }
+function money(n){ return n.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ---------- contract rows ---------- */
+function addContract(c = {}){
+  const row = document.createElement('div');
+  row.className = 'c-row';
+  row.innerHTML = `
+    <input type="text" class="c-no" placeholder="Contract #" aria-label="Contract number">
+    <input type="text" class="c-merchant" placeholder="Merchant" aria-label="Merchant">
+    <input type="date" class="c-date" aria-label="Start date">
+    <input type="text" class="c-pay" inputmode="decimal" placeholder="Monthly" aria-label="Monthly payment">
+    <input type="number" class="c-months" min="1" max="120" placeholder="12" aria-label="Months">
+    <button type="button" class="btn btn-quiet x" aria-label="Remove contract">&times;</button>`;
+  row.querySelector('.c-no').value = c.contract || '';
+  row.querySelector('.c-merchant').value = c.vendor || '';
+  row.querySelector('.c-date').value = c.date || '';
+  row.querySelector('.c-pay').value = c.monthly != null ? money(c.monthly) : '';
+  row.querySelector('.c-months').value = c.months || '';
+  row.querySelector('.x').onclick = () => { row.remove(); if (!$('contracts').children.length) addContract(); };
+  $('contracts').appendChild(row);
+}
+
+/* ---------- read the statement PDF ---------- */
+async function pdfText(file){
+  const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++){
+    const content = await (await pdf.getPage(i)).getTextContent();
+    text += content.items.map(it => it.str).join(' ') + '\n';
+  }
+  return text.replace(/[ \t]+/g, ' ');
+}
+
+function parseStatement(text){
+  const name = (text.match(/Account:\s*(.+?)\s+Open Balance/i) || [])[1];
+  const bal = text.match(/Open Balance\s*:?\s*([A-Za-z.]{0,6})\s*([\d,]+\.\d{2})/i);
+  // the outstanding balance is the subtotal: the open balance minus the legal fee
+  const fee = text.match(/Legal Fee\s*:?\s*(?:[A-Za-z.]{0,6}\s*)?([\d,]+\.\d{2})/i);
+  const subtotal = bal ? Math.round((num(bal[2]) - (fee ? num(fee[1]) : 0)) * 100) / 100 : null;
+  const stmtDate = (text.match(/\b(\d{4}-\d{2}-\d{2})\b/) || [])[1] || '';
+  // first row of every contract is its M1 invoice: contract#, vendor, M1, date
+  const re = /([A-Za-z]{2,}\d{3,})\s+([A-Za-z][A-Za-z&.'-]*(?:\s+[A-Za-z][A-Za-z&.'-]*)*?)\s+M1\s+(\d{2}-[A-Za-z]{3}-\d{4})\s+Monthly Payment/g;
+  const hits = []; let m;
+  while ((m = re.exec(text))) hits.push({ m, index: m.index });
+  const contracts = hits.map((h, i) => {
+    const end = i + 1 < hits.length ? hits[i+1].index : text.length;
+    const seg = text.slice(h.index, end);
+    const pay = seg.match(/M1\s+\d{2}-[A-Za-z]{3}-\d{4}\s+Monthly Payment\s+[A-Za-z.]{0,6}\s*([\d,]+\.\d{2})/);
+    const months = (seg.match(/\bM\d+\s+\d{2}-[A-Za-z]{3}-\d{4}\s+Monthly Payment/g) || []).length;
+    return { contract: h.m[1], vendor: h.m[2].trim(), date: pdfDateToIso(h.m[3]), monthly: pay ? num(pay[1]) : null, months: months || '' };
+  });
+  return { name: name ? name.trim() : '', currency: bal ? bal[1].replace(/\.$/,'') : '', balance: subtotal, stmtDate, contracts };
+}
+
+$('pdfUpload').addEventListener('change', async e => {
+  const file = e.target.files[0]; const st = $('pdfStatus');
+  if (!file) return;
+  st.className = 'hint status'; st.textContent = 'Reading the statement…';
+  try {
+    const d = parseStatement(await pdfText(file));
+    if (d.name) $('custName').value = d.name;
+    if (d.balance != null) $('balAmount').value = money(d.balance);
+    if (d.stmtDate) $('balDate').value = d.stmtDate;
+    if (d.currency){ const sel = $('currency'); if (![...sel.options].some(o => o.value === d.currency)) sel.add(new Option(d.currency)); sel.value = d.currency; }
+    $('contracts').innerHTML = '';
+    if (!d.contracts.length){ addContract(); st.className = 'status bad'; st.textContent = 'No contracts found in this file. Fill them in by hand.'; return; }
+    d.contracts.forEach(addContract);
+    st.className = 'status ok';
+    st.textContent = `Read ${d.contracts.length} contract${d.contracts.length > 1 ? 's' : ''} for ${d.name || 'this customer'}. Check the details below.`;
+  } catch (err){
+    console.error(err);
+    st.className = 'status bad'; st.textContent = 'Could not read this PDF. Fill in the details by hand.';
+  }
+});
+
+/* ---------- build the letter ---------- */
+function collect(){
+  const contracts = [...document.querySelectorAll('.c-row')].map(r => ({
+    no: r.querySelector('.c-no').value.trim(),
+    merchant: r.querySelector('.c-merchant').value.trim(),
+    date: r.querySelector('.c-date').value,
+    pay: num(r.querySelector('.c-pay').value),
+    months: r.querySelector('.c-months').value.trim()
+  })).filter(c => c.no || c.merchant || c.date || c.pay != null);
+  return {
+    name: $('custName').value.trim(), date: $('letterDate').value || todayIso(), cur: $('currency').value,
+    showBal: $('showBal').checked, bal: num($('balAmount').value), balDate: $('balDate').value, contracts
+  };
+}
+
+function validate(d){
+  const miss = [];
+  if (!d.name) miss.push('customer name');
+  if (!d.contracts.length) miss.push('at least one contract');
+  d.contracts.forEach((c, i) => { if (!c.no || !c.date) miss.push(`contract ${i+1}: number and start date`); });
+  if (d.showBal && d.bal == null) miss.push('outstanding balance');
+  return miss;
+}
+
+function texts(d){
+  const n = d.contracts.length;
+  return {
+    intro: `This letter confirms that ${d.name} has the following ${n === 1 ? 'contract' : n + ' contracts'} with ${COMPANY.name}:`,
+    balance: d.showBal ? `As of ${fmtDate(d.balDate || d.date)}, the outstanding balance on ${n === 1 ? 'this contract' : 'these contracts'} is ${d.cur} ${money(d.bal)}.` : '',
+    issued: `This letter was created on ${fmtDate(d.date)} at the request of the customer. For questions, please contact us at ${COMPANY.email}.`,
+    rows: d.contracts.map(c => [c.no, c.merchant || '—', fmtDate(c.date), c.pay != null ? `${d.cur} ${money(c.pay)}` : '—', c.months ? `${c.months} months` : '—'])
+  };
+}
+
+function renderPreview(d){
+  const t = texts(d);
+  $('doc').innerHTML = `
+    <div class="from"><b>${COMPANY.name}</b><br>${COMPANY.addr}<br>${COMPANY.email}</div>
+    <div class="date">${fmtDate(d.date)}</div>
+    <h3>TO WHOM IT MAY CONCERN</h3>
+    <p>${esc(t.intro)}</p>
+    <table><thead><tr><th>Contract #</th><th>Merchant</th><th>Start date</th><th>Monthly payment</th><th>Term</th></tr></thead>
+    <tbody>${t.rows.map(r => `<tr>${r.map(v => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>
+    ${t.balance ? `<p>${esc(t.balance)}</p>` : ''}
+    <p>${esc(t.issued)}</p>
+    <div class="sign">Sincerely,<br><br><b>${COMPANY.name}</b></div>
+    <div class="foot"><img src="${SUAVE_LOGO}" alt="Suave"><small>${COMPANY.name} · ${COMPANY.addr} · ${COMPANY.email}</small></div>`;
+}
+
+function buildPdf(d){
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit:'mm', format:'a4' });
+  const W = 210, H = 297, L = 22, R = W - 22, ink = [28,42,54], soft = [92,114,134], blue = [67,155,218];
+  const t = texts(d);
+  let y = 26;
+
+  const footer = () => {
+    const lw = 42, lh = lw / 3;
+    pdf.setDrawColor(207,224,238); pdf.setLineWidth(0.3); pdf.line(L, H - 38, R, H - 38);
+    pdf.addImage(SUAVE_LOGO, 'PNG', (W - lw) / 2, H - 34, lw, lh);
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(...soft);
+    pdf.text(`${COMPANY.name} · ${COMPANY.addr} · ${COMPANY.email}`, W / 2, H - 14, { align:'center' });
+  };
+  const newPageIfNeeded = need => { if (y + need > H - 44){ footer(); pdf.addPage(); y = 26; } };
+  const para = (text, gap = 6) => {
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(11); pdf.setTextColor(...ink);
+    const lines = pdf.splitTextToSize(text, R - L);
+    newPageIfNeeded(lines.length * 5.6);
+    pdf.text(lines, L, y, { lineHeightFactor:1.45 }); y += lines.length * 5.6 + gap;
+  };
+
+  // sender + date
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(11.5); pdf.setTextColor(...ink); pdf.text(COMPANY.name, L, y);
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5); pdf.setTextColor(...soft);
+  pdf.text(COMPANY.addr, L, y + 5); pdf.text(COMPANY.email, L, y + 10);
+  pdf.setFontSize(11); pdf.setTextColor(...ink); pdf.text(fmtDate(d.date), R, y, { align:'right' });
+  y += 30;
+
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(14); pdf.setCharSpace(0.4); pdf.text('TO WHOM IT MAY CONCERN', L, y); pdf.setCharSpace(0);
+  y += 11;
+  para(t.intro, 4);
+
+  // contracts table
+  const cols = [{ h:'Contract #', w:38 }, { h:'Merchant', w:36 }, { h:'Start date', w:36 }, { h:'Monthly payment', w:32 }, { h:'Term', w:24 }];
+  const head = () => {
+    pdf.setFillColor(230,242,252); pdf.rect(L, y - 5, R - L, 8, 'F');
+    pdf.setDrawColor(...blue); pdf.setLineWidth(0.6); pdf.line(L, y + 3, R, y + 3);
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(9.5); pdf.setTextColor(...ink);
+    let x = L + 2; cols.forEach(c => { pdf.text(c.h, x, y); x += c.w; }); y += 9;
+  };
+  newPageIfNeeded(20); head();
+  t.rows.forEach(r => {
+    if (y + 8 > H - 44){ footer(); pdf.addPage(); y = 26; head(); }
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5); pdf.setTextColor(...ink);
+    let x = L + 2; r.forEach((v, i) => { pdf.text(pdf.splitTextToSize(String(v), cols[i].w - 3)[0], x, y); x += cols[i].w; });
+    pdf.setDrawColor(207,224,238); pdf.setLineWidth(0.2); pdf.line(L, y + 3, R, y + 3); y += 8;
+  });
+  y += 6;
+
+  if (t.balance) para(t.balance);
+  para(t.issued);
+  newPageIfNeeded(20);
+  y += 4; para('Sincerely,', 6);
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.text(COMPANY.name, L, y);
+  footer();
+  return pdf;
+}
+
+$('createBtn').onclick = () => {
+  const d = collect(), miss = validate(d), err = $('err');
+  if (miss.length){ err.style.display = 'block'; err.textContent = 'Still missing: ' + miss.join(', ') + '.'; return; }
+  err.style.display = 'none';
+  renderPreview(d);
+  $('setup').style.display = 'none'; $('preview').style.display = 'block'; window.scrollTo(0, 0);
+};
+$('editBtn').onclick = () => { $('preview').style.display = 'none'; $('setup').style.display = 'block'; };
+$('pdfBtn').onclick = () => {
+  const d = collect();
+  const safe = s => s.replace(/[\\/:*?"<>|]+/g, '').trim();
+  buildPdf(d).save(`To Whom It May Concern - ${safe(d.name)} - ${d.date}.pdf`);
+};
+$('addContract').onclick = () => addContract();
+$('showBal').onchange = e => $('balRow').classList.toggle('show', e.target.checked);
+
+$('letterDate').value = todayIso();
+addContract();
+</script>
+
+<!-- Help chat (the worker address is set inside help-chat.js) -->
+<script src="help-chat.js"></script>
+</body>
+</html>
