@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Herinneringen via Intercom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="site.css">
+<style>
+  body{ --page-width:780px; --tool:#2E8B7A; --tool-soft:#E3F4F0; }
+  .section-title .tag{ font-size:12.5px; font-weight:600; color:var(--tool); background:var(--tool-soft); border-radius:999px; padding:1px 10px; }
+  .section p{ margin:0 0 12px; color:var(--ink-soft); line-height:1.6; max-width:64ch; }
+  .section b{ color:var(--ink); font-weight:600; }
+  kbd{ font-family:inherit; font-size:13px; font-weight:600; background:var(--surface-2); border:1px solid var(--line-strong); border-bottom-width:2px; border-radius:5px; padding:0 6px; }
+  .bms{ display:flex; gap:12px; flex-wrap:wrap; }
+  .bm{ display:inline-flex; align-items:center; gap:10px; margin:6px 0 10px; padding:13px 22px; border-radius:var(--radius-sm);
+       background:var(--tool); color:#fff; font-weight:600; font-size:15.5px; text-decoration:none; cursor:grab; border:2px dashed transparent;
+       box-shadow:0 6px 16px -8px color-mix(in srgb, var(--tool) 70%, transparent); }
+  .bm.two{ background:#1F5F92; }
+  .bm:hover{ border-color:#fff; outline:2px dashed var(--tool); outline-offset:2px; }
+  .bm:active{ cursor:grabbing; }
+  details{ margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+  summary{ cursor:pointer; font-size:14.5px; font-weight:600; color:var(--tool); }
+  details ol{ margin-top:10px; padding-left:20px; color:var(--ink-soft); line-height:1.7; }
+  .ok{ color:var(--ok); font-weight:600; font-size:14px; margin-left:8px; }
+  .steps{ list-style:none; counter-reset:s; margin:0; padding:0; }
+  .steps > li{ counter-increment:s; position:relative; padding:0 0 14px 42px; color:var(--ink-soft); line-height:1.6; }
+  .steps > li::before{ content:counter(s); position:absolute; left:0; top:0; width:28px; height:28px; border-radius:50%;
+       display:flex; align-items:center; justify-content:center; font-size:13.5px; font-weight:700; color:var(--tool); background:var(--tool-soft); }
+  .steps > li:not(:last-child)::after{ content:""; position:absolute; left:13.5px; top:32px; bottom:4px; width:1px; background:var(--line); }
+  .steps > li:last-child{ padding-bottom:0; }
+  table.t{ border-collapse:collapse; font-size:14px; margin:4px 0 0; }
+  table.t td, table.t th{ border-bottom:1px solid var(--line); padding:6px 10px 6px 0; text-align:left; color:var(--ink-soft); }
+  table.t th{ color:var(--ink); font-weight:600; }
+</style>
+</head>
+<body data-tool="reminders">
+<header class="app-bar">
+  <div class="app-bar-inner">
+    <a class="app-back" href="index.html"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Alle documenten</a>
+    <a class="app-brand" href="index.html" aria-label="David – startpagina"><img class="app-logo" src="logo-white.svg" alt="David" width="129" height="40"></a>
+  </div>
+</header>
+<main class="page">
+  <div class="page-head">
+    <h1>Herinneringen via Intercom</h1>
+    <p>Leest de <b>My Computer past due list</b> in Suave (naam, e-mail, telefoon, dagen te laat, bedrag). Daarna vult hij in Intercom naam en telefoon aan als die ontbreken, en stuurt iedereen de juiste WhatsApp-template. Geen telefoon of lukt WhatsApp niet? Dan gaat er een e-mail. Je hoeft alleen ingelogd te zijn in Suave en Intercom. Geen sleutels nodig.</p>
+  </div>
+
+  <section class="section">
+    <h2 class="section-title">Zet de twee knoppen in je bladwijzerbalk <span class="tag">Eenmalig</span></h2>
+    <p>Sleep beide knoppen met je muis naar de <b>bladwijzerbalk</b> bovenin Chrome. Zie je die balk niet? Druk op <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>.</p>
+    <div class="bms">
+      <a class="bm" id="bm1" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4.5H19V19.5H5V4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.5 9H15.5M8.5 12.5H15.5M8.5 16H12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        1 · Suave Lijst
+      </a>
+      <a class="bm two" id="bm2" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5H20V16.5H9L5 20V16.5H4V5.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 10H16M8 13H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        2 · Intercom Versturen
+      </a>
+    </div>
+    <div class="hint" id="dragHint" role="status" hidden style="color:var(--tool);font-weight:600">Niet klikken, maar slepen: houd de knop vast en sleep hem naar de bladwijzerbalk.</div>
+    <details>
+      <summary>Slepen lukt niet?</summary>
+      <ol>
+        <li>Klik op <button type="button" class="btn btn-secondary" data-copy="bm1" style="min-height:36px;padding:6px 14px;font-size:14px">Code knop 1 kopiëren</button> of <button type="button" class="btn btn-secondary" data-copy="bm2" style="min-height:36px;padding:6px 14px;font-size:14px">Code knop 2 kopiëren</button><span class="ok" id="copied" role="status" hidden>Gekopieerd</span></li>
+        <li>Rechtsklik op de bladwijzerbalk → <b>Pagina toevoegen…</b></li>
+        <li>Naam: <b>1 · Suave Lijst</b> of <b>2 · Intercom Versturen</b>. Bij URL: plak de code (<kbd>Ctrl</kbd>+<kbd>V</kbd>) en klik <b>Opslaan</b>.</li>
+      </ol>
+    </details>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">Herinneringen sturen <span class="tag">Elke keer</span></h2>
+    <ol class="steps">
+      <li>Open <b>admin.paywithsuave.com</b> (ingelogd) en klik op <b>1 · Suave Lijst</b>. Het paneel haalt de past due list op, met de telefoon van elke klant.</li>
+      <li>Klik in het paneel op <b>Kopieer voor Intercom</b>.</li>
+      <li>Open <b>app.intercom.com</b> (ingelogd) en klik op <b>2 · Intercom Versturen</b>. Klik <b>Plak lijst</b> (Chrome vraagt de eerste keer of plakken mag: kies <b>Toestaan</b>).</li>
+      <li>Je ziet iedereen met dagen te laat, bedrag en welke template ze krijgen. Vink uit wie niets moet krijgen. Wil je eerst alleen kijken? Vink <b>Testrun</b> aan.</li>
+      <li>Klik <b>Versturen</b> en bevestig het aantal. Per klant: naam en telefoon worden aangevuld in Intercom als ze leeg zijn, daarna gaat de WhatsApp-template (of een e-mail als er geen telefoon is of WhatsApp mislukt).</li>
+      <li>Klik op <b>Rapport</b> voor een lijst (opent in Excel) van wat er per klant gebeurd is.</li>
+    </ol>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">Welke template wanneer</h2>
+    <table class="t">
+      <tr><th>Dagen te laat</th><th>WhatsApp-template</th><th>Ingevuld met</th></tr>
+      <tr><td>1 – 29</td><td>1_29days</td><td>Afl., bedrag, voornaam, dagen</td></tr>
+      <tr><td>30 – 59</td><td>30_59days_past_template</td><td>voornaam, dagen, Afl., bedrag</td></tr>
+      <tr><td>60 en meer</td><td>60_days_</td><td>voornaam, Afl., bedrag, dagen</td></tr>
+    </table>
+    <p style="margin-top:12px">Wie in de laatste 7 dagen al dezelfde soort herinnering kreeg, staat standaard uitgevinkt (bijgehouden in deze browser). Klanten die niet in Intercom staan worden overgeslagen en staan in het rapport.</p>
+  </section>
+</main>
+
+<script>
+// =====================================================================================
+// KNOP 1 — runs on admin.paywithsuave.com. Reads the past due list + phone numbers.
+// Everything is inside this one function, because it is turned into the bookmark.
+// =====================================================================================
+function suaveLijst(){
+  if (window.__suaveLijst){ window.__suaveLijst.show(); return; }
+  if (!/paywithsuave\.com$/.test(location.hostname)){ alert("Open eerst admin.paywithsuave.com en klik dan op 1 · Suave Lijst."); return; }
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  let rows = [];
+
+  const host = document.createElement("div");
+  const root = host.attachShadow({ mode: "open" });
+  root.innerHTML = `<style>
+    .p{ position:fixed; top:0; right:0; z-index:2147483647; width:460px; max-width:100vw; height:100vh; background:#fff; color:#1d2a36;
+        font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; box-shadow:-8px 0 30px rgba(0,0,0,.18); display:flex; flex-direction:column; }
+    .h{ display:flex; align-items:center; padding:12px 14px; background:#2E8B7A; color:#fff; } .h b{ flex:1; font-size:15px; }
+    .h button{ background:none; border:0; color:#fff; font-size:20px; cursor:pointer; }
+    .b{ flex:1; overflow:auto; padding:12px 14px; }
+    .btn{ background:#2E8B7A; color:#fff; border:0; border-radius:6px; padding:9px 14px; font:inherit; font-weight:600; cursor:pointer; }
+    .btn:disabled{ opacity:.5; cursor:default; }
+    .msg{ margin:10px 0; padding:8px 10px; border-radius:6px; background:#eef3f6; font-size:13px; }
+    .msg.err{ background:#fdecea; color:#922; } .msg.good{ background:#e3f4f0; color:#1f6e60; }
+    table{ width:100%; border-collapse:collapse; font-size:12.5px; margin-top:8px; }
+    th,td{ text-align:left; padding:4px; border-bottom:1px solid #edf1f4; } th{ color:#6b7884; font-weight:600; } td.r{ text-align:right; }
+    .f{ border-top:1px solid #e3e8ec; padding:10px 14px; display:flex; gap:8px; }
+  </style>
+  <div class="p">
+    <div class="h"><b>1 · Suave Lijst</b><button id="x" title="Sluiten">×</button></div>
+    <div class="b"><div id="info"></div><div id="list"></div></div>
+    <div class="f"><button class="btn" id="load">Lijst ophalen</button><button class="btn" id="copy" disabled>Kopieer voor Intercom</button></div>
+  </div>`;
+  document.body.appendChild(host);
+  const $ = id => root.getElementById(id);
+  const info = (h, c) => { $("info").innerHTML = h ? `<div class="msg ${c || ""}">${h}</div>` : ""; };
+
+  function token(){ let t = localStorage.getItem("accessToken") || ""; try { const p = JSON.parse(t); if (typeof p === "string") t = p; } catch(e){} return t; }
+  const H = () => ({ "Content-Type": "application/json", "Accept": "application/json", "Authorization": "Bearer " + token() });
+
+  function findPhone(o, depth){
+    if (!o || typeof o !== "object" || depth > 4) return "";
+    for (const k of Object.keys(o)) if (/^(telephone|phone|phone_number|mobile|mobile_number|cellphone)$/i.test(k) && o[k] && typeof o[k] !== "object" && /\d{6,}/.test(String(o[k]).replace(/\D/g, ""))) return String(o[k]);
+    for (const k in o){ const v = findPhone(o[k], depth + 1); if (v) return v; }
+    return "";
+  }
+  async function phoneOf(email){
+    try {
+      const r = await fetch("/api/v1/admin/mc/user/" + encodeURIComponent(email), { method: "POST", headers: H(), body: "{}" });
+      if (!r.ok) return "";
+      return findPhone(await r.json(), 0);
+    } catch(e){ return ""; }
+  }
+  function dateOf(d){ if (d && typeof d === "object") d = d.date || d.value || Object.values(d)[0]; return String(d || "").slice(0, 10); }
+
+  $("load").addEventListener("click", async () => {
+    $("load").disabled = true; $("copy").disabled = true;
+    try {
+      const all = []; let page = 1, last = 1;
+      do {
+        info(`Lijst ophalen… pagina ${page}${last > 1 ? " van " + last : ""}`);
+        const r = await fetch("/api/v1/admin/mc/past-due?page=" + page, { method: "POST", headers: H(), body: JSON.stringify({ page }) });
+        if (r.status === 401) throw new Error("Je bent niet (meer) ingelogd in Suave. Log opnieuw in.");
+        if (!r.ok) throw new Error("Suave gaf fout " + r.status + ".");
+        const j = await r.json();
+        (j.data || []).forEach(x => all.push(x));
+        last = Number(j.pagination && j.pagination.last_page) || 1;
+        page++; await sleep(150);
+      } while (page <= last);
+      // The list has one row per open invoice: add them up per customer, keep the oldest (most days late).
+      const by = new Map();
+      for (const r of all){
+        const email = String(r.customer_email || "").trim().toLowerCase();
+        if (!email) continue;
+        const days = Number(r.days_difference != null ? r.days_difference : r.aging) || 0;
+        const amt = Number(r.subtotal_fl) || 0;
+        const p = by.get(email);
+        if (!p) by.set(email, { user_id: r.user_id, name: String(r.fullname || "").trim().replace(/\s+/g, " "), email, days, total: amt, invoices: 1, due: dateOf(r.due_date), phone: "" });
+        else { p.total += amt; p.invoices++; if (days > p.days){ p.days = days; p.due = dateOf(r.due_date); } }
+      }
+      rows = [...by.values()].map(p => ({ ...p, amount: p.total.toFixed(2) }));
+      rows.forEach(p => delete p.total);
+      let n = 0;
+      for (const p of rows){ n++; info(`Telefoonnummers ophalen… ${n} van ${rows.length}`); p.phone = await phoneOf(p.email); await sleep(120); }
+      const withPhone = rows.filter(p => p.phone).length;
+      info(`${rows.length} klanten gevonden, ${withPhone} met telefoon. Klik nu <b>Kopieer voor Intercom</b>.`, "good");
+      $("list").innerHTML = `<table><tr><th>Naam</th><th>Telefoon</th><th class="r">Dagen</th><th class="r">Afl.</th></tr>${
+        rows.map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.phone || "–")}</td><td class="r">${p.days}</td><td class="r">${p.amount}</td></tr>`).join("")}</table>`;
+      $("copy").disabled = !rows.length;
+    } catch (e){ info(esc(e.message || e), "err"); }
+    $("load").disabled = false;
+  });
+
+  $("copy").addEventListener("click", async () => {
+    const text = "SUAVE-HERINNERINGEN:" + JSON.stringify({ at: new Date().toISOString(), rows });
+    try { await navigator.clipboard.writeText(text); }
+    catch(e){ const ta = document.createElement("textarea"); ta.value = text; root.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+    info(`Gekopieerd: ${rows.length} klanten. Open nu <b>app.intercom.com</b> en klik op <b>2 · Intercom Versturen</b>.`, "good");
+  });
+  $("x").addEventListener("click", () => { host.style.display = "none"; });
+  window.__suaveLijst = { show(){ host.style.display = ""; } };
+}
+
+// =====================================================================================
+// KNOP 2 — runs on app.intercom.com. Checks contacts, fills in name/phone, sends.
+// Uses your own Intercom login in this tab, the same way the Intercom inbox does.
+// =====================================================================================
+function intercomVersturen(){
+  if (window.__icVersturen){ window.__icVersturen.show(); return; }
+  if (!/(^|\.)intercom\.com$/.test(location.hostname)){ alert("Open eerst app.intercom.com en klik dan op 2 · Intercom Versturen."); return; }
+
+  // ---- Suave's Intercom settings (from your workspace) ----
+  const APP_ID = (location.pathname.match(/\/apps\/([^/]+)/) || [])[1] || "ka42edsc";
+  const ADMIN_ID = 8698880;            // David — the teammate the messages come from
+  const WA_INTEGRATION_ID = 6781;      // WhatsApp number Suave (+1 555 763 9010)
+  const EMAIL_SENDER_ID = "398115";    // support@paywithsuave.com
+  const TEMPLATES = [
+    { min: 1,  max: 29,    key: "1_29days", label: "1–29 dagen",
+      wa: "1_29days", params: p => ["Afl.", p.amount, p.first, String(p.days)],
+      title: "Your payment is late",
+      text: p => `Hi ${p.first} you missed your payment. It's now ${p.days} day past due.\n\nYou owe: Afl. ${p.amount}\n\nPlease pay today to keep your account in good standing.` },
+    { min: 30, max: 59,    key: "30_59", label: "30–59 dagen",
+      wa: "30_59days_past_template", params: p => [p.first, String(p.days), "Afl.", p.amount],
+      title: "Your payment is past due",
+      text: p => `Hi ${p.first}, your payment is ${p.days} days late.\n\nYou owe: Afl. ${p.amount}\n\nYou will be charged 25 FL every day for each late invoice. Please pay today to stop the late fees.` },
+    { min: 60, max: 99999, key: "60plus", label: "60+ dagen",
+      wa: "60_days_", params: p => [p.first, "Afl.", p.amount, String(p.days)],
+      title: "Final notice: please pay now",
+      text: p => `Hi ${p.first}, you owe Afl. ${p.amount}. Your payment is more than ${p.days} days late.\n\nWe have tried to reach you several times about this.\n\nPlease pay all late invoices within 14 days. Until you pay, you will be charged 25 FL every day for each late invoice.` }
+  ];
+
+  const LS = "suaveIc.";
+  const get = (k, d) => { try { const v = localStorage.getItem(LS + k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } };
+  const put = (k, v) => { try { localStorage.setItem(LS + k, JSON.stringify(v)); } catch(e){} };
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const S = { rows: [], log: get("log", {}), running: false, stop: false };
+
+  const host = document.createElement("div");
+  const root = host.attachShadow({ mode: "open" });
+  root.innerHTML = `<style>
+    .p{ position:fixed; top:0; right:0; z-index:2147483647; width:540px; max-width:100vw; height:100vh; background:#fff; color:#1d2a36;
+        font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; box-shadow:-8px 0 30px rgba(0,0,0,.18); display:flex; flex-direction:column; }
+    .h{ display:flex; align-items:center; padding:12px 14px; background:#1F5F92; color:#fff; } .h b{ flex:1; font-size:15px; }
+    .h button{ background:none; border:0; color:#fff; font-size:20px; cursor:pointer; }
+    .b{ flex:1; overflow:auto; padding:12px 14px; }
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .btn{ background:#1F5F92; color:#fff; border:0; border-radius:6px; padding:9px 14px; font:inherit; font-weight:600; cursor:pointer; }
+    .btn.sec{ background:#eef3f6; color:#1d2a36; } .btn.red{ background:#c0392b; } .btn:disabled{ opacity:.5; cursor:default; }
+    label.c{ display:flex; gap:6px; align-items:center; font-size:13.5px; }
+    textarea{ width:100%; box-sizing:border-box; min-height:70px; margin-top:8px; font:12px monospace; border:1px solid #c9d3db; border-radius:6px; padding:6px; }
+    .msg{ margin:10px 0; padding:8px 10px; border-radius:6px; background:#eef3f6; font-size:13px; }
+    .msg.err{ background:#fdecea; color:#922; } .msg.good{ background:#e3f4f0; color:#1f6e60; }
+    .muted{ color:#6b7884; font-size:12px; }
+    table{ width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+    th,td{ text-align:left; padding:5px 4px; border-bottom:1px solid #edf1f4; vertical-align:top; }
+    th{ font-size:12px; color:#6b7884; font-weight:600; position:sticky; top:-12px; background:#fff; }
+    td.r{ text-align:right; white-space:nowrap; } td.n{ cursor:pointer; color:#1f5f92; }
+    .pill{ font-size:11.5px; padding:1px 7px; border-radius:999px; white-space:nowrap; }
+    .b0{ background:#e3f4f0; color:#1f6e60; } .b1{ background:#fff3d6; color:#8a5a00; } .b2{ background:#fdecea; color:#922; }
+    .st{ font-size:12px; } .st.ok{ color:#1f6e60; } .st.err{ color:#c0392b; }
+    .prev{ white-space:pre-wrap; background:#f7f9fa; border:1px solid #e3e8ec; border-radius:6px; padding:8px; margin-top:4px; font-size:12.5px; color:#1d2a36; }
+    .f{ border-top:1px solid #e3e8ec; padding:10px 14px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; } .f .sp{ flex:1; }
+  </style>
+  <div class="p">
+    <div class="h"><b>2 · Intercom Versturen</b><button id="x" title="Sluiten">×</button></div>
+    <div class="b">
+      <div class="row">
+        <button class="btn" id="paste">Plak lijst</button>
+        <label class="c"><input type="checkbox" id="test"> Testrun (niets versturen of wijzigen)</label>
+      </div>
+      <div class="muted" style="margin-top:6px">Plakken lukt niet? Plak de lijst hieronder met Ctrl+V.</div>
+      <textarea id="manual" placeholder="Hier plakken (Ctrl+V)…"></textarea>
+      <div id="info"></div>
+      <div id="list"></div>
+    </div>
+    <div class="f">
+      <span id="count" class="muted"></span><span class="sp"></span>
+      <button class="btn sec" id="report" disabled>Rapport</button>
+      <button class="btn red" id="stop" hidden>Stoppen</button>
+      <button class="btn" id="send" disabled>Versturen</button>
+    </div>
+  </div>`;
+  document.body.appendChild(host);
+  const $ = id => root.getElementById(id);
+  const info = (h, c) => { $("info").innerHTML = h ? `<div class="msg ${c || ""}">${h}</div>` : ""; };
+
+  // ---------- Intercom (same requests the inbox itself makes) ----------
+  const csrf = () => (document.querySelector("meta[name=csrf-token]") || {}).content || "";
+  async function ic(method, path, body){
+    const r = await fetch(path, { method, credentials: "same-origin",
+      headers: { "Content-Type": "application/json", "Accept": "application/json", "X-CSRF-Token": csrf() },
+      body: body ? JSON.stringify(body) : undefined });
+    let j = null; try { j = await r.json(); } catch(e){}
+    if (!r.ok){
+      const m = j && (j.errors ? (j.errors[0] && (j.errors[0].message || j.errors[0])) : j.message);
+      throw new Error("Intercom " + r.status + (m ? ": " + m : ""));
+    }
+    return j || {};
+  }
+  async function findContact(email){
+    const j = await ic("POST", "/ember/users/search.json", { app_id: APP_ID,
+      predicates: [{ attribute: "email", comparison: "eq", value: email, type: "string" }], page: 1, per_page: 5, include_count: false });
+    return (j.users || [])[0] || null;
+  }
+  async function setAttr(id, attr, value){
+    return ic("PUT", "/ember/user_attributes/" + id, { app_id: APP_ID, id, attribute_identifier: attr, attribute_value: value, attribute_belongs_to_type: "user" });
+  }
+  const html = s => esc(s).replace(/\n/g, "<br />");
+  function recipients(id){ return { to: { ids: [id], emails: [] }, cc: { ids: [], emails: [] }, bcc: { ids: [], emails: [] } }; }
+  async function sendWhatsApp(id, t, p){
+    return ic("POST", "/ember/users/send_support_conversation.json", {
+      type: 115, admin_assignee_id: ADMIN_ID, team_assignee_id: 0, sender_id: String(ADMIN_ID), sender_type: 0,
+      recipients: recipients(id), user_ids: [id],
+      data: { whatsapp: { integration_id: WA_INTEGRATION_ID, template_name: t.wa, template_language: "en",
+        template_components: [{ type: "body", parameters: t.params(p).map(text => ({ type: "text", text })) }] } },
+      app_id: APP_ID,
+      blocks: [{ type: "subheading", text: html(t.title) }, { type: "paragraph", text: html(t.text(p)), class: "no-margin" }]
+    });
+  }
+  async function sendEmail(id, t, p){
+    return ic("POST", "/ember/users/send_support_conversation.json", {
+      type: 8, subject: t.title, admin_assignee_id: ADMIN_ID, team_assignee_id: 0, sender_id: EMAIL_SENDER_ID, sender_type: 3,
+      recipients: recipients(id), user_ids: [id], app_id: APP_ID,
+      blocks: t.text(p).split(/\n{2,}/).map(par => ({ type: "paragraph", text: html(par), class: "no-margin" }))
+    });
+  }
+  function normPhone(raw){
+    // Keep a number that already has a country code (+… or 00…); otherwise it is Aruban: add +297.
+    const t = String(raw || "").trim();
+    let d = t.replace(/\D/g, "");
+    if (!d) return "";
+    if (t.includes("+")) return "+" + d;
+    if (d.startsWith("00")) return "+" + d.slice(2);
+    if (d.startsWith("297") && d.length === 10) return "+" + d;
+    return "+297" + d.replace(/^0+/, "");
+  }
+
+  // ---------- list ----------
+  function tplOf(days){ return TEMPLATES.findIndex(t => days >= t.min && days <= t.max); }
+  function recently(p){ const l = S.log[p.user_id + ":" + p.tpl]; return l && (Date.now() - new Date(l).getTime()) < 7 * 864e5; }
+  function load(text){
+    text = String(text || "").trim();
+    if (!text.startsWith("SUAVE-HERINNERINGEN:")) { info("Dit is niet de lijst van <b>1 · Suave Lijst</b>. Klik daar eerst op <b>Kopieer voor Intercom</b>.", "err"); return; }
+    let data; try { data = JSON.parse(text.slice(20)); } catch(e){ info("De lijst is niet compleet gekopieerd. Probeer opnieuw.", "err"); return; }
+    S.rows = (data.rows || []).map(r => {
+      const name = String(r.name || "").trim();
+      const w = name.split(" ")[0] || "";
+      const p = { ...r, first: w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : "there", phone: normPhone(r.phone), status: "", open: false };
+      p.tpl = tplOf(p.days);
+      p.on = p.tpl >= 0 && !recently(p);
+      return p;
+    }).sort((a, b) => b.days - a.days);
+    const age = data.at ? Math.round((Date.now() - new Date(data.at).getTime()) / 60000) : 0;
+    info(`${S.rows.length} klanten geladen${age > 60 ? ` (lijst is ${Math.round(age / 60)} uur oud — haal hem liever opnieuw op)` : ""}.`, age > 60 ? "" : "good");
+    $("manual").value = "";
+    render();
+  }
+  $("paste").addEventListener("click", async () => {
+    try { load(await navigator.clipboard.readText()); }
+    catch(e){ info("Chrome liet plakken niet toe. Plak de lijst in het vak hieronder met Ctrl+V.", "err"); $("manual").focus(); }
+  });
+  $("manual").addEventListener("paste", e => { setTimeout(() => load($("manual").value), 0); });
+  $("manual").addEventListener("change", () => { if ($("manual").value.trim()) load($("manual").value); });
+
+  function render(){
+    const rows = S.rows;
+    $("list").innerHTML = !rows.length ? "" : `<table>
+      <thead><tr><th><input type="checkbox" id="all"></th><th>Naam</th><th class="r">Dagen</th><th class="r">Afl.</th><th>Template</th><th></th></tr></thead>
+      <tbody>${rows.map((p, i) => { const t = TEMPLATES[p.tpl]; return `<tr>
+        <td><input type="checkbox" data-on="${i}" ${p.on ? "checked" : ""} ${p.tpl < 0 ? "disabled" : ""}></td>
+        <td class="n" data-open="${i}">${esc(p.name || p.email)}<div class="muted">${esc(p.email)} · ${esc(p.phone || "geen telefoon → e-mail")}${recently(p) ? " · al gestuurd deze week" : ""}</div>
+          ${p.open && t ? `<div class="prev"><b>${esc(t.title)}</b>\n\n${esc(t.text(p))}</div>` : ""}</td>
+        <td class="r">${p.days}</td><td class="r">${esc(p.amount)}</td>
+        <td>${t ? `<span class="pill b${p.tpl}">${esc(t.label)}</span>` : `<span class="muted">geen</span>`}</td>
+        <td class="st ${/^(WhatsApp|E-mail|Test)/.test(p.status) ? "ok" : p.status ? "err" : ""}">${esc(p.status)}</td></tr>`; }).join("")}</tbody></table>`;
+    root.querySelectorAll("[data-on]").forEach(el => el.addEventListener("change", () => { S.rows[+el.dataset.on].on = el.checked; count(); }));
+    root.querySelectorAll("[data-open]").forEach(el => el.addEventListener("click", () => { const p = S.rows[+el.dataset.open]; p.open = !p.open; render(); }));
+    const all = $("all"); if (all) all.addEventListener("change", e => { S.rows.forEach(p => { if (p.tpl >= 0) p.on = e.target.checked; }); render(); });
+    count();
+  }
+  const selected = () => S.rows.filter(p => p.on && p.tpl >= 0);
+  function count(){
+    const n = selected().length;
+    $("count").textContent = S.rows.length ? `${n} van ${S.rows.length} geselecteerd` : "";
+    $("send").disabled = S.running || !n;
+    $("send").textContent = $("test").checked ? `Testrun (${n})` : `Versturen (${n})`;
+    $("report").disabled = !S.rows.length;
+  }
+  $("test").addEventListener("change", count);
+
+  // ---------- send ----------
+  $("send").addEventListener("click", async () => {
+    const list = selected(), test = $("test").checked;
+    if (!list.length) return;
+    if (!test && !confirm(`${list.length} klanten een herinnering sturen via Intercom (WhatsApp, of e-mail als dat niet kan)?`)) return;
+    S.running = true; S.stop = false; $("stop").hidden = false; $("paste").disabled = true; count();
+    let wa = 0, em = 0, bad = 0;
+    for (const p of list){
+      if (S.stop) break;
+      const t = TEMPLATES[p.tpl];
+      p.status = "Bezig…"; render();
+      try {
+        const c = await findContact(p.email);
+        if (!c){ p.status = "Niet in Intercom (overgeslagen)"; bad++; render(); continue; }
+        const notes = [];
+        if (!c.name && p.name){ if (!test) await setAttr(c.id, "name", p.name); notes.push("naam"); }
+        let phone = c.whatsapp_number || c.phone || "";
+        if (!c.phone && p.phone){ if (!test) await setAttr(c.id, "phone", p.phone); phone = p.phone; notes.push("telefoon"); }
+        const added = notes.length ? ` (+${notes.join(" en ")} ingevuld)` : "";
+        if (test){ p.status = `Test: ${phone ? "WhatsApp " + t.wa : "e-mail"}${added}`; wa++; render(); continue; }
+        let how = "";
+        if (phone){
+          try { await sendWhatsApp(c.id, t, p); how = "WhatsApp"; wa++; }
+          catch(e){ await sleep(500); await sendEmail(c.id, t, p); how = "E-mail (WhatsApp mislukt: " + e.message + ")"; em++; }
+        } else { await sendEmail(c.id, t, p); how = "E-mail (geen telefoon)"; em++; }
+        p.status = how + added; p.on = false;
+        S.log[p.user_id + ":" + p.tpl] = new Date().toISOString(); put("log", S.log);
+      } catch (e){ p.status = "Fout: " + (e.message || e); bad++; }
+      render(); await sleep(1200);
+    }
+    S.running = false; $("stop").hidden = true; $("paste").disabled = false;
+    info(test ? `Testrun klaar: ${wa} klanten zouden een bericht krijgen. Vink Testrun uit om echt te sturen.`
+              : `Klaar: ${wa} via WhatsApp, ${em} via e-mail${bad ? ", " + bad + " niet gelukt" : ""}${S.stop ? " (gestopt)" : ""}.`, bad ? "err" : "good");
+    count();
+  });
+  $("stop").addEventListener("click", () => { S.stop = true; });
+
+  $("report").addEventListener("click", () => {
+    const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+    const lines = [["Naam","E-mail","Telefoon","User ID","Dagen te laat","Bedrag (Afl.)","Vervaldatum","Template","Resultaat"].map(q).join(";")]
+      .concat(S.rows.map(p => [p.name, p.email, p.phone, p.user_id, p.days, String(p.amount).replace(".", ","), p.due, TEMPLATES[p.tpl] ? TEMPLATES[p.tpl].wa : "", p.status].map(q).join(";")));
+    const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = "herinneringen-" + new Date().toISOString().slice(0, 10) + ".csv"; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  });
+
+  $("x").addEventListener("click", () => { host.style.display = "none"; });
+  window.__icVersturen = { show(){ host.style.display = ""; } };
+}
+
+// ================= This page =================
+const toBm = fn => "javascript:" + encodeURIComponent("(" + fn.toString() + ")();void 0");
+const bm1 = document.getElementById("bm1"), bm2 = document.getElementById("bm2");
+bm1.href = toBm(suaveLijst); bm2.href = toBm(intercomVersturen);
+[bm1, bm2].forEach(b => b.addEventListener("click", e => { e.preventDefault(); document.getElementById("dragHint").hidden = false; }));
+document.querySelectorAll("[data-copy]").forEach(btn => btn.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(document.getElementById(btn.dataset.copy).getAttribute("href"));
+    const ok = document.getElementById("copied"); ok.hidden = false;
+    clearTimeout(window.__copiedT); window.__copiedT = setTimeout(() => { ok.hidden = true; }, 4000);
+  } catch (e) { alert("Kopiëren lukte niet. Probeer de knop te slepen."); }
+}));
+</script>
+<script src="help-chat.js"></script>
+</body>
+</html>
