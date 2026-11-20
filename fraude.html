@@ -136,8 +136,10 @@
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const getConn = () => { try { return JSON.parse(localStorage.getItem(CONN_KEY) || "{}"); } catch(e){ return {}; } };
   const setConn = c => { try { localStorage.setItem(CONN_KEY, JSON.stringify(c)); } catch(e){} };
+  const WORKER = "https://suave-fraude.perezabimael01.workers.dev";
   let conn = getConn();
-  if (!conn.url) conn.url = "https://suave-fraude.perezabimael01.workers.dev";
+  // Always use Suave's own Worker; ignore an address typed by mistake (for example the website's own address).
+  if (!/\.workers\.dev\/?$/.test(conn.url || "")) { conn.url = WORKER; setConn(conn); }
   let rows = [], connected = false, busy = false;
   const selected = new Set();
   let editing = null, confirmDel = null;
@@ -212,7 +214,7 @@
   $("sUrl").value = conn.url || ""; $("sKey").value = conn.key || "";
   $("connectBtn").addEventListener("click", async () => {
     const url = $("sUrl").value.trim().replace(/\/+$/, "");
-    if (!/^https:\/\/[^\s/]+/.test(url)){ msg("connMsg", "Vul het Worker-adres in, beginnend met https://", true); return; }
+    if (!/^https:\/\/[^\s/]+\.workers\.dev$/.test(url)){ $("sUrl").value = WORKER; msg("connMsg", "Dat was niet het Worker-adres. Ik heb het juiste adres ingevuld; klik nog een keer op Verbinden.", true); return; }
     conn = { url, key: $("sKey").value.trim() }; setConn(conn);
     msg("connMsg", "Verbinden…"); await refresh(); if (connected) msg("connMsg", "");
   });
