@@ -93,7 +93,7 @@
 <main class="page">
   <div class="page-head">
     <h1>To Whom It May Concern</h1>
-    <p>Upload the customer statement and pick what you need: a To Whom It May Concern letter, a Notice of Outstanding Obligations, or an Adjusted Statement with your late-fee choices. All come with the Suave logo, ready as PDF.</p>
+    <p>Upload the customer statement and pick what you need: a To Whom It May Concern letter, a Notice of Outstanding Obligations, or a Customer Statement with your late-fee choices. All come with the Suave logo, ready as PDF.</p>
   </div>
 
   <div id="setup">
@@ -111,7 +111,7 @@
       <div class="types" role="radiogroup" aria-label="Type of letter">
         <label class="type-card"><input type="radio" name="ltype" value="twimc" checked><div><b>To Whom It May Concern</b><span>Full letter: every subscription with what was paid in total, outstanding balance and pay-off amount.</span></div></label>
         <label class="type-card"><input type="radio" name="ltype" value="notice"><div><b>Notice of Outstanding Obligations</b><span>Short letter: open payment plans, monthly amount, pending payments and the pay-off amount.</span></div></label>
-        <label class="type-card"><input type="radio" name="ltype" value="statement"><div><b>Adjusted Statement</b><span>The customer statement again, with your late-fee choices applied and a list of what was adjusted.</span></div></label>
+        <label class="type-card"><input type="radio" name="ltype" value="statement"><div><b>Customer Statement</b><span>The customer statement again, with your late-fee choices applied and a list of what was adjusted.</span></div></label>
       </div>
       <div class="row">
         <div class="field">
@@ -131,7 +131,7 @@
 
       <label class="check" data-for="twimc" style="margin-top:18px"><input type="checkbox" id="showPays" checked> Show the total paid per subscription</label>
       <label class="check" data-for="twimc"><input type="checkbox" id="showBal" checked> Mention the outstanding balance and pay-off amount</label>
-      <label class="check" data-for="statement" style="margin-top:18px"><input type="checkbox" id="addLegal"> Add the 15% legal fee to the adjusted statement</label>
+      <label class="check" data-for="statement" style="margin-top:18px"><input type="checkbox" id="addLegal"> Add the 15% legal fee to the customer statement</label>
       <div class="row bal-row show" id="balRow">
         <div class="field">
           <label for="balAmount">Outstanding balance <span class="opt">without legal fee</span></label>
@@ -377,7 +377,7 @@ function validate(d){
   if (!d.name) miss.push('customer name');
   if (!d.contracts.length) miss.push('at least one contract');
   if (d.type === 'statement'){
-    if (!d.contracts.some(c => c.items.length)) miss.push('an uploaded customer statement (the adjusted statement is built from it)');
+    if (!d.contracts.some(c => c.items.length)) miss.push('an uploaded customer statement (the customer statement is built from it)');
     return miss;
   }
   d.contracts.forEach((c, i) => {
@@ -472,7 +472,7 @@ function htmlTable(cols, rows, total, rightLast = true){
 }
 
 function stmtNote(d){
-  return `This adjusted statement was created on ${fmtDate(d.date)} and replaces the customer statement of ${fmtDate(d.stmtDate) || 'the earlier date'}. ` +
+  return `This customer statement was created on ${fmtDate(d.date)} and replaces the earlier customer statement of ${fmtDate(d.stmtDate) || 'the earlier date'}. ` +
     (d.addLegal ? 'The 15% legal fee is calculated on the adjusted subtotal.' : 'No legal fee is included.');
 }
 
@@ -485,7 +485,7 @@ function renderPreview(d){
     const a = adjusted(d), right = i => STMT_RIGHT.includes(i) ? ' class="num"' : '';
     const sumRow = (label, v, cls) => `<tr class="${cls}"><td colspan="8">${esc(label)}</td><td class="num">${money(v)}</td></tr>`;
     $('doc').innerHTML = `${head}<div class="date">${fmtDate(d.date)}</div>
-      <h3>ADJUSTED CUSTOMER STATEMENT</h3>
+      <h3>CUSTOMER STATEMENT</h3>
       <p class="kv">Account: <b>${esc(d.name)}</b></p>
       <p class="kv">Original statement: ${esc(fmtDate(d.stmtDate) || '—')}</p>
       <p>Open balance: <b>${d.cur} ${money(a.total)}</b></p>
@@ -612,7 +612,7 @@ function buildPdf(d){
 
   if (d.type === 'statement'){
     const a = adjusted(d);
-    pdf.setFont(F,'bold'); pdf.setFontSize(14); pdf.setCharSpace(0.4); pdf.text('ADJUSTED CUSTOMER STATEMENT', L, y); pdf.setCharSpace(0);
+    pdf.setFont(F,'bold'); pdf.setFontSize(14); pdf.setCharSpace(0.4); pdf.text('CUSTOMER STATEMENT', L, y); pdf.setCharSpace(0);
     y += 10;
     pdf.setFontSize(12); pdf.setFont(F,'normal'); pdf.text('Account:', L, y); pdf.setFont(F,'bold'); pdf.text(d.name, L + 40, y); y += 6;
     pdf.setFont(F,'normal'); pdf.text('Original statement:', L, y); pdf.text(fmtDate(d.stmtDate) || '—', L + 40, y); y += 6;
@@ -668,7 +668,7 @@ $('editBtn').onclick = () => { $('preview').style.display = 'none'; $('setup').s
 $('pdfBtn').onclick = () => {
   const d = collect();
   const safe = s => s.replace(/[\\/:*?"<>|]+/g, '').trim();
-  const title = { notice:'Notice of Outstanding Obligations', statement:'Adjusted Statement', twimc:'To Whom It May Concern' }[d.type];
+  const title = { notice:'Notice of Outstanding Obligations', statement:'Customer Statement', twimc:'To Whom It May Concern' }[d.type];
   buildPdf(d).save(`${safe(d.name)} - ${title} - ${d.date}.pdf`);
 };
 $('addContract').onclick = () => addContract();
@@ -676,7 +676,7 @@ function syncUI(){
   const t = letterType();
   document.querySelectorAll('[data-for]').forEach(el => el.hidden = !el.dataset.for.split(' ').includes(t));
   $('balRow').classList.toggle('show', t === 'notice' || (t === 'twimc' && $('showBal').checked));
-  $('createBtn').textContent = { notice:'Create notice', statement:'Create adjusted statement', twimc:'Create letter' }[t];
+  $('createBtn').textContent = { notice:'Create notice', statement:'Create customer statement', twimc:'Create letter' }[t];
 }
 $('showBal').onchange = syncUI;
 document.querySelectorAll('input[name=ltype]').forEach(r => r.onchange = syncUI);
