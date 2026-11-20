@@ -26,7 +26,7 @@ Rules:
 All pages share the same layout: a top bar with **Alle documenten** / **All documents** (back to the start page), the title, the form in white sections, and a blue main button at the bottom. Red-marked fields are missing or invalid; the message under the main button says which ones. The **Hulp** / **Help** button bottom right opens this chat; the conversation is kept while the browser tab stays open, and **Nieuw gesprek** / **New conversation** clears it.
 
 === Start page (index.html, Dutch: "Wat wil je aanmaken?") ===
-Two groups. "Documenten": Customer Statement (tag "Overzicht", TOOL 1), Final Notice (tag "Aanmaning", TOOL 4), Bevel tot Betaling (tag "Verzoekschrift", TOOL 3), Computer Lease Contract (tag "Huurovereenkomst", TOOL 2), Factoring (tag "Invoice of Sale", TOOL 6). "In Suave": Betalingen boeken (tag "Betalingen", TOOL 5).
+Three groups, in order of work. "1 · Klant en contract": Customer Statement (tag "Overzicht", TOOL 1), Computer Lease Contract (tag "Huurovereenkomst", TOOL 2), Factoring (tag "Invoice of Sale", TOOL 6). "2 · Incasso" (in order of escalation): Herinneringen via Intercom, Final Notice (tag "Aanmaning", TOOL 4), Bevel tot Betaling (tag "Verzoekschrift", TOOL 3), Fraude Contacten. "3 · Betalingen en berekeningen": Betalingen boeken (tag "Betalingen", TOOL 5), Care Plan Calculator, Remaining Balance Calculator. Keys 1-9 and 0 open the tools in that order; "/" focuses the search box.
 Typical order of work: make the Customer Statement first; from there the Lease agreement, Final Notice and Factoring can be opened already filled in. The Bevel tot Betaling can read the Customer Statement PDF.
 
 === TOOL 1: Customer Statement (English interface) ===
