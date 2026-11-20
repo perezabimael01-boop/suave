@@ -48,6 +48,8 @@
   .group{ margin:0 0 36px; }
   .group h2{ display:flex; align-items:center; gap:12px; font-size:13px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-soft); margin:0 0 14px; }
   .group h2::after{ content:""; flex:1; height:1px; background:var(--line); }
+  .group h2{ margin-bottom:4px; }
+  .group-note{ margin:0 0 14px; font-size:13.5px; color:var(--ink-soft); }
   .tools{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px; }
   .tools > li{ display:flex; }
 
@@ -186,38 +188,23 @@
 <main class="page">
   <div class="hero">
     <p class="hero-eyebrow">Suave</p>
-    <h1>Documenten en betalingen</h1>
-    <p>Selecteer een document om het formulier te openen. Voor elke download wordt eerst een voorbeeld getoond.</p>
+    <h1>Documenten, incasso en betalingen</h1>
+    <p>Kies een tool hieronder. De groepen volgen de werkvolgorde: klant en contract, incasso, betalingen. Voor elke download wordt eerst een voorbeeld getoond.</p>
     <label class="finder"><span class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Zoek een document</span>
       <input id="finder" type="search" placeholder="Zoek een document…" autocomplete="off">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <kbd>/</kbd></label>
   </div>
 
-  <section class="group" aria-labelledby="g-docs">
-    <h2 id="g-docs">Documenten</h2>
+  <section class="group" aria-labelledby="g-klant">
+    <h2 id="g-klant">1 · Klant en contract</h2>
+    <p class="group-note">Begin met de Customer Statement; hiervandaan openen de andere documenten al ingevuld.</p>
     <ul class="tools">
       <li class="featured">
         <a class="tool" data-tool="statement" href="customer-statement.html">
           <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 8H16M8 12H16M8 16H12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="tool-kind">Overzicht</span></span>
           <span><span class="tool-title"><b>Customer Statement</b></span>
           <p>Openstaand saldo, te late betalingen en eventueel 15% incassokosten, per contract opgebouwd. Hiervandaan open je ook de lease, final notice en factoring, al ingevuld.</p></span>
-          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        </a>
-      </li>
-      <li>
-        <a class="tool" data-tool="notice" href="final-notice.html">
-          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5C4 4.67 4.67 4 5.5 4H18.5C19.33 4 20 4.67 20 5.5V16.5C20 17.33 19.33 18 18.5 18H5.5C4.67 18 4 17.33 4 16.5V5.5Z" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 5.5L12 12L19.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="tool-kind">Aanmaning</span></span>
-          <span><span class="tool-title"><b>Final Notice</b></span>
-          <p>Laatste betalingsherinnering als e-mail, met automatische escalatiedatum. Klaar om als PDF te bewaren.</p></span>
-          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        </a>
-      </li>
-      <li>
-        <a class="tool" data-tool="claim" href="bevel-tot-betaling.html">
-          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="8 8 32 34" fill="none" aria-hidden="true"><path d="M13 19L24 12L35 19V29C35 34 30 37 24 39C18 37 13 34 13 29V19Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M19 25L23 29L30 21" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="tool-kind">Verzoekschrift</span></span>
-          <span><span class="tool-title"><b>Bevel tot Betaling</b></span>
-          <p>Verzoekschrift aan het Gerecht om de gedaagde te laten veroordelen tot betaling. Download als Word of PDF.</p></span>
           <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         </a>
       </li>
@@ -239,31 +226,53 @@
       </li>
     </ul>
   </section>
-
-  <section class="group" aria-labelledby="g-suave">
-    <h2 id="g-suave">In Suave</h2>
+  <section class="group" aria-labelledby="g-incasso">
+    <h2 id="g-incasso">2 · Incasso</h2>
+    <p class="group-note">Op volgorde van escalatie: herinnering, final notice, verzoekschrift.</p>
     <ul class="tools">
       <li>
-        <a class="tool" data-tool="payments" href="betalingen-boeken.html">
-          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5H14L18 7.5V20.5H6V3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 14L11.2 16.2L15.2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="tool-kind">Betalingen</span></span>
-          <span><span class="tool-title"><b>Betalingen boeken</b></span>
-          <p>Boek de betalingen uit het rapport van de deurwaarder automatisch in Suave, met een lijst van wat wel en niet geboekt is.</p></span>
-          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        </a>
-      </li>
-      <li>
         <a class="tool" data-tool="reminders" href="herinneringen.html" style="--tool:#2E8B7A;--tool-soft:#E3F4F0">
-          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5H20V16.5H9L5 20V16.5H4V5.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 10H16M8 13H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span></span>
+          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5H20V16.5H9L5 20V16.5H4V5.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 10H16M8 13H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="tool-kind">Herinnering</span></span>
           <span><span class="tool-title"><b>Herinneringen via Intercom</b></span>
           <p>Lees de past due list in Suave en stuur iedereen automatisch de juiste WhatsApp-template (of e-mail) via Intercom.</p></span>
           <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         </a>
       </li>
       <li>
+        <a class="tool" data-tool="notice" href="final-notice.html">
+          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5C4 4.67 4.67 4 5.5 4H18.5C19.33 4 20 4.67 20 5.5V16.5C20 17.33 19.33 18 18.5 18H5.5C4.67 18 4 17.33 4 16.5V5.5Z" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 5.5L12 12L19.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="tool-kind">Aanmaning</span></span>
+          <span><span class="tool-title"><b>Final Notice</b></span>
+          <p>Laatste betalingsherinnering als e-mail, met automatische escalatiedatum. Klaar om als PDF te bewaren.</p></span>
+          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </a>
+      </li>
+      <li>
+        <a class="tool" data-tool="claim" href="bevel-tot-betaling.html">
+          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="8 8 32 34" fill="none" aria-hidden="true"><path d="M13 19L24 12L35 19V29C35 34 30 37 24 39C18 37 13 34 13 29V19Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M19 25L23 29L30 21" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="tool-kind">Verzoekschrift</span></span>
+          <span><span class="tool-title"><b>Bevel tot Betaling</b></span>
+          <p>Verzoekschrift aan het Gerecht om de gedaagde te laten veroordelen tot betaling. Download als Word of PDF.</p></span>
+          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </a>
+      </li>
+      <li>
         <a class="tool" data-tool="fraud" href="fraude.html" style="--tool:#B42318;--tool-soft:#FDEDEB">
-          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5L19 6.5V11.5C19 15.8 16 19.2 12 20.5C8 19.2 5 15.8 5 11.5V6.5L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 8V12.5M12 15.5V15.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span></span>
+          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5L19 6.5V11.5C19 15.8 16 19.2 12 20.5C8 19.2 5 15.8 5 11.5V6.5L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 8V12.5M12 15.5V15.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="tool-kind">Fraude</span></span>
           <span><span class="tool-title"><b>Fraude Contacten</b></span>
           <p>Lijst van fraudegebruikers met naam, e-mail, telefoon en maandbedrag, opgeslagen in Cloudflare. Stuur ze de collection_template via Intercom.</p></span>
+          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </a>
+      </li>
+    </ul>
+  </section>
+  <section class="group" aria-labelledby="g-betalingen">
+    <h2 id="g-betalingen">3 · Betalingen en berekeningen</h2>
+    <p class="group-note">Betalingen boeken in Suave en bedragen narekenen.</p>
+    <ul class="tools">
+      <li>
+        <a class="tool" data-tool="payments" href="betalingen-boeken.html">
+          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5H14L18 7.5V20.5H6V3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 14L11.2 16.2L15.2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="tool-kind">Betalingen</span></span>
+          <span><span class="tool-title"><b>Betalingen boeken</b></span>
+          <p>Boek de betalingen uit het rapport van de deurwaarder automatisch in Suave, met een lijst van wat wel en niet geboekt is.</p></span>
           <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         </a>
       </li>
@@ -301,8 +310,8 @@
   // staggered entrance, number shortcuts, shine layer
   cards.forEach(function(c, i){
     c.parentNode.classList.add('reveal'); c.parentNode.style.animationDelay = (120 + i * 70) + 'ms';
-    var k = document.createElement('span'); k.className = 'key'; k.textContent = i + 1; k.setAttribute('aria-hidden','true'); c.appendChild(k);
-    c.setAttribute('aria-keyshortcuts', String(i + 1));
+    var k = document.createElement('span'); k.className = 'key'; k.textContent = (i + 1) % 10; k.setAttribute('aria-hidden','true'); c.appendChild(k);
+    if (i < 10) c.setAttribute('aria-keyshortcuts', String((i + 1) % 10));
   });
 
   // 3D tilt toward the mouse
@@ -329,12 +338,12 @@
     if (e.key === 'Escape'){ f.value = ''; f.dispatchEvent(new Event('input')); f.blur(); }
   });
 
-  // keyboard: "/" focuses search, 1-6 opens a document
+  // keyboard: "/" focuses search, 1-9 (and 0 for the 10th) opens a tool
   document.addEventListener('keydown', function(e){
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     var t = e.target.tagName; if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
     if (e.key === '/'){ e.preventDefault(); f.focus(); return; }
-    var n = parseInt(e.key, 10); if (n >= 1 && n <= cards.length){ cards[n-1].classList.add('pressed'); setTimeout(function(){ cards[n-1].click(); }, 120); }
+    var n = e.key === '0' ? 10 : parseInt(e.key, 10); if (n >= 1 && n <= cards.length){ cards[n-1].classList.add('pressed'); setTimeout(function(){ cards[n-1].click(); }, 120); }
   });
 })();
 </script>
