@@ -176,6 +176,22 @@
   .tool:hover .tool-icon{ transform:scale(1.04); }
   .tool-icon{ transition:transform .18s ease; }
   @media (max-width:640px){ .tools{ grid-template-columns:repeat(3, 1fr); gap:10px; } .tool{ padding:16px 6px 14px; } .tool-icon{ width:54px; height:54px; border-radius:14px; } .tool-title b{ font-size:13px; } }
+  /* ---- Overzicht: groepen naast elkaar, alles in één scherm ---- */
+  .hero{ padding:0 0 18px; margin:0 0 22px; }
+  .hero p{ margin:0; }
+  .finder{ margin-top:14px; }
+  .groups{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:18px; align-items:start; }
+  .group{ margin:0; padding:16px; background:var(--surface); border:1px solid var(--line); border-radius:14px; }
+  .group h2{ font-size:12px; margin:0 0 2px; }
+  .group h2::after{ display:none; }
+  .group-note{ font-size:12.5px; line-height:1.4; margin:0 0 14px; min-height:2.8em; }
+  .group .tools{ grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
+  .group .tool{ padding:14px 8px 12px; gap:8px; border-radius:12px; box-shadow:none; background:var(--surface-2, #F6F9FC); }
+  .group .tool-icon{ width:48px; height:48px; border-radius:13px; }
+  .group .tool-icon svg{ width:24px; height:24px; }
+  .group .tool-title b{ font-size:13px; line-height:1.25; }
+  @media (max-width:900px){ .groups{ grid-template-columns:1fr; } .group-note{ min-height:0; } .group .tools{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
+  @media (max-width:560px){ .group .tools{ grid-template-columns:repeat(3, minmax(0,1fr)); } }
 </style>
 </head>
 <body>
@@ -189,13 +205,14 @@
   <div class="hero">
     <p class="hero-eyebrow">Suave</p>
     <h1>Documenten, incasso en betalingen</h1>
-    <p>Kies een tool hieronder. De groepen volgen de werkvolgorde: klant en contract, incasso, tools. Voor elke download wordt eerst een voorbeeld getoond.</p>
+    <p>Kies een tool. Voor elke download wordt eerst een voorbeeld getoond.</p>
     <label class="finder"><span class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Zoek een document</span>
       <input id="finder" type="search" placeholder="Zoek een document…" autocomplete="off">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <kbd>/</kbd></label>
   </div>
 
+  <div class="groups">
   <section class="group" aria-labelledby="g-klant">
     <h2 id="g-klant">1 · Klant en contract</h2>
     <p class="group-note">Begin met de Customer Statement; hiervandaan openen de andere documenten al ingevuld.</p>
@@ -294,6 +311,7 @@
       </li>
     </ul>
   </section>
+  </div>
   <p class="no-results" id="no-results">Geen documenten gevonden.</p>
 </main>
 
