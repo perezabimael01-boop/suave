@@ -192,26 +192,34 @@
   .group .tool-title b{ font-size:13px; line-height:1.25; }
   @media (max-width:900px){ .groups{ grid-template-columns:1fr; } .group-note{ min-height:0; } .group .tools{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
   @media (max-width:560px){ .group .tools{ grid-template-columns:repeat(3, minmax(0,1fr)); } }
+  /* ---- Zoeken in de bovenbalk ---- */
+  .app-bar-inner{ display:flex; align-items:center; justify-content:space-between; gap:16px; }
+  .bar-search.finder{ margin:0; width:240px; max-width:50vw; flex:none; transition:width .2s ease; }
+  .bar-search.finder:focus-within{ width:320px; }
+  .bar-search.finder input{ min-height:38px; padding:7px 36px 7px 36px; border-radius:19px; font-size:14px; color:#fff;
+    background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35); box-shadow:none; }
+  .bar-search.finder input::placeholder{ color:rgba(255,255,255,.8); }
+  .bar-search.finder input:focus{ background:#fff; color:var(--ink); border-color:#fff; box-shadow:0 0 0 3px rgba(255,255,255,.35); }
+  .bar-search.finder input:focus::placeholder{ color:#8794A0; }
+  .bar-search.finder svg{ left:12px; color:#fff; }
+  .bar-search.finder input:focus ~ svg{ color:var(--ink-soft); }
+  .bar-search.finder kbd{ background:rgba(255,255,255,.2); color:#fff; border-color:rgba(255,255,255,.35); }
+  .page{ padding-top:28px; }
+  @media (max-width:560px){ .bar-search.finder{ width:150px; } .bar-search.finder:focus-within{ width:200px; } .bar-search.finder kbd{ display:none; } }
 </style>
 </head>
 <body>
 <header class="app-bar">
   <div class="app-bar-inner">
     <a class="app-brand" href="index.html" aria-label="David – startpagina"><img class="app-logo" src="logo-white.svg" alt="David" width="129" height="40"></a>
+    <label class="finder bar-search"><span class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Zoek een document</span>
+      <input id="finder" type="search" placeholder="Zoek…" autocomplete="off">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <kbd>/</kbd></label>
   </div>
 </header>
 
 <main class="page">
-  <div class="hero">
-    <p class="hero-eyebrow">Suave</p>
-    <h1>Documenten, incasso en betalingen</h1>
-    <p>Kies een tool. Voor elke download wordt eerst een voorbeeld getoond.</p>
-    <label class="finder"><span class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Zoek een document</span>
-      <input id="finder" type="search" placeholder="Zoek een document…" autocomplete="off">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <kbd>/</kbd></label>
-  </div>
-
   <div class="groups">
   <section class="group" aria-labelledby="g-klant">
     <h2 id="g-klant">1 · Klant en contract</h2>
