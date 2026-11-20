@@ -62,7 +62,7 @@ const HELP_CHAT_ENDPOINT = "https://abimael-help.perezabimael01.workers.dev";
 
   const css = `
   #mchat-root{
-    --mc-brand:var(--brand,#449BDA);--mc-brand-ink:var(--brand-ink,#2E6FA3);--mc-accent:var(--accent,#FF6B4A);
+    --mc-brand:var(--brand,#449BDA);--mc-brand-ink:var(--brand-ink,#2E6FA3);--mc-accent:#2F84C6;
     --mc-ink:var(--ink,#1C2A36);--mc-soft:var(--ink-soft,#5C7286);--mc-line:var(--line,#CFE0EE);--mc-bg:var(--surface-2,#F2F8FC);
     position:fixed;right:20px;bottom:20px;z-index:2147483000;
     font-family:var(--font,"IBM Plex Sans","Segoe UI",system-ui,sans-serif);color:var(--mc-ink);font-size:15px;line-height:1.5;}
@@ -71,14 +71,14 @@ const HELP_CHAT_ENDPOINT = "https://abimael-help.perezabimael01.workers.dev";
     padding:12px 18px 12px 14px;font:600 15px/1 inherit;font-family:inherit;cursor:pointer;min-height:46px;
     box-shadow:0 6px 18px -6px rgba(10,68,112,.55);}
   .mchat-btn:hover{background:var(--mc-brand-ink);}
-  .mchat-btn .dot{width:9px;height:9px;border-radius:50%;background:var(--mc-accent);margin-left:2px;}
+  .mchat-btn .dot{width:9px;height:9px;border-radius:50%;background:#fff;margin-left:2px;}
   #mchat-root button:focus-visible,#mchat-root textarea:focus-visible{outline:3px solid var(--mc-accent);outline-offset:2px;}
   .mchat-panel{display:none;flex-direction:column;width:min(390px,calc(100vw - 32px));height:min(560px,calc(100vh - 100px));
     background:#fff;border:1px solid var(--mc-line);border-radius:14px;box-shadow:0 18px 44px -12px rgba(20,32,42,.35);overflow:hidden;}
   #mchat-root.open .mchat-panel{display:flex;animation:mchatIn .18s ease-out;}
   #mchat-root.open .mchat-btn{display:none;}
   @keyframes mchatIn{from{opacity:0;transform:translateY(8px) scale(.98);}to{opacity:1;transform:none;}}
-  .mchat-head{display:flex;align-items:center;gap:8px;padding:12px 10px 12px 16px;border-bottom:1px solid var(--mc-line);border-top:4px solid var(--tool,var(--mc-brand));}
+  .mchat-head{display:flex;align-items:center;gap:8px;padding:12px 10px 12px 16px;border-bottom:1px solid var(--mc-line);border-top:4px solid var(--mc-brand);}
   .mchat-head b{font-size:15.5px;font-weight:600;flex:1;}
   .mchat-iconbtn{background:none;border:none;color:var(--mc-soft);cursor:pointer;border-radius:8px;padding:6px 8px;font:500 13px/1 inherit;font-family:inherit;}
   .mchat-iconbtn:hover{background:var(--mc-bg);color:var(--mc-ink);}
