@@ -392,3 +392,9 @@ body:has(.page-head) .page{ animation:suave-rise .6s cubic-bezier(.2,.8,.2,1) bo
   body:has(.page-head) .section{ padding:22px 18px 24px; border-radius:20px; }
 }
 @media (prefers-reduced-motion:reduce){ body:has(.page-head) .page{ animation:none; } }
+
+/* ==========================================================================
+   One blue theme everywhere: every tool page uses Suave blue, no per-tool colours
+   ========================================================================== */
+:root{ --accent:#2F84C6; }
+body, body[data-tool]{ --tool:var(--brand) !important; --tool-soft:var(--brand-soft) !important; }
