@@ -236,7 +236,7 @@ function intercomVersturen(){
     { min: -2, max: -2, key: "fraude", label: "Fraude",
       wa: "collection_template", params: p => [p.first],
       title: "Important: Account Past Due",
-      text: p => `Hi ${p.first},\n\nMy name is David from the Collections Department at Suave Solutions.\n\nThis is a formal notification that your account is significantly past due.${Number(p.amount) > 0 ? ` Your monthly payment is $${p.amount}.` : ""}\n\nTo prevent further administrative action, restrictions on your services, or referral to external agencies, please contact us immediately.` }
+      text: p => `Hi ${p.first},\n\nMy name is David from the Collections Department at Suave Solutions.\n\nThis is a formal notification that your account is significantly past due.${Number(p.amount) > 0 ? ` Your monthly payment is Afl. ${p.amount}.` : ""}\n\nTo prevent further administrative action, restrictions on your services, or referral to external agencies, please contact us immediately.` }
   ];
 
   const LS = "suaveIc.";
@@ -366,7 +366,9 @@ function intercomVersturen(){
       const w = name.split(" ")[0] || "";
       const p = { ...r, first: w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : "there", phone: normPhone(r.phone), status: "", open: false };
       p.email = String(p.email || "").trim().toLowerCase();
-      p.amount = (Number(p.amount) || 0).toFixed(2);
+      // Fraud list amounts are entered in US$; messages use Aruban florin at 1.79.
+      if (fraud){ p.usd = (Number(p.amount) || 0).toFixed(2); p.amount = ((Number(p.amount) || 0) * 1.79).toFixed(2); }
+      else p.amount = (Number(p.amount) || 0).toFixed(2);
       p.days = Number(p.days) || 0;
       p.tpl = fraud ? TEMPLATES.findIndex(t => t.key === "fraude") : tplOf(p.days);
       p.on = p.tpl >= 0 && !recently(p);
@@ -393,7 +395,7 @@ function intercomVersturen(){
         <td><input type="checkbox" data-on="${i}" ${p.on ? "checked" : ""} ${p.tpl < 0 ? "disabled" : ""}></td>
         <td class="n" data-open="${i}">${esc(p.name || p.email)}<div class="muted">${esc(p.email)} · ${esc(p.phone || "geen telefoon → e-mail")}${recently(p) ? " · al gestuurd deze week" : ""}</div>
           ${p.open && t ? `<div class="prev"><b>${esc(t.title)}</b>\n\n${esc(t.text(p))}</div>` : ""}</td>
-        <td class="r">${t && t.key === "fraude" ? "–" : p.days}</td><td class="r">${t && t.key === "fraude" ? "$" : ""}${esc(p.amount)}</td>
+        <td class="r">${t && t.key === "fraude" ? "–" : p.days}</td><td class="r">${esc(p.amount)}${p.usd ? `<div class="muted">$${esc(p.usd)}</div>` : ""}</td>
         <td>${t ? `<span class="pill b${p.tpl}">${esc(t.label)}</span>` : `<span class="muted">geen</span>`}</td>
         <td class="st ${/^(WhatsApp|E-mail|Test)/.test(p.status) ? "ok" : p.status ? "err" : ""}">${esc(p.status)}</td></tr>`; }).join("")}</tbody></table>`;
     root.querySelectorAll("[data-on]").forEach(el => el.addEventListener("change", () => { S.rows[+el.dataset.on].on = el.checked; count(); }));
