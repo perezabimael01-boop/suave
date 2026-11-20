@@ -3,7 +3,7 @@
      <script src="help-chat.js"></script>
    Optional attributes on that tag:
      data-endpoint="https://…"   use another worker address for this page
-     data-lang="nl" | "en"       force the language (otherwise the page's <html lang> is used)
+     data-lang="nl"              switch this page to Dutch (English is the default)
 */
 
 // >>> Your Cloudflare worker address — the ONLY place you need to change it <<<
@@ -12,7 +12,7 @@ const HELP_CHAT_ENDPOINT = "https://abimael-help.perezabimael01.workers.dev";
 (function(){
   const script = document.currentScript;
   const ENDPOINT = (script && script.dataset.endpoint) || HELP_CHAT_ENDPOINT;
-  const isNL = ((script && script.dataset.lang) || document.documentElement.lang || "").toLowerCase().startsWith("nl");
+  const isNL = ((script && script.dataset.lang) || "").toLowerCase().startsWith("nl");
   const PAGE = location.pathname.split("/").pop() || "index.html";
   const STORE_KEY = "mchat-history-v2";
   const TIMEOUT_MS = 30000;
