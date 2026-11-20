@@ -64,10 +64,10 @@
   </svg>`;
 
   var root = document.createElement('div'); root.className = 'pip';
-  root.innerHTML = '<button class="pip-body pip-idle" type="button" aria-label="Pip, je hulpje. Klik voor een tip.">' + svg +
-    '</button><button class="pip-close" type="button" aria-label="Pip verbergen">×</button><div class="pip-bubble" role="status" aria-live="polite"></div>';
+  root.innerHTML = '<button class="pip-body pip-idle" type="button" aria-label="Pip, your helper. Click for a tip.">' + svg +
+    '</button><button class="pip-close" type="button" aria-label="Hide Pip">×</button><div class="pip-bubble" role="status" aria-live="polite"></div>';
   var wake = document.createElement('button'); wake.className = 'pip-wake'; wake.type = 'button';
-  wake.setAttribute('aria-label', 'Pip terughalen'); wake.textContent = '👋';
+  wake.setAttribute('aria-label', 'Bring Pip back'); wake.textContent = '👋';
 
   var body = root.querySelector('.pip-body'), bubble = root.querySelector('.pip-bubble');
   var eyes = root.querySelectorAll('.pip-eye'), mouth = root.querySelector('.pip-mouth');
@@ -93,25 +93,25 @@
 
   function greet() {
     var h = new Date().getHours();
-    var hi = h < 6 ? 'Nog wakker? 🌙' : h < 12 ? 'Goedemorgen! ☀️' : h < 18 ? 'Goedemiddag! 👋' : 'Goedenavond! 🌆';
-    setTimeout(function () { root.classList.add('pip-wave'); say(hi + ' Ik ben Pip. Klik op me voor een tip.', 5000); }, 700);
+    var hi = h < 6 ? 'Still up? 🌙' : h < 12 ? 'Good morning! ☀️' : h < 18 ? 'Good afternoon! 👋' : 'Good evening! 🌆';
+    setTimeout(function () { root.classList.add('pip-wave'); say(hi + ' I am Pip. Click me for a tip.', 5000); }, 700);
     setTimeout(function () { root.classList.remove('pip-wave'); }, 2400);
   }
 
   var tips = [
-    'Tip: druk op 1 t/m 6 om meteen een document te openen.',
-    'Je ziet altijd eerst een voorbeeld voordat je iets downloadt. 👀',
-    'Vanuit het Customer Statement open je lease, final notice en factoring al ingevuld.',
-    'Factoring maakt één Invoice of Sale per factuur, elk met eigen datum.',
-    'Het deurwaardersrapport? Betalingen boeken zet het in één keer in Suave.',
-    'Dubbelklik op mij als je je verveelt. 😄',
-    'Hulp nodig? Rechtsonder zit de Hulp-knop.'
+    'Tip: press / to search for any tool.',
+    'You always see a preview before anything downloads. 👀',
+    'From the Customer Statement you can open the lease, final notice and factoring pre-filled.',
+    'Factoring makes one Invoice of Sale per invoice, each with its own date.',
+    'The bailiff report? Book Payments puts it in Suave in one go.',
+    'Double-click me if you are bored. 😄',
+    'Need help? The Help button is bottom right.'
   ], tipI = Math.floor(Math.random() * tips.length);
 
   var clicks = 0, clickT;
   body.addEventListener('click', function () {
     clicks++; clearTimeout(clickT); clickT = setTimeout(function () { clicks = 0; }, 1500);
-    if (clicks >= 5) { clicks = 0; play('pip-spin', 800); say('Wieee! Ik word duizelig… 😵‍💫', 3000); hearts(6); return; }
+    if (clicks >= 5) { clicks = 0; play('pip-spin', 800); say('Wheee! I am getting dizzy… 😵‍💫', 3000); hearts(6); return; }
     play('pip-jump', 600); hearts(1);
     say(tips[tipI++ % tips.length]);
   });
@@ -131,7 +131,7 @@
   }
 
   root.querySelector('.pip-close').addEventListener('click', function () {
-    say('Oké, tot later! 👋', 1200);
+    say('Okay, see you later! 👋', 1200);
     setTimeout(function () { root.remove(); document.body.appendChild(wake); store.set('pip-hidden', '1'); }, 900);
   });
   wake.addEventListener('click', function () { wake.remove(); store.set('pip-hidden', '0'); document.body.appendChild(root); greet(); });
@@ -157,12 +157,12 @@
 
   /* ----- react to the document cards ----- */
   var lines = {
-    statement: 'Customer Statement: hét startpunt per klant. 📊',
-    notice: 'Final Notice: de laatste herinnering. Streng maar netjes. ✉️',
-    claim: 'Bevel tot Betaling: het verzoekschrift voor het Gerecht. ⚖️',
-    lease: 'Lease Contract: huur met koopoptie, alles automatisch ingevuld. 💻',
-    factoring: 'Factoring: facturen verkopen aan Suave Solutions. 📄',
-    payments: 'Betalingen boeken: scheelt je een hoop typwerk! 💸'
+    statement: 'Customer Statement: the starting point for every customer. 📊',
+    notice: 'Final Notice: the last reminder. Firm but polite. ✉️',
+    claim: 'Payment Order: the petition for the court. ⚖️',
+    lease: 'Lease Contract: rent-to-own, all filled in automatically. 💻',
+    factoring: 'Factoring: selling invoices to Suave Solutions. 📄',
+    payments: 'Book Payments: saves you a lot of typing! 💸'
   };
   var lastTool, hoverT;
   document.addEventListener('mouseover', function (e) {
@@ -179,7 +179,7 @@
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('.btn-primary, [download]');
     if (!b || !root.isConnected) return;
-    setTimeout(function () { play('pip-jump', 600); hearts(5); say(['Lekker bezig! 🎉', 'Klaar is Kees! ✅', 'Top, die staat! 🙌'][Math.floor(Math.random() * 3)], 2500); }, 150);
+    setTimeout(function () { play('pip-jump', 600); hearts(5); say(['Nice work! 🎉', 'All done! ✅', 'Great, that is saved! 🙌'][Math.floor(Math.random() * 3)], 2500); }, 150);
   });
 
   /* ----- get sleepy when idle ----- */
