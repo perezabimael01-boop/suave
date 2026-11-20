@@ -81,7 +81,7 @@
       <li>Klik in het paneel op <b>Kopieer voor Intercom</b>.</li>
       <li>Open <b>app.intercom.com</b> (ingelogd) en klik op <b>2 · Intercom Versturen</b>. Klik <b>Plak lijst</b> (Chrome vraagt de eerste keer of plakken mag: kies <b>Toestaan</b>).</li>
       <li>Je ziet iedereen met dagen te laat, bedrag en welke template ze krijgen. Vink uit wie niets moet krijgen. Wil je eerst alleen kijken? Vink <b>Testrun</b> aan.</li>
-      <li>Klik <b>Versturen</b> en bevestig het aantal. Per klant: naam en telefoon worden aangevuld in Intercom als ze leeg zijn, daarna gaat de WhatsApp-template (of een e-mail als er geen telefoon is of WhatsApp mislukt).</li>
+      <li>Klik <b>Versturen</b> en bevestig het aantal. Per klant: staat de klant nog niet in Intercom, dan wordt hij aangemaakt; anders worden naam en telefoon aangevuld als ze leeg zijn, daarna gaat de WhatsApp-template (of een e-mail als er geen telefoon is of WhatsApp mislukt).</li>
       <li>Klik op <b>Rapport</b> voor een lijst (opent in Excel) van wat er per klant gebeurd is.</li>
     </ol>
   </section>
@@ -94,7 +94,7 @@
       <tr><td>30 – 59</td><td>30_59days_past_template</td><td>voornaam, dagen, Afl., bedrag</td></tr>
       <tr><td>60 en meer</td><td>60_days_</td><td>voornaam, Afl., bedrag, dagen</td></tr>
     </table>
-    <p style="margin-top:12px">Wie in de laatste 7 dagen al dezelfde soort herinnering kreeg, staat standaard uitgevinkt (bijgehouden in deze browser). Klanten die niet in Intercom staan worden overgeslagen en staan in het rapport.</p>
+    <p style="margin-top:12px">Wie in de laatste 7 dagen al dezelfde soort herinnering kreeg, staat standaard uitgevinkt (bijgehouden in deze browser). Klanten die nog niet in Intercom staan worden eerst aangemaakt met naam, e-mail en telefoon.</p>
   </section>
 </main>
 
@@ -210,7 +210,7 @@ function intercomVersturen(){
   if (!/(^|\.)intercom\.com$/.test(location.hostname)){ alert("Open eerst app.intercom.com en klik dan op 2 · Intercom Versturen."); return; }
 
   // ---- Suave's Intercom settings (from your workspace) ----
-  const APP_ID = (location.pathname.match(/\/apps\/([^/]+)/) || [])[1] || "ka42edsc";
+  const APP_ID = (location.pathname.match(/\/(?:apps|inbox)\/([a-z0-9]{6,})/) || [])[1] || "ka42edsc";
   const ADMIN_ID = 8698880;            // David — the teammate the messages come from
   const WA_INTEGRATION_ID = 6781;      // WhatsApp number Suave (+1 555 763 9010)
   const EMAIL_SENDER_ID = "398115";    // support@paywithsuave.com
@@ -302,6 +302,13 @@ function intercomVersturen(){
     const j = await ic("POST", "/ember/users/search.json", { app_id: APP_ID,
       predicates: [{ attribute: "email", comparison: "eq", value: email, type: "string" }], page: 1, per_page: 5, include_count: false });
     return (j.users || [])[0] || null;
+  }
+  async function createContact(p){
+    const j = await ic("POST", "/ember/users", { user_id: "", app_id: APP_ID, name: p.name || "", name_masked: false, role: "user_role",
+      email: p.email, email_masked: false, phone: p.phone || "", phone_masked: false, whatsapp_number_masked: false,
+      recent_page_views: [], user_event_summaries: [], segment_ids: [], taggings: [] });
+    if (!j.user || !j.user.id) throw new Error("Intercom kon het contact niet aanmaken");
+    return j.user;
   }
   async function setAttr(id, attr, value){
     return ic("PUT", "/ember/user_attributes/" + id, { app_id: APP_ID, id, attribute_identifier: attr, attribute_value: value, attribute_belongs_to_type: "user" });
@@ -401,13 +408,16 @@ function intercomVersturen(){
       const t = TEMPLATES[p.tpl];
       p.status = "Bezig…"; render();
       try {
-        const c = await findContact(p.email);
-        if (!c){ p.status = "Niet in Intercom (overgeslagen)"; bad++; render(); continue; }
+        let c = await findContact(p.email);
         const notes = [];
-        if (!c.name && p.name){ if (!test) await setAttr(c.id, "name", p.name); notes.push("naam"); }
+        if (!c){
+          if (test){ p.status = `Test: nieuw contact aanmaken, daarna ${p.phone ? "WhatsApp " + t.wa : "e-mail"}`; wa++; render(); continue; }
+          c = await createContact(p); c._new = true; notes.push("nieuw contact");
+        }
+        if (!c._new && !c.name && p.name){ if (!test) await setAttr(c.id, "name", p.name); notes.push("naam"); }
         let phone = c.whatsapp_number || c.phone || "";
-        if (!c.phone && p.phone){ if (!test) await setAttr(c.id, "phone", p.phone); phone = p.phone; notes.push("telefoon"); }
-        const added = notes.length ? ` (+${notes.join(" en ")} ingevuld)` : "";
+        if (!c._new && !c.phone && p.phone){ if (!test) await setAttr(c.id, "phone", p.phone); phone = p.phone; notes.push("telefoon"); }
+        const added = notes.length ? ` (${notes.join(", ")}${c._new ? "" : " ingevuld"})` : "";
         if (test){ p.status = `Test: ${phone ? "WhatsApp " + t.wa : "e-mail"}${added}`; wa++; render(); continue; }
         let how = "";
         if (phone){
