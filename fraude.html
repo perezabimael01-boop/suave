@@ -59,34 +59,35 @@
   </div>
 
   <section class="section">
-    <div class="note" id="cloudNote"><b>Opgeslagen in Cloudflare.</b> De lijst staat in jullie eigen Cloudflare-database (D1), niet op deze openbare website. Iedereen met het wachtwoord ziet dezelfde lijst, op elke computer.</div>
-    <div class="settings" id="settings">
-      <h2 class="section-title" style="margin-top:16px">Verbinding met Cloudflare</h2>
-      <div class="addgrid" style="grid-template-columns:2fr 1.5fr auto">
-        <div><label for="sUrl">Worker-adres</label><input type="text" id="sUrl" placeholder="https://suave-fraude.jouwnaam.workers.dev"></div>
-        <div><label for="sKey">Wachtwoord (FRAUDE_KEY)</label><input type="text" name="username" value="suave-fraude" autocomplete="username" hidden><input type="password" id="sKey" name="password" autocomplete="current-password"></div>
-        <div><button class="btn btn-primary" type="button" id="connectBtn">Verbinden</button></div>
+    <div class="note" id="cloudNote"><b>Opgeslagen in Cloudflare.</b> Iedereen kan de lijst bekijken, maar namen, e-mails en telefoonnummers zijn dan deels verborgen. Log in om mensen toe te voegen, alle gegevens te zien en berichten te sturen.</div>
+    <div class="settings" id="settings" hidden>
+      <h2 class="section-title" style="margin-top:16px">Inloggen</h2>
+      <div class="addgrid" style="grid-template-columns:2fr auto">
+        <div hidden><label for="sUrl">Worker-adres</label><input type="text" id="sUrl" placeholder="https://suave-fraude.jouwnaam.workers.dev"></div>
+        <div><label for="sKey">Wachtwoord</label><input type="text" name="username" value="suave-fraude" autocomplete="username" hidden><input type="password" id="sKey" name="password" autocomplete="current-password"></div>
+        <div><button class="btn btn-primary" type="button" id="connectBtn">Inloggen</button></div>
       </div>
-      <div class="hint">Alleen het wachtwoord invullen, één keer per computer. Laat Chrome het wachtwoord opslaan, dan hoef je het nooit meer te typen. Hoe je de Worker maakt staat in <a href="fraude-worker.js" target="_blank" rel="noopener">fraude-worker.js</a>.</div>
+      <div class="hint">Eén keer per computer. Laat Chrome het wachtwoord opslaan, dan hoef je het nooit meer te typen.</div>
       <div id="connMsg" role="status"></div>
     </div>
     <div id="migrate" hidden class="msg" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <span id="migrateTxt" style="flex:1"></span>
       <button class="btn btn-secondary" type="button" id="migrateBtn">Naar Cloudflare uploaden</button>
     </div>
-    <div class="hint" id="connState" style="margin-top:10px"></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px"><span class="hint" id="connState" style="margin:0"></span><button class="btn btn-quiet" type="button" id="changeConn">Inloggen</button></div>
   </section>
 
   <section class="section">
     <h2 class="section-title">Fraudegebruiker toevoegen</h2>
-    <form class="addgrid" id="addForm" autocomplete="off">
+    <div id="loginFirst"><p style="margin:0 0 10px">Om iemand toe te voegen moet je eerst inloggen.</p><button class="btn btn-primary" type="button" id="loginBtn">Inloggen om toe te voegen</button></div>
+    <form class="addgrid" id="addForm" autocomplete="off" hidden>
       <div class="full"><label for="fEmail">E-mail *</label><input type="email" id="fEmail" required placeholder="naam@voorbeeld.com"></div>
       <div><label for="fName">Naam</label><input type="text" id="fName" placeholder="Voornaam Achternaam"></div>
       <div><label for="fPhone">Telefoon</label><input type="tel" id="fPhone" placeholder="592 5242"></div>
       <div><label for="fMonthly">Maandbedrag ($)</label><input type="number" id="fMonthly" min="0" step="0.01" placeholder="0.00"></div>
       <div><button class="btn btn-primary" type="submit" id="addBtn">Toevoegen</button></div>
     </form>
-    <div class="hint">Telefoon zonder landcode krijgt automatisch +297. Bestaat het e-mailadres al? Dan wordt die regel bijgewerkt.</div>
+    <div class="hint" id="addHint" hidden>Telefoon zonder landcode krijgt automatisch +297. Bestaat het e-mailadres al? Dan wordt die regel bijgewerkt.</div>
     <div id="formMsg" role="status"></div>
   </section>
 
@@ -107,16 +108,6 @@
     </div>
   </section>
 
-  <section class="section">
-    <h2 class="section-title">Back-up</h2>
-    <p>Download af en toe een kopie van de lijst uit Cloudflare. Met <b>Back-up laden</b> zet je een kopie (terug) in Cloudflare.</p>
-    <div class="backup">
-      <button class="btn btn-secondary" type="button" id="exportBtn">Back-up downloaden</button>
-      <button class="btn btn-quiet" type="button" id="changeConn">Verbinding wijzigen</button>
-      <label class="btn btn-secondary" style="margin:0;cursor:pointer">Back-up laden<input type="file" id="importFile" accept=".json,application/json" hidden></label>
-      <span class="hint" id="backupMsg" style="margin:0"></span>
-    </div>
-  </section>
 </main>
 
 <div class="bar">
@@ -140,7 +131,7 @@
   let conn = getConn();
   // Always use Suave's own Worker; ignore an address typed by mistake (for example the website's own address).
   if (!/\.workers\.dev\/?$/.test(conn.url || "")) { conn.url = WORKER; setConn(conn); }
-  let rows = [], connected = false, busy = false;
+  let rows = [], connected = false, busy = false, publicMode = false;
   const selected = new Set();
   let editing = null, confirmDel = null;
 
@@ -176,15 +167,33 @@
     rows = (list || []).map(x => ({ email: x.email, name: x.name || "", phone: x.phone || "", monthly: Number(x.monthly) || 0, addedAt: x.added_at, lastSent: x.last_sent || "" }));
     render();
   }
+  function setMode(loggedIn){
+    connected = loggedIn; publicMode = !loggedIn;
+    $("addForm").hidden = !loggedIn; $("addHint").hidden = !loggedIn; $("loginFirst").hidden = loggedIn;
+    $("changeConn").textContent = loggedIn ? "Uitloggen" : "Inloggen";
+  }
+  async function loadPublic(note){
+    setMode(false);
+    try {
+      const r = await fetch(WORKER + "/public", { cache: "no-store" });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || ("Fout " + r.status));
+      rows = (j.rows || []).map(x => ({ email: x.id, name: x.name || "", maskedEmail: x.email || "", phone: x.phone || "", monthly: Number(x.monthly) || 0, lastSent: x.last_sent || "" }));
+      $("connState").textContent = note || "Alleen bekijken · log in om toe te voegen";
+    } catch(e){ rows = []; $("connState").textContent = "De lijst is nu niet bereikbaar."; }
+    render();
+  }
   async function refresh(){
+    if (!conn.key) return loadPublic();
     try {
       const j = await api("/contacts");
-      connected = true; setRows(j.rows);
-      $("settings").hidden = true;
-      $("connState").textContent = `Verbonden met Cloudflare · bijgewerkt ${new Date().toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}`;
+      setMode(true); setRows(j.rows);
+      $("settings").hidden = true; msg("connMsg", "");
+      $("connState").textContent = `Ingelogd · bijgewerkt ${new Date().toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}`;
       checkMigrate();
     } catch(e){
-      connected = false; $("settings").hidden = false; msg("connMsg", e.message, true); render();
+      if (/wachtwoord/i.test(e.message)){ conn.key = ""; setConn(conn); $("settings").hidden = false; msg("connMsg", "Verkeerd wachtwoord. Probeer opnieuw.", true); }
+      await loadPublic();
     }
   }
   async function act(path, body, okText){
@@ -219,7 +228,11 @@
     msg("connMsg", "Verbinden…"); await refresh(); if (connected) msg("connMsg", "");
   });
   $("sKey").addEventListener("keydown", e => { if (e.key === "Enter") $("connectBtn").click(); });
-  $("changeConn").addEventListener("click", () => { $("settings").hidden = false; $("sUrl").focus(); });
+  $("changeConn").addEventListener("click", () => {
+    if (connected){ conn.key = ""; setConn(conn); selected.clear(); $("sKey").value = ""; loadPublic("Uitgelogd · alleen bekijken"); return; }
+    $("settings").hidden = false; $("sKey").focus();
+  });
+  $("loginBtn").addEventListener("click", () => { $("settings").hidden = false; $("sKey").focus(); $("settings").scrollIntoView({ behavior: "smooth", block: "center" }); });
 
   // ---------- list ----------
   function visible(){
@@ -228,9 +241,16 @@
   }
   function render(){
     const list = visible(), tb = $("rows");
-    if (!connected) tb.innerHTML = `<tr><td colspan="6" class="empty">${conn.url ? "Verbinden met Cloudflare…" : "Vul hierboven het Worker-adres en wachtwoord in om de lijst te laden."}</td></tr>`;
+    if (!connected && !publicMode) tb.innerHTML = `<tr><td colspan="6" class="empty">Lijst laden…</td></tr>`;
     else if (!rows.length) tb.innerHTML = `<tr><td colspan="6" class="empty">Nog geen fraudegebruikers. Voeg de eerste toe met het formulier hierboven.</td></tr>`;
     else if (!list.length) tb.innerHTML = `<tr><td colspan="6" class="empty">Niemand gevonden voor deze zoekopdracht.</td></tr>`;
+    else if (publicMode) tb.innerHTML = list.map(r => `<tr>
+        <td></td>
+        <td class="name">${esc(r.name || "—")}<span class="sub">${esc(r.maskedEmail)}</span></td>
+        <td>${esc(r.phone || "—")}</td>
+        <td class="num">${Number(r.monthly) > 0 ? "$" + money(r.monthly) : "—"}</td>
+        <td>${esc(day(r.lastSent))}</td>
+        <td></td></tr>`).join("");
     else tb.innerHTML = list.map(r => editing === r.email ? `<tr data-id="${esc(r.email)}">
         <td></td>
         <td><input type="text" id="eName" value="${esc(r.name)}" aria-label="Naam"><span class="sub">${esc(r.email)}</span></td>
@@ -251,10 +271,11 @@
     const n = selected.size;
     $("count").textContent = rows.length ? `${rows.length} contact${rows.length === 1 ? "" : "en"}` : "";
     $("all").checked = list.length > 0 && list.every(r => selected.has(r.email));
-    $("copyBtn").disabled = !n; $("markBtn").disabled = !n || busy;
+    $("all").disabled = publicMode;
+    $("copyBtn").disabled = !n || publicMode; $("markBtn").disabled = !n || busy || publicMode;
     $("addBtn").disabled = !connected || busy;
     $("copyBtn").textContent = n ? `Kopieer voor Intercom (${n})` : "Kopieer voor Intercom";
-    $("barTxt").textContent = n ? `${n} geselecteerd. Kopieer en klik in Intercom op 2 · Intercom Versturen.` : "Selecteer contacten om ze een bericht te sturen.";
+    $("barTxt").textContent = publicMode ? "Log in om contacten te selecteren en berichten te sturen." : n ? `${n} geselecteerd. Kopieer en klik in Intercom op 2 · Intercom Versturen.` : "Selecteer contacten om ze een bericht te sturen.";
   }
 
   $("rows").addEventListener("change", e => {
@@ -311,30 +332,11 @@
     if (await act("/contacts/mark-sent", { emails }, `${emails.length} gemarkeerd als verstuurd.`)){ selected.clear(); render(); }
   });
 
-  $("exportBtn").addEventListener("click", () => {
-    const blob = new Blob([JSON.stringify({ kind: "suave-fraude", savedAt: new Date().toISOString(), rows }, null, 1)], { type: "application/json" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-    a.download = "fraude-contacten-" + new Date().toISOString().slice(0, 10) + ".json"; a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-    $("backupMsg").textContent = "Back-up gedownload. Bewaar dit bestand op een veilige plek: het bevat namen en telefoonnummers.";
-  });
-  $("importFile").addEventListener("change", async e => {
-    const f = e.target.files && e.target.files[0]; if (!f) return;
-    try {
-      const data = JSON.parse(await f.text());
-      const incoming = (Array.isArray(data) ? data : data.rows || []).map(x => ({ email: x.email, name: x.name, phone: normPhone(x.phone), monthly: x.monthly != null ? x.monthly : x.amount }));
-      if (!incoming.length) throw new Error();
-      const ok = await act("/contacts/import", { rows: incoming }, `Back-up geladen in Cloudflare: ${incoming.length} contacten.`);
-      $("backupMsg").textContent = ok ? `Back-up geladen: ${incoming.length} contacten.` : "Laden mislukt, zie de melding hierboven.";
-    } catch(err){ $("backupMsg").textContent = "Dit bestand is geen back-up van Fraude Contacten."; }
-    e.target.value = "";
-  });
-
   // Reload the list when you come back to the tab, so changes by colleagues show up.
-  document.addEventListener("visibilitychange", () => { if (!document.hidden && connected && !busy && !editing) refresh(); });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && !busy && !editing) refresh(); });
 
   render();
-  if (conn.url && conn.key) refresh(); else { $("settings").hidden = false; checkMigrate(); setTimeout(() => $("sKey").focus(), 50); }
+  refresh();
 })();
 </script>
 <script src="help-chat.js"></script>

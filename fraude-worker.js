@@ -42,6 +42,20 @@ function sameKey(a, b){
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function maskName(n){
+  const parts = String(n || "").trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "";
+  return parts[0] + (parts.length > 1 ? " " + parts[parts.length - 1].charAt(0).toUpperCase() + "." : "");
+}
+function maskEmail(e){
+  const [u, d] = String(e || "").split("@");
+  if (!d) return "";
+  return u.slice(0, 2) + "•••@" + d;
+}
+function maskPhone(p){
+  const d = String(p || "").replace(/\D/g, "");
+  return d ? "•••• " + d.slice(-3) : "";
+}
 function clean(r){
   return {
     email: String(r.email || "").trim().toLowerCase().slice(0, 200),
@@ -85,6 +99,21 @@ export default {
     }
     if (h["Access-Control-Allow-Origin"] === "null") return json({ error: "Website not allowed: " + (origin || "(unknown)") }, 403, h);
     if (!env.DB || !env.FRAUDE_KEY) return json({ error: "Worker niet ingesteld: D1-binding DB en secret FRAUDE_KEY zijn nodig." }, 500, h);
+
+    // Public, read-only view without password: details are masked so the list
+    // can be looked at but nobody can harvest names, emails or phone numbers.
+    if (request.method === "GET" && url.pathname === "/public"){
+      try {
+        await ensureSchema(env);
+        const rows = (await list(env)).map(r => ({
+          id: r.email ? r.email.slice(-6) + r.added_at : r.added_at,
+          name: maskName(r.name), email: maskEmail(r.email), phone: maskPhone(r.phone),
+          monthly: r.monthly, last_sent: r.last_sent
+        }));
+        return json({ rows, masked: true }, 200, h);
+      } catch (err){ return json({ error: "Databasefout" }, 500, h); }
+    }
+
     if (!sameKey(request.headers.get("X-Fraude-Key"), env.FRAUDE_KEY)) return json({ error: "Verkeerd wachtwoord." }, 401, h);
 
     try {
