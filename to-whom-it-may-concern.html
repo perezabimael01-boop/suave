@@ -18,7 +18,7 @@
   .status{ margin-top:10px; font-size:14px; }
   .status.ok{ color:var(--ok); font-weight:600; }
   .status.bad{ color:var(--danger); font-weight:600; }
-  .c-head, .c-row{ display:grid; grid-template-columns:1.3fr 1.1fr 1fr 1fr .7fr 44px; gap:10px; }
+  .c-head, .c-row{ display:grid; grid-template-columns:1.3fr 1fr 1.05fr .95fr .6fr .65fr 44px; gap:10px; }
   .c-head{ font-size:13.5px; font-weight:600; margin:0 0 6px; }
   .c-row{ margin:0 0 8px; }
   .c-row .x{ min-height:42px; padding:0; }
@@ -30,6 +30,16 @@
   .lf-row select{ width:auto; min-height:36px; padding:4px 32px 4px 10px; }
   .lf-row .lf-amt{ width:120px; min-height:36px; padding:4px 10px; }
   .lf-row .lf-amt[hidden]{ display:none; }
+  .types{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:0 0 18px; }
+  .type-card{ display:flex; gap:12px; align-items:flex-start; border:1.5px solid var(--line); border-radius:var(--radius); padding:13px 14px; cursor:pointer; background:var(--surface); }
+  .type-card input{ margin-top:3px; }
+  .type-card b{ display:block; font-size:15px; }
+  .type-card span{ font-size:13px; color:var(--ink-soft); }
+  .type-card:has(input:checked){ border-color:var(--tool); background:var(--tool-soft); }
+  .only-twimc[hidden]{ display:none !important; }
+  .doc .payoff{ font-style:italic; text-align:center; margin:18px 10px; }
+  .doc .center-title{ text-align:center; font-size:17px; letter-spacing:.04em; margin:0 0 26px; }
+  @media (max-width:700px){ .types{ grid-template-columns:1fr; } }
   .pay-note{ font-size:13px; color:var(--ink-soft); margin:5px 2px 0; }
   .doc h4{ font-size:15px; margin:26px 0 8px; }
   .doc .num{ text-align:right; }
@@ -42,7 +52,7 @@
   #preview{ display:none; }
   .preview-wrap{ background:#DDE3E8; border-radius:var(--radius); padding:20px; overflow:auto; margin-top:16px; }
   .doc{ position:relative; background:#fff; width:794px; min-height:1123px; max-width:100%; margin:0 auto; padding:64px 72px 170px; color:#1C2A36;
-        font:14px/1.6 "IBM Plex Sans",Arial,sans-serif; box-shadow:0 1px 4px rgba(0,0,0,.12); }
+        font:15px/1.55 "Times New Roman",Times,serif; box-shadow:0 1px 4px rgba(0,0,0,.12); }
   .doc .from{ font-size:13px; color:#5C7286; line-height:1.5; }
   .doc .from b{ color:#1C2A36; font-size:14px; }
   .doc .date{ text-align:right; margin:-58px 0 46px; }
@@ -76,7 +86,7 @@
 <main class="page">
   <div class="page-head">
     <h1>To Whom It May Concern</h1>
-    <p>Upload the customer statement and get a letter listing the customer's contracts, with the Suave logo, ready as PDF.</p>
+    <p>Upload the customer statement and pick the letter: a full To Whom It May Concern letter with the total paid per subscription, or a short Notice of Outstanding Obligations. Both come with the Suave logo, ready as PDF.</p>
   </div>
 
   <div id="setup">
@@ -85,12 +95,16 @@
       <div class="upload-box">
         <label for="pdfUpload">Customer Statement PDF (from Suave admin)</label>
         <input type="file" id="pdfUpload" accept="application/pdf">
-        <div class="hint status" id="pdfStatus">Fills in the customer's name, every contract (number, merchant, start date, monthly payment, term) and the outstanding balance (without the legal fee). Everything stays editable.</div>
+        <div class="hint status" id="pdfStatus">Fills in the customer's name, every contract (number, merchant, start date, monthly payment, term, pending payments), the payments made and the outstanding balance (without the legal fee). Everything stays editable.</div>
       </div>
     </div>
 
     <div class="section">
       <h2>Letter</h2>
+      <div class="types" role="radiogroup" aria-label="Type of letter">
+        <label class="type-card"><input type="radio" name="ltype" value="twimc" checked><div><b>To Whom It May Concern</b><span>Full letter: every subscription with what was paid in total, outstanding balance and pay-off amount.</span></div></label>
+        <label class="type-card"><input type="radio" name="ltype" value="notice"><div><b>Notice of Outstanding Obligations</b><span>Short letter: open payment plans, monthly amount, pending payments and the pay-off amount.</span></div></label>
+      </div>
       <div class="row">
         <div class="field">
           <label for="custName">Customer name</label>
@@ -103,12 +117,12 @@
       </div>
 
       <label>Contracts</label>
-      <div class="c-head"><span>Contract #</span><span>Merchant</span><span>Start date</span><span>Monthly payment</span><span>Months</span><span></span></div>
+      <div class="c-head"><span>Contract #</span><span>Merchant</span><span>Start date</span><span>Monthly payment</span><span>Months</span><span>Pending</span><span></span></div>
       <div id="contracts"></div>
       <button type="button" class="btn btn-quiet" id="addContract">+ Add contract</button>
 
-      <label class="check" style="margin-top:18px"><input type="checkbox" id="showPays" checked> Show the payments made (table with what was paid and when)</label>
-      <label class="check"><input type="checkbox" id="showBal" checked> Mention the outstanding balance</label>
+      <label class="check only-twimc" style="margin-top:18px"><input type="checkbox" id="showPays" checked> Show the total paid per subscription</label>
+      <label class="check only-twimc"><input type="checkbox" id="showBal" checked> Mention the outstanding balance and pay-off amount</label>
       <div class="row bal-row show" id="balRow">
         <div class="field">
           <label for="balAmount">Outstanding balance <span class="opt">without legal fee</span></label>
@@ -122,6 +136,21 @@
       <div class="field">
         <label for="currency">Currency</label>
         <select id="currency"><option>ANG</option><option>AWG</option><option>FL</option><option>USD</option></select>
+      </div>
+      <label class="check"><input type="checkbox" id="showUsd" checked> Also show the pay-off amount in USD (rate 1.79)</label>
+    </div>
+
+    <div class="section">
+      <h2>Signature</h2>
+      <div class="row">
+        <div class="field">
+          <label for="signer">Signed by <span class="opt">optional</span></label>
+          <input type="text" id="signer" placeholder="e.g. Gio">
+        </div>
+        <div class="field">
+          <label for="signTitle">Title</label>
+          <input type="text" id="signTitle" value="Suave Customer Support, Authorized Representative">
+        </div>
       </div>
     </div>
 
@@ -171,12 +200,14 @@ function addContract(c = {}){
     <input type="date" class="c-date" aria-label="Start date">
     <input type="text" class="c-pay" inputmode="decimal" placeholder="Monthly" aria-label="Monthly payment">
     <input type="number" class="c-months" min="1" max="120" placeholder="12" aria-label="Months">
+    <input type="number" class="c-pending" min="0" max="120" placeholder="0" aria-label="Pending payments">
     <button type="button" class="btn btn-quiet x" aria-label="Remove contract">&times;</button>`;
   row.querySelector('.c-no').value = c.contract || '';
   row.querySelector('.c-merchant').value = c.vendor || '';
   row.querySelector('.c-date').value = c.date || '';
   row.querySelector('.c-pay').value = c.monthly != null ? money(c.monthly) : '';
   row.querySelector('.c-months').value = c.months || '';
+  row.querySelector('.c-pending').value = c.pending != null ? c.pending : '';
   row.querySelector('.x').onclick = () => { item.remove(); if (!$('contracts').children.length) addContract(); recalcBalance(); };
   if (c.base != null){ item.dataset.base = c.base; item.dataset.lf = c.lf || 0; item.dataset.payments = JSON.stringify(c.payments || []); }
   if (c.payments){
@@ -184,7 +215,7 @@ function addContract(c = {}){
     const tot = c.payments.reduce((a, p) => a + p.amount, 0);
     pn.className = 'pay-note';
     pn.textContent = c.payments.length
-      ? `Payments on the statement: ${c.payments.length} (${$('currency').value} ${money(tot)}), last on ${fmtDate(c.payments.map(p => p.date).sort().pop())}`
+      ? `Total paid on this subscription: ${$('currency').value} ${money(tot)}`
       : 'No payments on the statement yet';
     item.appendChild(pn);
   }
@@ -251,7 +282,7 @@ function parseStatement(text){
     const seg = text.slice(h.index, end);
     // every invoice row: M#/L# date type, then invoice amount, paid amount, balance
     const rowRe = /\b([ML]\d+)\s+(\d{2}-[A-Za-z]{3}-\d{4})\s+(Monthly Payment|LF)\b([\s\S]*?)(?=\b[ML]\d+\s+\d{2}-[A-Za-z]{3}-\d{4}\s|$)/g;
-    let base = 0, lf = 0, lfCount = 0, rows = 0, r;
+    let base = 0, lf = 0, lfCount = 0, rows = 0, pending = 0, r;
     const payments = [];
     while ((r = rowRe.exec(seg))){
       const amts = (r[4].match(/[\d,]+\.\d{2}/g) || []).map(num);
@@ -262,13 +293,13 @@ function parseStatement(text){
         payments.push({ inv: r[1], type: r[3] === 'LF' ? 'LF' : 'M', due: pdfDateToIso(r[2]), date: pdfDateToIso(pd), amount: paid });
       }
       rows++;
-      if (r[3] === 'LF'){ if (open > 0){ lf += open; lfCount++; } } else base += open;
+      if (r[3] === 'LF'){ if (open > 0){ lf += open; lfCount++; } } else { base += open; if (open > 0) pending++; }
     }
     const pay = seg.match(/M1\s+\d{2}-[A-Za-z]{3}-\d{4}\s+Monthly Payment\s+[A-Za-z.]{0,6}\s*([\d,]+\.\d{2})/);
     const months = (seg.match(/\bM\d+\s+\d{2}-[A-Za-z]{3}-\d{4}\s+Monthly Payment/g) || []).length;
     const r2 = x => Math.round(x * 100) / 100;
     return { contract: h.m[1], vendor: h.m[2].trim(), date: pdfDateToIso(h.m[3]), monthly: pay ? num(pay[1]) : null, months: months || '',
-             base: rows ? r2(base) : null, lf: r2(lf), lfCount, payments };
+             base: rows ? r2(base) : null, lf: r2(lf), lfCount, payments, pending: rows ? pending : null };
   });
   return { name: name ? name.trim() : '', currency: bal ? bal[1].replace(/\.$/,'') : '', balance: subtotal, stmtDate, contracts };
 }
@@ -298,25 +329,31 @@ $('pdfUpload').addEventListener('change', async e => {
 });
 
 /* ---------- build the letter ---------- */
+function letterType(){ return document.querySelector('input[name=ltype]:checked').value; }
+
 function collect(){
   const contracts = [...document.querySelectorAll('.c-item')].map(it => {
     const r = it.querySelector('.c-row');
     let payments = [];
     try { payments = JSON.parse(it.dataset.payments || '[]'); } catch (e) {}
+    const pend = r.querySelector('.c-pending').value.trim();
     return {
       no: r.querySelector('.c-no').value.trim(),
       merchant: r.querySelector('.c-merchant').value.trim(),
       date: r.querySelector('.c-date').value,
       pay: num(r.querySelector('.c-pay').value),
       months: r.querySelector('.c-months').value.trim(),
+      pending: pend === '' ? null : Number(pend),
       fromStatement: it.dataset.base != null,
       payments
     };
   }).filter(c => c.no || c.merchant || c.date || c.pay != null);
+  const type = letterType();
   return {
-    name: $('custName').value.trim(), date: $('letterDate').value || todayIso(), cur: $('currency').value,
-    showBal: $('showBal').checked, bal: num($('balAmount').value), balDate: $('balDate').value,
-    showPays: $('showPays').checked, contracts
+    type, name: $('custName').value.trim(), date: $('letterDate').value || todayIso(), cur: $('currency').value,
+    showBal: type === 'notice' || $('showBal').checked, bal: num($('balAmount').value), balDate: $('balDate').value,
+    showPays: type === 'twimc' && $('showPays').checked, showUsd: $('showUsd').checked && $('currency').value !== 'USD',
+    signer: $('signer').value.trim(), signTitle: $('signTitle').value.trim(), contracts
   };
 }
 
@@ -324,60 +361,86 @@ function validate(d){
   const miss = [];
   if (!d.name) miss.push('customer name');
   if (!d.contracts.length) miss.push('at least one contract');
-  d.contracts.forEach((c, i) => { if (!c.no || !c.date) miss.push(`contract ${i+1}: number and start date`); });
-  if (d.showBal && d.bal == null) miss.push('outstanding balance');
+  d.contracts.forEach((c, i) => {
+    if (!c.no) miss.push(`contract ${i+1}: contract number`);
+    if (d.type === 'twimc' && !c.date) miss.push(`contract ${i+1}: start date`);
+    if (d.type === 'notice' && (c.pay == null || c.pending == null)) miss.push(`contract ${i+1}: monthly payment and pending payments`);
+  });
+  if (d.showBal && d.bal == null) miss.push(d.type === 'notice' ? 'pay-off amount (outstanding balance)' : 'outstanding balance');
   return miss;
 }
 
 function fmtShort(iso){ if (!iso) return '—'; return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }); }
+function fmtNumeric(iso){ const [y, m, dd] = (iso || todayIso()).split('-'); return `${m}-${dd}-${y}`; }
 const r2 = x => Math.round(x * 100) / 100;
+const USD_RATE = 1.79;
 
 function texts(d){
   const n = d.contracts.length, cur = d.cur;
   const known = d.contracts.some(c => c.fromStatement);
   const paidOf = c => r2(c.payments.reduce((a, p) => a + p.amount, 0));
-  const pays = [];
-  d.contracts.forEach(c => c.payments.forEach(p => pays.push({ ...p, no: c.no })));
-  pays.sort((a, b) => (a.date || '').localeCompare(b.date || '') || a.no.localeCompare(b.no));
-  const totalPaid = r2(pays.reduce((a, p) => a + p.amount, 0));
-  const showPays = d.showPays && known;
+  const totalPaid = r2(d.contracts.reduce((a, c) => a + paidOf(c), 0));
+  const withPaid = d.showPays && known;
+  const pend = c => c.pending == null ? '—' : `${c.pending} pending payment${c.pending === 1 ? '' : 's'}`;
+  const amount = d.bal != null ? `${cur} ${money(d.bal)}` + (d.showUsd ? ` ($${money(r2(d.bal / USD_RATE))})` : '') : '';
+  const open = d.contracts.filter(c => c.pending == null || c.pending > 0);
+  const plural = open.length === 1;
   return {
+    // To Whom It May Concern
     intro: `This letter confirms that ${d.name} has the following ${n === 1 ? 'contract' : n + ' contracts'} with ${COMPANY.name}:`,
-    contractCols: ['Contract #', 'Merchant', 'Start date', 'Per month', 'Term', 'Paid so far'],
+    contractCols: ['Contract #', 'Merchant', 'Start date', 'Per month', 'Term', 'Pending', ...(withPaid ? ['Total paid'] : [])],
+    contractWidths: withPaid ? [29, 23, 25, 25, 20, 17, 27] : [34, 28, 28, 28, 26, 22],
     rows: d.contracts.map(c => [c.no, c.merchant || '—', fmtShort(c.date), c.pay != null ? `${cur} ${money(c.pay)}` : '—',
-      c.months ? `${c.months} months` : '—', c.fromStatement ? `${cur} ${money(paidOf(c))}` : '—']),
-    showPays,
-    payIntro: pays.length
-      ? `The following ${pays.length === 1 ? 'payment has' : pays.length + ' payments have'} been received:`
-      : `No payments have been received on ${n === 1 ? 'this contract' : 'these contracts'} yet.`,
-    payCols: ['Contract #', 'Invoice', 'Due date', 'Paid on', 'Amount paid'],
-    payRows: pays.map(p => [p.no, (p.type === 'LF' ? 'Late fee ' : 'Monthly payment ') + p.inv.slice(1), fmtShort(p.due), fmtShort(p.date), `${cur} ${money(p.amount)}`]),
-    payTotal: pays.length ? ['Total paid', '', '', '', `${cur} ${money(totalPaid)}`] : null,
+      c.months ? `${c.months} months` : '—', c.pending == null ? '—' : String(c.pending),
+      ...(withPaid ? [c.fromStatement ? `${cur} ${money(paidOf(c))}` : '—'] : [])]),
+    contractTotal: withPaid ? ['Total', '', '', '', '', '', `${cur} ${money(totalPaid)}`] : null,
+    paidLine: withPaid ? (totalPaid > 0
+      ? `In total, ${d.name} has paid ${cur} ${money(totalPaid)} on ${n === 1 ? 'this subscription' : 'these subscriptions'}.`
+      : `No payments have been received on ${n === 1 ? 'this subscription' : 'these subscriptions'} yet.`) : '',
     balance: d.showBal ? `As of ${fmtDate(d.balDate || d.date)}, the outstanding balance on ${n === 1 ? 'this contract' : 'these contracts'} is ${cur} ${money(d.bal)}.` : '',
-    issued: `This letter was created on ${fmtDate(d.date)} at the request of the customer. For questions, please contact us at ${COMPANY.email}.`
+    payoff: d.showBal ? `If the customer wishes to pay off ${plural ? 'the payment plan' : 'all payment plans'} in one single payment, this comes to a total of ${amount}. Upon payment, the payment ${plural ? 'plan' : 'plans'} will be closed immediately.` : '',
+    issued: `This letter was created on ${fmtDate(d.date)} at the request of the customer. Should you have any questions or require additional information, please contact us at ${COMPANY.email}.`,
+    // Notice of Outstanding Obligations
+    noticeIntro: `This letter is to confirm that the above-referenced customer has a total of ${open.length} open balance${plural ? '' : 's'} with Suave.`,
+    noticeRows: open.map(c => [c.no, c.pay != null ? `${cur} ${money(c.pay)} p/m` : '—', pend(c)]),
+    noticePayoff: `"If the client wishes to pay off ${plural ? 'the payment plan' : 'all payment plans'} in one single payment, this comes to a total of ${amount}. Upon payment, the payment ${plural ? 'plan' : 'plans'} will be closed immediately."`,
+    noticeClose: 'Should you have any questions or require additional information, please feel free to contact us.',
+    sign: [d.signer, ...(d.signTitle ? d.signTitle.split(/\s*,\s*/) : []), 'Suave', 'www.paywithsuave.com'].filter(Boolean)
   };
 }
 
-function htmlTable(cols, rows, total){
-  const right = i => i === cols.length - 1 ? ' class="num"' : '';
-  return `<table><thead><tr>${cols.map((h, i) => `<th${right(i)}>${esc(h)}</th>`).join('')}</tr></thead><tbody>` +
+function htmlTable(cols, rows, total, rightLast = true){
+  const right = i => rightLast && i === cols.length - 1 ? ' class="num"' : '';
+  return `<table>${cols ? `<thead><tr>${cols.map((h, i) => `<th${right(i)}>${esc(h)}</th>`).join('')}</tr></thead>` : ''}<tbody>` +
     rows.map(r => `<tr>${r.map((v, i) => `<td${right(i)}>${esc(v)}</td>`).join('')}</tr>`).join('') +
     (total ? `<tr class="total">${total.map((v, i) => `<td${right(i)}>${esc(v)}</td>`).join('')}</tr>` : '') + '</tbody></table>';
 }
 
 function renderPreview(d){
   const t = texts(d);
-  $('doc').innerHTML = `
-    <div class="from"><b>${COMPANY.name}</b><br>${COMPANY.addr}<br>${COMPANY.email}</div>
-    <div class="date">${fmtDate(d.date)}</div>
+  const head = `<div class="from"><b>${COMPANY.name}</b><br>${COMPANY.addr}<br>${COMPANY.email}</div>`;
+  const sign = `<div class="sign">Sincerely,<br><br>${t.sign.map((l, i) => i === 0 && d.signer ? `<b>${esc(l)}</b>` : esc(l)).join('<br>')}</div>`;
+  const foot = `<div class="foot"><img src="${SUAVE_LOGO}" alt="Suave"><small>${COMPANY.name} · ${COMPANY.addr} · ${COMPANY.email}</small></div>`;
+  if (d.type === 'notice'){
+    $('doc').innerHTML = `${head}<div class="date">Date: ${fmtNumeric(d.date)}</div>
+      <h3 class="center-title">NOTICE OF OUTSTANDING OBLIGATIONS</h3>
+      <p>To Whom It May Concern,</p>
+      <p>Customer Name: <b>${esc(d.name)}</b></p>
+      <p>${esc(t.noticeIntro)}</p>
+      <h4>Payment plans</h4>
+      ${htmlTable(['Contract #', 'Monthly payment', 'Pending payments'], t.noticeRows, null, false)}
+      <p class="payoff">${esc(t.noticePayoff)}</p>
+      <p>${esc(t.noticeClose)}</p>${sign}${foot}`;
+    return;
+  }
+  $('doc').innerHTML = `${head}<div class="date">${fmtDate(d.date)}</div>
     <h3>TO WHOM IT MAY CONCERN</h3>
     <p>${esc(t.intro)}</p>
-    ${htmlTable(t.contractCols, t.rows)}
-    ${t.showPays ? `<h4>Payments received</h4><p>${esc(t.payIntro)}</p>${t.payRows.length ? htmlTable(t.payCols, t.payRows, t.payTotal) : ''}` : ''}
+    ${htmlTable(t.contractCols, t.rows, t.contractTotal)}
+    ${t.paidLine ? `<p>${esc(t.paidLine)}</p>` : ''}
     ${t.balance ? `<p>${esc(t.balance)}</p>` : ''}
-    <p>${esc(t.issued)}</p>
-    <div class="sign">Sincerely,<br><br><b>${COMPANY.name}</b></div>
-    <div class="foot"><img src="${SUAVE_LOGO}" alt="Suave"><small>${COMPANY.name} · ${COMPANY.addr} · ${COMPANY.email}</small></div>`;
+    ${t.payoff ? `<p>${esc(t.payoff)}</p>` : ''}
+    <p>${esc(t.issued)}</p>${sign}${foot}`;
 }
 
 function buildPdf(d){
@@ -391,73 +454,97 @@ function buildPdf(d){
     const lw = 42, lh = lw / 3;
     pdf.setDrawColor(207,224,238); pdf.setLineWidth(0.3); pdf.line(L, H - 38, R, H - 38);
     pdf.addImage(SUAVE_LOGO, 'PNG', (W - lw) / 2, H - 34, lw, lh);
-    pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(...soft);
+    pdf.setFont('times','normal'); pdf.setFontSize(8); pdf.setTextColor(...soft);
     pdf.text(`${COMPANY.name} · ${COMPANY.addr} · ${COMPANY.email}`, W / 2, H - 14, { align:'center' });
   };
   const newPage = () => { footer(); pdf.addPage(); y = 26; };
   const newPageIfNeeded = need => { if (y + need > H - 44) newPage(); };
-  const para = (text, gap = 6) => {
-    pdf.setFont('helvetica','normal'); pdf.setFontSize(11); pdf.setTextColor(...ink);
-    const lines = pdf.splitTextToSize(text, R - L);
+  const para = (text, gap = 6, opt = {}) => {
+    pdf.setFont('times', opt.style || 'normal'); pdf.setFontSize(12); pdf.setTextColor(...ink);
+    const width = opt.center ? R - L - 16 : R - L;
+    const lines = pdf.splitTextToSize(text, width);
     newPageIfNeeded(lines.length * 5.6);
-    pdf.text(lines, L, y, { lineHeightFactor:1.45 }); y += lines.length * 5.6 + gap;
+    if (opt.center) pdf.text(lines, W / 2, y, { align:'center', lineHeightFactor:1.45 });
+    else pdf.text(lines, L, y, { lineHeightFactor:1.45 });
+    y += lines.length * 5.6 + gap;
+  };
+  const labelled = (label, value) => {
+    pdf.setFont('times','normal'); pdf.setFontSize(12); pdf.setTextColor(...ink); pdf.text(label, L, y);
+    pdf.setFont('times','bold'); pdf.text(value, L + pdf.getTextWidth(label) + 1.5, y); y += 9;
   };
   const heading = text => {
     newPageIfNeeded(24);
-    pdf.setFont('helvetica','bold'); pdf.setFontSize(12); pdf.setTextColor(...ink); pdf.text(text, L, y); y += 7;
+    pdf.setFont('times','bold'); pdf.setFontSize(13); pdf.setTextColor(...ink); pdf.text(text, L, y); y += 7;
   };
-  // table with the last column right-aligned; repeats the header on a new page
-  const table = (heads, widths, rows, total) => {
+  // table with the last column right-aligned (optional); repeats the header on a new page
+  const table = (heads, widths, rows, total, rightLast = true) => {
     const cell = (v, i, x) => {
       const txt = pdf.splitTextToSize(String(v), widths[i] - 3)[0];
-      if (i === heads.length - 1) pdf.text(txt, x + widths[i] - 4, y, { align:'right' }); else pdf.text(txt, x, y);
+      if (rightLast && i === heads.length - 1) pdf.text(txt, x + widths[i] - 4, y, { align:'right' }); else pdf.text(txt, x, y);
     };
     const head = () => {
       pdf.setFillColor(230,242,252); pdf.rect(L, y - 5, R - L, 8, 'F');
       pdf.setDrawColor(...blue); pdf.setLineWidth(0.6); pdf.line(L, y + 3, R, y + 3);
-      pdf.setFont('helvetica','bold'); pdf.setFontSize(9.5); pdf.setTextColor(...ink);
+      pdf.setFont('times','bold'); pdf.setFontSize(10.5); pdf.setTextColor(...ink);
       let x = L + 2; heads.forEach((h, i) => { cell(h, i, x); x += widths[i]; }); y += 8.5;
     };
     newPageIfNeeded(18); head();
     rows.forEach(r => {
       if (y + 7 > H - 44){ newPage(); head(); }
-      pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5); pdf.setTextColor(...ink);
+      pdf.setFont('times','normal'); pdf.setFontSize(10.5); pdf.setTextColor(...ink);
       let x = L + 2; r.forEach((v, i) => { cell(v, i, x); x += widths[i]; });
       pdf.setDrawColor(207,224,238); pdf.setLineWidth(0.2); pdf.line(L, y + 2.8, R, y + 2.8); y += 7;
     });
     if (total){
       if (y + 8 > H - 44){ newPage(); head(); }
-      pdf.setFont('helvetica','bold'); pdf.setFontSize(9.5);
+      pdf.setFont('times','bold'); pdf.setFontSize(10.5);
       let x = L + 2; total.forEach((v, i) => { cell(v, i, x); x += widths[i]; });
       pdf.setDrawColor(...blue); pdf.setLineWidth(0.4); pdf.line(L, y + 2.8, R, y + 2.8); y += 7;
     }
     y += 6;
   };
+  const signature = () => {
+    newPageIfNeeded(14 + t.sign.length * 5.5);
+    y += 2; para('Sincerely,', 8);
+    t.sign.forEach((l, i) => {
+      pdf.setFont('times', i === 0 && d.signer ? 'bold' : 'normal'); pdf.setFontSize(12); pdf.setTextColor(...ink);
+      pdf.text(l, L, y); y += 5.5;
+    });
+  };
 
   // sender + date
-  pdf.setFont('helvetica','bold'); pdf.setFontSize(11.5); pdf.setTextColor(...ink); pdf.text(COMPANY.name, L, y);
-  pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5); pdf.setTextColor(...soft);
+  pdf.setFont('times','bold'); pdf.setFontSize(12.5); pdf.setTextColor(...ink); pdf.text(COMPANY.name, L, y);
+  pdf.setFont('times','normal'); pdf.setFontSize(10.5); pdf.setTextColor(...soft);
   pdf.text(COMPANY.addr, L, y + 5); pdf.text(COMPANY.email, L, y + 10);
-  pdf.setFontSize(11); pdf.setTextColor(...ink); pdf.text(fmtDate(d.date), R, y, { align:'right' });
+  pdf.setFontSize(12); pdf.setTextColor(...ink);
+  pdf.text(d.type === 'notice' ? `Date: ${fmtNumeric(d.date)}` : fmtDate(d.date), R, y, { align:'right' });
   y += 30;
 
-  pdf.setFont('helvetica','bold'); pdf.setFontSize(14); pdf.setCharSpace(0.4); pdf.text('TO WHOM IT MAY CONCERN', L, y); pdf.setCharSpace(0);
-  y += 11;
-  para(t.intro, 4);
-  table(t.contractCols, [33, 27, 27, 29, 22, 28], t.rows);
-
-  if (t.showPays){
-    heading('Payments received');
-    para(t.payIntro, 3);
-    if (t.payRows.length) table(t.payCols, [33, 40, 29, 29, 35], t.payRows, t.payTotal);
+  if (d.type === 'notice'){
+    pdf.setFont('times','bold'); pdf.setFontSize(14); pdf.setCharSpace(0.3);
+    pdf.text('NOTICE OF OUTSTANDING OBLIGATIONS', W / 2, y, { align:'center' }); pdf.setCharSpace(0);
+    y += 14;
+    para('To Whom It May Concern,', 4);
+    labelled('Customer Name:', d.name);
+    para(t.noticeIntro, 6);
+    heading('Payment plans');
+    table(['Contract #', 'Monthly payment', 'Pending payments'], [60, 56, 50], t.noticeRows, null, false);
+    y += 2; para(t.noticePayoff, 8, { style:'italic', center:true });
+    para(t.noticeClose, 4);
+    signature(); footer();
+    return pdf;
   }
 
-  if (t.balance) para(t.balance);
+  pdf.setFont('times','bold'); pdf.setFontSize(14); pdf.setCharSpace(0.4); pdf.text('TO WHOM IT MAY CONCERN', L, y); pdf.setCharSpace(0);
+  y += 11;
+  para(t.intro, 4);
+  table(t.contractCols, t.contractWidths, t.rows, t.contractTotal);
+  if (t.paidLine) para(t.paidLine, 4);
+
+  if (t.balance) para(t.balance, 4);
+  if (t.payoff) para(t.payoff);
   para(t.issued);
-  newPageIfNeeded(20);
-  y += 4; para('Sincerely,', 6);
-  pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.text(COMPANY.name, L, y);
-  footer();
+  signature(); footer();
   return pdf;
 }
 
@@ -472,10 +559,17 @@ $('editBtn').onclick = () => { $('preview').style.display = 'none'; $('setup').s
 $('pdfBtn').onclick = () => {
   const d = collect();
   const safe = s => s.replace(/[\\/:*?"<>|]+/g, '').trim();
-  buildPdf(d).save(`To Whom It May Concern - ${safe(d.name)} - ${d.date}.pdf`);
+  const title = d.type === 'notice' ? 'Notice of Outstanding Obligations' : 'To Whom It May Concern';
+  buildPdf(d).save(`${safe(d.name)} - ${title} - ${d.date}.pdf`);
 };
 $('addContract').onclick = () => addContract();
-$('showBal').onchange = e => $('balRow').classList.toggle('show', e.target.checked);
+function syncBalRow(){ $('balRow').classList.toggle('show', letterType() === 'notice' || $('showBal').checked); }
+$('showBal').onchange = syncBalRow;
+document.querySelectorAll('input[name=ltype]').forEach(r => r.onchange = () => {
+  document.querySelectorAll('.only-twimc').forEach(el => el.hidden = letterType() === 'notice');
+  $('createBtn').textContent = letterType() === 'notice' ? 'Create notice' : 'Create letter';
+  syncBalRow();
+});
 
 $('letterDate').value = todayIso();
 addContract();
