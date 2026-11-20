@@ -3,14 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>To Whom It May Concern – Suave</title>
+<title>Customer Letters – Suave</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Caladea:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="site.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="caladea-font.js"></script>
 <style>
   .field{ margin:0 0 16px; }
   .upload-box{ border:2px dashed var(--line-strong); border-radius:var(--radius); padding:18px; background:var(--surface-2); }
@@ -30,16 +31,22 @@
   .lf-row select{ width:auto; min-height:36px; padding:4px 32px 4px 10px; }
   .lf-row .lf-amt{ width:120px; min-height:36px; padding:4px 10px; }
   .lf-row .lf-amt[hidden]{ display:none; }
-  .types{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:0 0 18px; }
+  .types{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:0 0 18px; }
   .type-card{ display:flex; gap:12px; align-items:flex-start; border:1.5px solid var(--line); border-radius:var(--radius); padding:13px 14px; cursor:pointer; background:var(--surface); }
   .type-card input{ margin-top:3px; }
   .type-card b{ display:block; font-size:15px; }
   .type-card span{ font-size:13px; color:var(--ink-soft); }
   .type-card:has(input:checked){ border-color:var(--tool); background:var(--tool-soft); }
-  .only-twimc[hidden]{ display:none !important; }
+  [data-for][hidden]{ display:none !important; }
   .doc .payoff{ font-style:italic; text-align:center; margin:18px 10px; }
   .doc .center-title{ text-align:center; font-size:17px; letter-spacing:.04em; margin:0 0 26px; }
   @media (max-width:700px){ .types{ grid-template-columns:1fr; } }
+  .doc table.stmt{ font-size:12px; }
+  .doc table.stmt td, .doc table.stmt th{ padding:5px 6px; }
+  .doc tr.sub td{ font-weight:700; border-top:1px solid #439BDA; border-bottom:none; }
+  .doc tr.adj td{ color:#2F84C6; font-style:italic; }
+  .doc ul.adj-list{ margin:4px 0 14px; padding-left:20px; }
+  .doc .kv{ margin:0 0 4px; }
   .pay-note{ font-size:13px; color:var(--ink-soft); margin:5px 2px 0; }
   .doc h4{ font-size:15px; margin:26px 0 8px; }
   .doc .num{ text-align:right; }
@@ -52,7 +59,7 @@
   #preview{ display:none; }
   .preview-wrap{ background:#DDE3E8; border-radius:var(--radius); padding:20px; overflow:auto; margin-top:16px; }
   .doc{ position:relative; background:#fff; width:794px; min-height:1123px; max-width:100%; margin:0 auto; padding:64px 72px 170px; color:#1C2A36;
-        font:15px/1.55 "Times New Roman",Times,serif; box-shadow:0 1px 4px rgba(0,0,0,.12); }
+        font:15px/1.55 Cambria,Caladea,Georgia,serif; box-shadow:0 1px 4px rgba(0,0,0,.12); }
   .doc .from{ font-size:13px; color:#5C7286; line-height:1.5; }
   .doc .from b{ color:#1C2A36; font-size:14px; }
   .doc .date{ text-align:right; margin:-58px 0 46px; }
@@ -86,7 +93,7 @@
 <main class="page">
   <div class="page-head">
     <h1>To Whom It May Concern</h1>
-    <p>Upload the customer statement and pick the letter: a full To Whom It May Concern letter with the total paid per subscription, or a short Notice of Outstanding Obligations. Both come with the Suave logo, ready as PDF.</p>
+    <p>Upload the customer statement and pick what you need: a To Whom It May Concern letter, a Notice of Outstanding Obligations, or an Adjusted Statement with your late-fee choices. All come with the Suave logo, ready as PDF.</p>
   </div>
 
   <div id="setup">
@@ -104,6 +111,7 @@
       <div class="types" role="radiogroup" aria-label="Type of letter">
         <label class="type-card"><input type="radio" name="ltype" value="twimc" checked><div><b>To Whom It May Concern</b><span>Full letter: every subscription with what was paid in total, outstanding balance and pay-off amount.</span></div></label>
         <label class="type-card"><input type="radio" name="ltype" value="notice"><div><b>Notice of Outstanding Obligations</b><span>Short letter: open payment plans, monthly amount, pending payments and the pay-off amount.</span></div></label>
+        <label class="type-card"><input type="radio" name="ltype" value="statement"><div><b>Adjusted Statement</b><span>The customer statement again, with your late-fee choices applied and a list of what was adjusted.</span></div></label>
       </div>
       <div class="row">
         <div class="field">
@@ -121,8 +129,9 @@
       <div id="contracts"></div>
       <button type="button" class="btn btn-quiet" id="addContract">+ Add contract</button>
 
-      <label class="check only-twimc" style="margin-top:18px"><input type="checkbox" id="showPays" checked> Show the total paid per subscription</label>
-      <label class="check only-twimc"><input type="checkbox" id="showBal" checked> Mention the outstanding balance and pay-off amount</label>
+      <label class="check" data-for="twimc" style="margin-top:18px"><input type="checkbox" id="showPays" checked> Show the total paid per subscription</label>
+      <label class="check" data-for="twimc"><input type="checkbox" id="showBal" checked> Mention the outstanding balance and pay-off amount</label>
+      <label class="check" data-for="statement" style="margin-top:18px"><input type="checkbox" id="addLegal"> Add the 15% legal fee to the adjusted statement</label>
       <div class="row bal-row show" id="balRow">
         <div class="field">
           <label for="balAmount">Outstanding balance <span class="opt">without legal fee</span></label>
@@ -137,10 +146,10 @@
         <label for="currency">Currency</label>
         <select id="currency"><option>ANG</option><option>AWG</option><option>FL</option><option>USD</option></select>
       </div>
-      <label class="check"><input type="checkbox" id="showUsd" checked> Also show the pay-off amount in USD (rate 1.79)</label>
+      <label class="check" data-for="twimc notice"><input type="checkbox" id="showUsd" checked> Also show the pay-off amount in USD (rate 1.79)</label>
     </div>
 
-    <div class="section">
+    <div class="section" data-for="twimc notice">
       <h2>Signature</h2>
       <div class="row">
         <div class="field">
@@ -209,7 +218,7 @@ function addContract(c = {}){
   row.querySelector('.c-months').value = c.months || '';
   row.querySelector('.c-pending').value = c.pending != null ? c.pending : '';
   row.querySelector('.x').onclick = () => { item.remove(); if (!$('contracts').children.length) addContract(); recalcBalance(); };
-  if (c.base != null){ item.dataset.base = c.base; item.dataset.lf = c.lf || 0; item.dataset.payments = JSON.stringify(c.payments || []); }
+  if (c.base != null){ item.dataset.base = c.base; item.dataset.lf = c.lf || 0; item.dataset.payments = JSON.stringify(c.payments || []); item.dataset.items = JSON.stringify(c.items || []); }
   if (c.payments){
     const pn = document.createElement('div');
     const tot = c.payments.reduce((a, p) => a + p.amount, 0);
@@ -283,7 +292,7 @@ function parseStatement(text){
     // every invoice row: M#/L# date type, then invoice amount, paid amount, balance
     const rowRe = /\b([ML]\d+)\s+(\d{2}-[A-Za-z]{3}-\d{4})\s+(Monthly Payment|LF)\b([\s\S]*?)(?=\b[ML]\d+\s+\d{2}-[A-Za-z]{3}-\d{4}\s|$)/g;
     let base = 0, lf = 0, lfCount = 0, rows = 0, pending = 0, r;
-    const payments = [];
+    const payments = [], items = [];
     while ((r = rowRe.exec(seg))){
       const amts = (r[4].match(/[\d,]+\.\d{2}/g) || []).map(num);
       const open = amts.length >= 3 ? amts[2] : 0;
@@ -292,6 +301,8 @@ function parseStatement(text){
         const pd = (r[4].match(/\d{2}-[A-Za-z]{3}-\d{4}/) || [])[0];
         payments.push({ inv: r[1], type: r[3] === 'LF' ? 'LF' : 'M', due: pdfDateToIso(r[2]), date: pdfDateToIso(pd), amount: paid });
       }
+      const pdt = (r[4].match(/\d{2}-[A-Za-z]{3}-\d{4}/) || [])[0];
+      items.push({ inv: r[1], type: r[3] === 'LF' ? 'LF' : 'M', due: pdfDateToIso(r[2]), amount: amts[0] || 0, paid, payDate: paid > 0 ? pdfDateToIso(pdt) : '', open });
       rows++;
       if (r[3] === 'LF'){ if (open > 0){ lf += open; lfCount++; } } else { base += open; if (open > 0) pending++; }
     }
@@ -299,7 +310,7 @@ function parseStatement(text){
     const months = (seg.match(/\bM\d+\s+\d{2}-[A-Za-z]{3}-\d{4}\s+Monthly Payment/g) || []).length;
     const r2 = x => Math.round(x * 100) / 100;
     return { contract: h.m[1], vendor: h.m[2].trim(), date: pdfDateToIso(h.m[3]), monthly: pay ? num(pay[1]) : null, months: months || '',
-             base: rows ? r2(base) : null, lf: r2(lf), lfCount, payments, pending: rows ? pending : null };
+             base: rows ? r2(base) : null, lf: r2(lf), lfCount, payments, items, pending: rows ? pending : null };
   });
   return { name: name ? name.trim() : '', currency: bal ? bal[1].replace(/\.$/,'') : '', balance: subtotal, stmtDate, contracts };
 }
@@ -334,8 +345,9 @@ function letterType(){ return document.querySelector('input[name=ltype]:checked'
 function collect(){
   const contracts = [...document.querySelectorAll('.c-item')].map(it => {
     const r = it.querySelector('.c-row');
-    let payments = [];
-    try { payments = JSON.parse(it.dataset.payments || '[]'); } catch (e) {}
+    let payments = [], items = [];
+    try { payments = JSON.parse(it.dataset.payments || '[]'); items = JSON.parse(it.dataset.items || '[]'); } catch (e) {}
+    const mode = it.querySelector('.lf-mode');
     const pend = r.querySelector('.c-pending').value.trim();
     return {
       no: r.querySelector('.c-no').value.trim(),
@@ -345,7 +357,9 @@ function collect(){
       months: r.querySelector('.c-months').value.trim(),
       pending: pend === '' ? null : Number(pend),
       fromStatement: it.dataset.base != null,
-      payments
+      payments, items,
+      lfMode: mode ? mode.value : 'keep',
+      lfAdj: mode && mode.value === 'adjust' ? (num(it.querySelector('.lf-amt').value) || 0) : null
     };
   }).filter(c => c.no || c.merchant || c.date || c.pay != null);
   const type = letterType();
@@ -353,7 +367,8 @@ function collect(){
     type, name: $('custName').value.trim(), date: $('letterDate').value || todayIso(), cur: $('currency').value,
     showBal: type === 'notice' || $('showBal').checked, bal: num($('balAmount').value), balDate: $('balDate').value,
     showPays: type === 'twimc' && $('showPays').checked, showUsd: $('showUsd').checked && $('currency').value !== 'USD',
-    signer: $('signer').value.trim(), signTitle: $('signTitle').value.trim(), contracts
+    signer: $('signer').value.trim(), signTitle: $('signTitle').value.trim(), contracts,
+    addLegal: $('addLegal').checked, stmtDate: $('balDate').value
   };
 }
 
@@ -361,6 +376,10 @@ function validate(d){
   const miss = [];
   if (!d.name) miss.push('customer name');
   if (!d.contracts.length) miss.push('at least one contract');
+  if (d.type === 'statement'){
+    if (!d.contracts.some(c => c.items.length)) miss.push('an uploaded customer statement (the adjusted statement is built from it)');
+    return miss;
+  }
   d.contracts.forEach((c, i) => {
     if (!c.no) miss.push(`contract ${i+1}: contract number`);
     if (d.type === 'twimc' && !c.date) miss.push(`contract ${i+1}: start date`);
@@ -409,6 +428,42 @@ function texts(d){
   };
 }
 
+// Rebuilds the statement rows with the late-fee choices applied
+function adjusted(d){
+  const groups = [], notes = [];
+  d.contracts.filter(c => c.items.length).forEach(c => {
+    const rows = [];
+    const unpaidLf = c.items.filter(i => i.type === 'LF' && i.open > 0);
+    const lfTotal = r2(unpaidLf.reduce((a, i) => a + i.open, 0));
+    c.items.forEach(i => {
+      if (i.type === 'LF' && i.open > 0 && c.lfMode !== 'keep'){
+        if (i.paid > 0) rows.push({ ...i, amount: i.paid, open: 0 });   // keep what was already paid on it
+        return;
+      }
+      rows.push(i);
+    });
+    if (c.lfMode === 'adjust' && c.lfAdj > 0)
+      rows.push({ inv: 'LF', type: 'LFADJ', due: d.stmtDate || d.date, amount: c.lfAdj, paid: 0, payDate: '', open: c.lfAdj });
+    if (c.lfMode === 'remove' && lfTotal > 0)
+      notes.push(`Contract ${c.no}: ${unpaidLf.length} unpaid late fee${unpaidLf.length === 1 ? '' : 's'} of ${d.cur} ${money(lfTotal)} removed.`);
+    if (c.lfMode === 'adjust' && lfTotal > 0)
+      notes.push(`Contract ${c.no}: unpaid late fees adjusted from ${d.cur} ${money(lfTotal)} to ${d.cur} ${money(c.lfAdj || 0)}.`);
+    groups.push({ no: c.no, merchant: c.merchant, rows, open: r2(rows.reduce((a, i) => a + i.open, 0)) });
+  });
+  const subtotal = r2(groups.reduce((a, g) => a + g.open, 0));
+  const legal = d.addLegal ? r2(subtotal * 0.15) : 0;
+  return { groups, notes, subtotal, legal, total: r2(subtotal + legal) };
+}
+const typeLabel = i => i.type === 'LFADJ' ? 'Late fees (adj.)' : i.type === 'LF' ? 'Late fee' : 'Monthly payment';
+const STMT_COLS = ['Contract #', 'Vendor', 'Invoice', 'Invoice date', 'Type', 'Amount', 'Paid', 'Paid on', 'Balance'];
+const STMT_RIGHT = [5, 6, 8];
+function stmtRows(a){
+  const out = [];
+  a.groups.forEach(g => g.rows.forEach((i, k) => out.push({ adj: i.type === 'LFADJ', cells: [k ? '' : g.no, k ? '' : (g.merchant || ''),
+    i.type === 'LFADJ' ? 'LF' : i.inv, fmtShort(i.due), typeLabel(i), money(i.amount), money(i.paid), i.payDate ? fmtShort(i.payDate) : '—', money(i.open)] })));
+  return out;
+}
+
 function htmlTable(cols, rows, total, rightLast = true){
   const right = i => rightLast && i === cols.length - 1 ? ' class="num"' : '';
   return `<table>${cols ? `<thead><tr>${cols.map((h, i) => `<th${right(i)}>${esc(h)}</th>`).join('')}</tr></thead>` : ''}<tbody>` +
@@ -416,11 +471,33 @@ function htmlTable(cols, rows, total, rightLast = true){
     (total ? `<tr class="total">${total.map((v, i) => `<td${right(i)}>${esc(v)}</td>`).join('')}</tr>` : '') + '</tbody></table>';
 }
 
+function stmtNote(d){
+  return `This adjusted statement was created on ${fmtDate(d.date)} and replaces the customer statement of ${fmtDate(d.stmtDate) || 'the earlier date'}. ` +
+    (d.addLegal ? 'The 15% legal fee is calculated on the adjusted subtotal.' : 'No legal fee is included.');
+}
+
 function renderPreview(d){
   const t = texts(d);
   const head = `<div class="from"><b>${COMPANY.name}</b><br>${COMPANY.addr}<br>${COMPANY.email}</div>`;
   const sign = `<div class="sign">Sincerely,<br><br>${t.sign.map((l, i) => i === 0 && d.signer ? `<b>${esc(l)}</b>` : esc(l)).join('<br>')}</div>`;
   const foot = `<div class="foot"><img src="${SUAVE_LOGO}" alt="Suave"><small>${COMPANY.name} · ${COMPANY.addr} · ${COMPANY.email}</small></div>`;
+  if (d.type === 'statement'){
+    const a = adjusted(d), right = i => STMT_RIGHT.includes(i) ? ' class="num"' : '';
+    const sumRow = (label, v, cls) => `<tr class="${cls}"><td colspan="8">${esc(label)}</td><td class="num">${money(v)}</td></tr>`;
+    $('doc').innerHTML = `${head}<div class="date">${fmtDate(d.date)}</div>
+      <h3>ADJUSTED CUSTOMER STATEMENT</h3>
+      <p class="kv">Account: <b>${esc(d.name)}</b></p>
+      <p class="kv">Original statement: ${esc(fmtDate(d.stmtDate) || '—')}</p>
+      <p>Open balance: <b>${d.cur} ${money(a.total)}</b></p>
+      <table class="stmt"><thead><tr>${STMT_COLS.map((h, i) => `<th${right(i)}>${h}</th>`).join('')}</tr></thead><tbody>
+      ${stmtRows(a).map(r => `<tr${r.adj ? ' class="adj"' : ''}>${r.cells.map((v, i) => `<td${right(i)}>${esc(v)}</td>`).join('')}</tr>`).join('')}
+      ${sumRow('Subtotal (' + d.cur + ')', a.subtotal, 'sub')}${a.legal ? sumRow('Legal fee 15% (' + d.cur + ')', a.legal, 'sub') : ''}${sumRow('Total (' + d.cur + ')', a.total, 'total')}
+      </tbody></table>
+      <h4>Adjustments</h4>
+      ${a.notes.length ? `<ul class="adj-list">${a.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : '<p>No late fees were removed or adjusted.</p>'}
+      <p>${esc(stmtNote(d))}</p>${foot}`;
+    return;
+  }
   if (d.type === 'notice'){
     $('doc').innerHTML = `${head}<div class="date">Date: ${fmtNumeric(d.date)}</div>
       <h3 class="center-title">NOTICE OF OUTSTANDING OBLIGATIONS</h3>
@@ -446,6 +523,16 @@ function renderPreview(d){
 function buildPdf(d){
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ unit:'mm', format:'a4' });
+  // Caladea = free twin of Cambria (same letter widths); falls back to Times if the font file did not load
+  let F = 'times';
+  if (window.CALADEA_TTF){
+    try {
+      Object.entries(window.CALADEA_TTF).forEach(([style, b64]) => {
+        pdf.addFileToVFS(`Caladea-${style}.ttf`, b64); pdf.addFont(`Caladea-${style}.ttf`, 'Caladea', style);
+      });
+      F = 'Caladea';
+    } catch (e) { console.error(e); }
+  }
   const W = 210, H = 297, L = 22, R = W - 22, ink = [28,42,54], soft = [92,114,134], blue = [67,155,218];
   const t = texts(d);
   let y = 26;
@@ -454,13 +541,13 @@ function buildPdf(d){
     const lw = 42, lh = lw / 3;
     pdf.setDrawColor(207,224,238); pdf.setLineWidth(0.3); pdf.line(L, H - 38, R, H - 38);
     pdf.addImage(SUAVE_LOGO, 'PNG', (W - lw) / 2, H - 34, lw, lh);
-    pdf.setFont('times','normal'); pdf.setFontSize(8); pdf.setTextColor(...soft);
+    pdf.setFont(F,'normal'); pdf.setFontSize(8); pdf.setTextColor(...soft);
     pdf.text(`${COMPANY.name} · ${COMPANY.addr} · ${COMPANY.email}`, W / 2, H - 14, { align:'center' });
   };
   const newPage = () => { footer(); pdf.addPage(); y = 26; };
   const newPageIfNeeded = need => { if (y + need > H - 44) newPage(); };
   const para = (text, gap = 6, opt = {}) => {
-    pdf.setFont('times', opt.style || 'normal'); pdf.setFontSize(12); pdf.setTextColor(...ink);
+    pdf.setFont(F, opt.style || 'normal'); pdf.setFontSize(12); pdf.setTextColor(...ink);
     const width = opt.center ? R - L - 16 : R - L;
     const lines = pdf.splitTextToSize(text, width);
     newPageIfNeeded(lines.length * 5.6);
@@ -469,59 +556,81 @@ function buildPdf(d){
     y += lines.length * 5.6 + gap;
   };
   const labelled = (label, value) => {
-    pdf.setFont('times','normal'); pdf.setFontSize(12); pdf.setTextColor(...ink); pdf.text(label, L, y);
-    pdf.setFont('times','bold'); pdf.text(value, L + pdf.getTextWidth(label) + 1.5, y); y += 9;
+    pdf.setFont(F,'normal'); pdf.setFontSize(12); pdf.setTextColor(...ink); pdf.text(label, L, y);
+    pdf.setFont(F,'bold'); pdf.text(value, L + pdf.getTextWidth(label) + 1.5, y); y += 9;
   };
   const heading = text => {
     newPageIfNeeded(24);
-    pdf.setFont('times','bold'); pdf.setFontSize(13); pdf.setTextColor(...ink); pdf.text(text, L, y); y += 7;
+    pdf.setFont(F,'bold'); pdf.setFontSize(13); pdf.setTextColor(...ink); pdf.text(text, L, y); y += 7;
   };
-  // table with the last column right-aligned (optional); repeats the header on a new page
-  const table = (heads, widths, rows, total, rightLast = true) => {
-    const cell = (v, i, x) => {
-      const txt = pdf.splitTextToSize(String(v), widths[i] - 3)[0];
-      if (rightLast && i === heads.length - 1) pdf.text(txt, x + widths[i] - 4, y, { align:'right' }); else pdf.text(txt, x, y);
+  // table: chosen columns right-aligned (default: the last one); repeats the header on a new page
+  const table = (heads, widths, rows, total, rightLast = true, opt = {}) => {
+    const right = opt.right || (rightLast ? [heads.length - 1] : []);
+    const size = opt.size || 10.5;
+    const cell = (v, i, x, noClip) => {
+      const txt = noClip ? String(v) : pdf.splitTextToSize(String(v), widths[i] - 2)[0];
+      if (right.includes(i)) pdf.text(txt, x + widths[i] - 3, y, { align:'right' }); else pdf.text(txt, x, y);
     };
     const head = () => {
       pdf.setFillColor(230,242,252); pdf.rect(L, y - 5, R - L, 8, 'F');
       pdf.setDrawColor(...blue); pdf.setLineWidth(0.6); pdf.line(L, y + 3, R, y + 3);
-      pdf.setFont('times','bold'); pdf.setFontSize(10.5); pdf.setTextColor(...ink);
+      pdf.setFont(F,'bold'); pdf.setFontSize(size); pdf.setTextColor(...ink);
       let x = L + 2; heads.forEach((h, i) => { cell(h, i, x); x += widths[i]; }); y += 8.5;
     };
     newPageIfNeeded(18); head();
     rows.forEach(r => {
       if (y + 7 > H - 44){ newPage(); head(); }
-      pdf.setFont('times','normal'); pdf.setFontSize(10.5); pdf.setTextColor(...ink);
-      let x = L + 2; r.forEach((v, i) => { cell(v, i, x); x += widths[i]; });
+      const cells = Array.isArray(r) ? r : r.cells;
+      pdf.setFont(F, r.adj ? 'italic' : 'normal'); pdf.setFontSize(size); pdf.setTextColor(...(r.adj ? [47,132,198] : ink));
+      let x = L + 2; cells.forEach((v, i) => { cell(v, i, x); x += widths[i]; });
       pdf.setDrawColor(207,224,238); pdf.setLineWidth(0.2); pdf.line(L, y + 2.8, R, y + 2.8); y += 7;
     });
-    if (total){
+    (total ? (Array.isArray(total[0]) ? total : [total]) : []).forEach(tr => {
       if (y + 8 > H - 44){ newPage(); head(); }
-      pdf.setFont('times','bold'); pdf.setFontSize(10.5);
-      let x = L + 2; total.forEach((v, i) => { cell(v, i, x); x += widths[i]; });
+      pdf.setFont(F,'bold'); pdf.setFontSize(size); pdf.setTextColor(...ink);
+      let x = L + 2; tr.forEach((v, i) => { cell(v, i, x, i === 0); x += widths[i]; });
       pdf.setDrawColor(...blue); pdf.setLineWidth(0.4); pdf.line(L, y + 2.8, R, y + 2.8); y += 7;
-    }
+    });
     y += 6;
   };
   const signature = () => {
     newPageIfNeeded(14 + t.sign.length * 5.5);
     y += 2; para('Sincerely,', 8);
     t.sign.forEach((l, i) => {
-      pdf.setFont('times', i === 0 && d.signer ? 'bold' : 'normal'); pdf.setFontSize(12); pdf.setTextColor(...ink);
+      pdf.setFont(F, i === 0 && d.signer ? 'bold' : 'normal'); pdf.setFontSize(12); pdf.setTextColor(...ink);
       pdf.text(l, L, y); y += 5.5;
     });
   };
 
   // sender + date
-  pdf.setFont('times','bold'); pdf.setFontSize(12.5); pdf.setTextColor(...ink); pdf.text(COMPANY.name, L, y);
-  pdf.setFont('times','normal'); pdf.setFontSize(10.5); pdf.setTextColor(...soft);
+  pdf.setFont(F,'bold'); pdf.setFontSize(12.5); pdf.setTextColor(...ink); pdf.text(COMPANY.name, L, y);
+  pdf.setFont(F,'normal'); pdf.setFontSize(10.5); pdf.setTextColor(...soft);
   pdf.text(COMPANY.addr, L, y + 5); pdf.text(COMPANY.email, L, y + 10);
   pdf.setFontSize(12); pdf.setTextColor(...ink);
   pdf.text(d.type === 'notice' ? `Date: ${fmtNumeric(d.date)}` : fmtDate(d.date), R, y, { align:'right' });
   y += 30;
 
+  if (d.type === 'statement'){
+    const a = adjusted(d);
+    pdf.setFont(F,'bold'); pdf.setFontSize(14); pdf.setCharSpace(0.4); pdf.text('ADJUSTED CUSTOMER STATEMENT', L, y); pdf.setCharSpace(0);
+    y += 10;
+    pdf.setFontSize(12); pdf.setFont(F,'normal'); pdf.text('Account:', L, y); pdf.setFont(F,'bold'); pdf.text(d.name, L + 40, y); y += 6;
+    pdf.setFont(F,'normal'); pdf.text('Original statement:', L, y); pdf.text(fmtDate(d.stmtDate) || '—', L + 40, y); y += 6;
+    pdf.text('Open balance:', L, y); pdf.setFont(F,'bold'); pdf.text(`${d.cur} ${money(a.total)}`, L + 40, y); y += 11;
+    const blank = Array(8).fill('');
+    const totals = [[`Subtotal (${d.cur})`, ...blank.slice(1), money(a.subtotal)]];
+    if (a.legal) totals.push([`Legal fee 15% (${d.cur})`, ...blank.slice(1), money(a.legal)]);
+    totals.push([`Total (${d.cur})`, ...blank.slice(1), money(a.total)]);
+    table(STMT_COLS, [24, 16, 13, 20, 27, 17, 16, 18, 15], stmtRows(a), totals, false, { right: STMT_RIGHT, size: 9 });
+    heading('Adjustments');
+    if (a.notes.length) a.notes.forEach(n => para('•  ' + n, 2)); else para('No late fees were removed or adjusted.', 2);
+    y += 4; para(stmtNote(d), 4);
+    footer();
+    return pdf;
+  }
+
   if (d.type === 'notice'){
-    pdf.setFont('times','bold'); pdf.setFontSize(14); pdf.setCharSpace(0.3);
+    pdf.setFont(F,'bold'); pdf.setFontSize(14); pdf.setCharSpace(0.3);
     pdf.text('NOTICE OF OUTSTANDING OBLIGATIONS', W / 2, y, { align:'center' }); pdf.setCharSpace(0);
     y += 14;
     para('To Whom It May Concern,', 4);
@@ -535,7 +644,7 @@ function buildPdf(d){
     return pdf;
   }
 
-  pdf.setFont('times','bold'); pdf.setFontSize(14); pdf.setCharSpace(0.4); pdf.text('TO WHOM IT MAY CONCERN', L, y); pdf.setCharSpace(0);
+  pdf.setFont(F,'bold'); pdf.setFontSize(14); pdf.setCharSpace(0.4); pdf.text('TO WHOM IT MAY CONCERN', L, y); pdf.setCharSpace(0);
   y += 11;
   para(t.intro, 4);
   table(t.contractCols, t.contractWidths, t.rows, t.contractTotal);
@@ -559,17 +668,19 @@ $('editBtn').onclick = () => { $('preview').style.display = 'none'; $('setup').s
 $('pdfBtn').onclick = () => {
   const d = collect();
   const safe = s => s.replace(/[\\/:*?"<>|]+/g, '').trim();
-  const title = d.type === 'notice' ? 'Notice of Outstanding Obligations' : 'To Whom It May Concern';
+  const title = { notice:'Notice of Outstanding Obligations', statement:'Adjusted Statement', twimc:'To Whom It May Concern' }[d.type];
   buildPdf(d).save(`${safe(d.name)} - ${title} - ${d.date}.pdf`);
 };
 $('addContract').onclick = () => addContract();
-function syncBalRow(){ $('balRow').classList.toggle('show', letterType() === 'notice' || $('showBal').checked); }
-$('showBal').onchange = syncBalRow;
-document.querySelectorAll('input[name=ltype]').forEach(r => r.onchange = () => {
-  document.querySelectorAll('.only-twimc').forEach(el => el.hidden = letterType() === 'notice');
-  $('createBtn').textContent = letterType() === 'notice' ? 'Create notice' : 'Create letter';
-  syncBalRow();
-});
+function syncUI(){
+  const t = letterType();
+  document.querySelectorAll('[data-for]').forEach(el => el.hidden = !el.dataset.for.split(' ').includes(t));
+  $('balRow').classList.toggle('show', t === 'notice' || (t === 'twimc' && $('showBal').checked));
+  $('createBtn').textContent = { notice:'Create notice', statement:'Create adjusted statement', twimc:'Create letter' }[t];
+}
+$('showBal').onchange = syncUI;
+document.querySelectorAll('input[name=ltype]').forEach(r => r.onchange = syncUI);
+syncUI();
 
 $('letterDate').value = todayIso();
 addContract();
