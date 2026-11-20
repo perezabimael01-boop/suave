@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wat wil je aanmaken? – My Computer</title>
+<title>Suave – My Computer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -11,223 +11,69 @@
 <link rel="stylesheet" href="site.css">
 <style>
   body{ --page-width:1040px; }
-
-  /* Hero */
-  .hero{
-    position:relative; overflow:hidden;
-    margin:0 0 36px; padding:40px 40px 36px;
-    border-radius:20px; color:#fff;
-    background:
-      radial-gradient(520px 320px at 92% 0%, rgba(255,255,255,.28), transparent 65%),
-      radial-gradient(420px 300px at 75% 125%, rgba(255,107,74,.16), transparent 65%),
-      linear-gradient(130deg, #2F84C6 0%, #439BDA 50%, #62B0E6 100%);
-    box-shadow:0 30px 60px -28px rgba(47,132,198,.75), inset 0 1px 0 rgba(255,255,255,.3);
-  }
-  .hero::before{
-    content:""; position:absolute; inset:0; pointer-events:none;
-    background-image:radial-gradient(rgba(255,255,255,.14) 1px, transparent 1.2px);
-    background-size:22px 22px;
-    -webkit-mask-image:linear-gradient(110deg, transparent 35%, #000 100%);
-            mask-image:linear-gradient(110deg, transparent 35%, #000 100%);
-  }
-  .hero::after{
-    content:""; position:absolute; width:360px; height:360px; right:-120px; top:-140px; border-radius:50%;
-    border:1px solid rgba(255,255,255,.18); box-shadow:0 0 0 60px rgba(255,255,255,.04), 0 0 0 120px rgba(255,255,255,.03);
-    pointer-events:none;
-  }
-  .hero > *{ position:relative; z-index:1; }
-  .hero-eyebrow{ display:inline-flex; align-items:center; gap:8px; font-size:13px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; color:#fff; opacity:.92; margin:0 0 12px; }
-  .hero-eyebrow::before{ content:""; width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 4px rgba(255,107,74,.25); }
-  .hero h1{ font-size:44px; line-height:1.08; letter-spacing:-1px; margin:0 0 12px; font-weight:700; }
-  .hero p{ margin:0; color:rgba(255,255,255,.92); font-size:16.5px; max-width:56ch; }
-  .hero-stats{ display:flex; flex-wrap:wrap; gap:10px; margin-top:24px; }
-  .hero-stats span{ font-size:13.5px; font-weight:500; padding:6px 12px; border-radius:999px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18); backdrop-filter:blur(4px); }
-  .hero-stats b{ font-weight:700; margin-right:4px; }
-
-  /* Groups */
-  .group{ margin:0 0 36px; }
-  .group h2{ display:flex; align-items:center; gap:12px; font-size:13px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-soft); margin:0 0 14px; }
-  .group h2::after{ content:""; flex:1; height:1px; background:var(--line); }
-  .group h2{ margin-bottom:4px; }
-  .group-note{ margin:0 0 14px; font-size:13.5px; color:var(--ink-soft); }
-  .tools{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px; }
-  .tools > li{ display:flex; }
-
-  /* Cards */
-  .tool{
-    position:relative; flex:1;
-    display:flex; flex-direction:column; gap:14px;
-    padding:22px 22px 20px;
-    background:var(--surface);
-    border:1px solid color-mix(in srgb, var(--line) 75%, transparent);
-    border-radius:16px;
-    color:inherit; text-decoration:none;
-    overflow:hidden;
-    box-shadow:var(--shadow-md);
-    transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
-  }
-  .tool::before{ /* coloured top strip */
-    content:""; position:absolute; left:0; right:0; top:0; height:4px;
-    background:var(--tool);
-  }
-  .tool:hover, .tool:focus-visible{ transform:translateY(-4px); box-shadow:var(--shadow-lg); border-color:color-mix(in srgb, var(--tool) 40%, var(--line)); }
-  .tool:focus-visible{ outline:3px solid var(--accent); outline-offset:2px; }
-
-  .tool-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
-  .tool-icon{
-    width:52px; height:52px; border-radius:14px; flex:none;
-    display:flex; align-items:center; justify-content:center;
-    color:#fff;
-    background:var(--tool);
-    box-shadow:0 8px 18px -8px var(--tool);
-  }
-  .tool-icon svg{ width:24px; height:24px; }
-  .tool-kind{ font-size:12px; font-weight:600; color:var(--tool); background:var(--tool-soft); border-radius:999px; padding:3px 10px; white-space:nowrap; }
-  .tool-title{ margin:0 0 6px; }
-  .tool-title b{ font-size:19px; font-weight:700; line-height:1.25; letter-spacing:-.2px; }
-  .tool p{ margin:0; font-size:14.5px; color:var(--ink-soft); line-height:1.55; }
-  .tool-foot{ margin-top:auto; padding-top:6px; display:inline-flex; align-items:center; gap:6px; font-size:14px; font-weight:600; color:var(--tool); }
-  .tool-go{ transition:transform .18s ease; }
-  .tool:hover .tool-go{ transform:translateX(4px); }
-
-  .tool[data-tool="claim"]    { --tool:var(--t-claim);     --tool-soft:var(--t-claim-soft); }
-  .tool[data-tool="statement"]{ --tool:var(--t-statement); --tool-soft:var(--t-statement-soft); }
-  .tool[data-tool="notice"]   { --tool:var(--t-notice);    --tool-soft:var(--t-notice-soft); }
-  .tool[data-tool="lease"]    { --tool:var(--t-lease);     --tool-soft:var(--t-lease-soft); }
-  .tool[data-tool="payments"] { --tool:var(--t-payments);  --tool-soft:var(--t-payments-soft); }
-  .tool[data-tool="factoring"]{ --tool:var(--t-factoring); --tool-soft:var(--t-factoring-soft); }
-
-  /* Featured first card spans two columns on wide screens */
-  @media (min-width:960px){ .tools > li.featured{ grid-column:span 2; } }
-
-  @media (max-width:640px){
-    .hero{ padding:28px 22px 24px; border-radius:16px; }
-    .hero h1{ font-size:32px; }
-    .tools{ grid-template-columns:1fr; }
-  }
-
-  /* ---- Interactive extras ---- */
-  .finder{ position:relative; margin:22px 0 0; max-width:420px; }
-  .finder input{ width:100%; min-height:46px; padding:11px 44px 11px 42px; border-radius:12px; font-size:15px;
-    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.25); color:#fff; }
-  .finder input::placeholder{ color:rgba(255,255,255,.6); }
-  .finder input:focus{ background:#fff; color:var(--ink); border-color:#fff; box-shadow:0 0 0 4px rgba(246,165,177,.45); }
-  .finder input:focus::placeholder{ color:#8794A0; }
-  .finder svg{ position:absolute; left:14px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,.7); pointer-events:none; }
-  .finder input:focus ~ svg{ color:var(--ink-soft); }
-  .finder kbd{ position:absolute; right:12px; top:50%; transform:translateY(-50%); font:600 12px/1 var(--font); padding:4px 7px; border-radius:6px;
-    background:rgba(255,255,255,.15); color:rgba(255,255,255,.8); border:1px solid rgba(255,255,255,.2); }
-  .finder input:focus ~ kbd{ display:none; }
-  .no-results{ display:none; padding:28px; text-align:center; color:var(--ink-soft); background:var(--surface); border:1px dashed var(--line-strong); border-radius:16px; }
-  .tools > li.hide{ display:none; }
-
-  .tool{ transform-style:preserve-3d; will-change:transform; }
-  .tool .key{ position:absolute; right:16px; bottom:16px; font:600 12px/1 var(--font); color:var(--ink-soft); background:var(--surface-2);
-    border:1px solid var(--line); border-bottom-width:2px; border-radius:6px; padding:4px 7px; }
-  .tool-icon{ transition:transform .25s cubic-bezier(.3,1.6,.5,1); }
-  .tool:hover .tool-icon{ transform:rotate(-8deg) scale(1.08); }
-  .tool.pressed{ transform:scale(.97) !important; }
-
-  .reveal{ opacity:0; transform:translateY(14px); animation:reveal .5s ease forwards; }
-  @keyframes reveal{ to{ opacity:1; transform:none; } }
-  .hero-wave{ display:inline-block; transform-origin:70% 70%; animation:wave 1.6s ease-in-out .6s 2; }
-  @keyframes wave{ 0%,60%,100%{ transform:rotate(0) } 10%,30%{ transform:rotate(14deg) } 20%,40%{ transform:rotate(-8deg) } }
-  @media (hover:none){ .tool .key{ display:none; } }
-  @media (prefers-reduced-motion:reduce){ .reveal{ opacity:1; transform:none; animation:none; } }
-
-  /* ---- Serious header (overrides) ---- */
-  .hero{ background:none; box-shadow:none; color:var(--ink); border-radius:0; padding:8px 0 28px; margin:0 0 32px; border-bottom:1px solid var(--line); overflow:visible; }
-  .hero::before, .hero::after{ display:none; }
-  .hero-eyebrow{ color:var(--brand-ink); opacity:1; font-size:12px; letter-spacing:.8px; margin:0 0 8px; }
-  .hero-eyebrow::before{ display:none; }
-  .hero h1{ font-size:30px; line-height:1.2; letter-spacing:-.4px; font-weight:600; margin:0 0 6px; color:var(--ink); }
-  .hero p{ color:var(--ink-soft); font-size:15px; }
-  .finder{ margin:20px 0 0; max-width:460px; }
-  .finder input{ min-height:42px; padding:9px 40px 9px 38px; border-radius:8px; font-size:14.5px; background:var(--surface); border:1px solid var(--line-strong); color:var(--ink); box-shadow:0 1px 2px rgba(28,42,54,.05); }
-  .finder input::placeholder{ color:#8794A0; }
-  .finder input:focus{ border-color:var(--brand); box-shadow:0 0 0 3px rgba(67,155,218,.2); }
-  .finder svg{ left:12px; color:var(--ink-soft); }
-  .finder kbd{ background:var(--surface-2); color:var(--ink-soft); border:1px solid var(--line); border-radius:4px; padding:3px 6px; font-weight:500; }
-  .tool .key{ display:none; }
-  .tool{ border-radius:10px; }
-  .tool-icon{ width:44px; height:44px; border-radius:8px; box-shadow:none; }
-  .tool-icon svg{ width:22px; height:22px; }
-  .tool-kind{ border-radius:4px; font-weight:500; }
-  .tool::before{ height:3px; }
-  .tool:hover, .tool:focus-visible{ transform:translateY(-2px); }
-  .reveal{ animation-duration:.3s; }
-  @media (max-width:640px){ .hero{ padding:4px 0 22px; } .hero h1{ font-size:26px; } }
-
-  /* ---- App launcher grid ---- */
-  .tools{ grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:14px; }
-  @media (min-width:960px){ .tools > li.featured{ grid-column:auto; } }
-  .tool{ align-items:center; text-align:center; gap:12px; padding:22px 12px 18px; border-radius:14px; }
-  .tool::before{ display:none; }
-  .tool-top{ flex-direction:column; gap:10px; }
-  .tool-icon{ width:64px; height:64px; border-radius:16px;
-    background:linear-gradient(160deg, color-mix(in srgb, var(--tool) 78%, #fff) 0%, var(--tool) 100%);
-    box-shadow:0 1px 0 rgba(255,255,255,.35) inset, 0 8px 16px -10px var(--tool); }
-  .tool-icon svg{ width:30px; height:30px; }
-  .tool-kind{ display:none; }
-  .tool-title{ margin:0; }
-  .tool-title b{ font-size:14.5px; font-weight:600; letter-spacing:0; }
-  .tool p, .tool-foot{ display:none; }
-  .tool:hover, .tool:focus-visible{ transform:translateY(-2px); border-color:color-mix(in srgb, var(--tool) 45%, var(--line)); }
-  .tool:hover .tool-icon{ transform:scale(1.04); }
-  .tool-icon{ transition:transform .18s ease; }
-  @media (max-width:640px){ .tools{ grid-template-columns:repeat(3, 1fr); gap:10px; } .tool{ padding:16px 6px 14px; } .tool-icon{ width:54px; height:54px; border-radius:14px; } .tool-title b{ font-size:13px; } }
-  /* ---- Overzicht: groepen naast elkaar, alles in één scherm ---- */
-  .hero{ padding:0 0 18px; margin:0 0 22px; }
-  .hero p{ margin:0; }
-  .finder{ margin-top:14px; }
-  .groups{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:18px; align-items:start; }
-  .group{ margin:0; padding:16px; background:var(--surface); border:1px solid var(--line); border-radius:14px; }
-  .group h2{ font-size:12px; margin:0 0 2px; }
-  .group h2::after{ display:none; }
-  .group-note{ font-size:12.5px; line-height:1.4; margin:0 0 14px; min-height:2.8em; }
-  .group .tools{ grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
-  .group .tool{ padding:14px 8px 12px; gap:8px; border-radius:12px; box-shadow:none; background:var(--surface-2, #F6F9FC); }
-  .group .tool-icon{ width:48px; height:48px; border-radius:13px; }
-  .group .tool-icon svg{ width:24px; height:24px; }
-  .group .tool-title b{ font-size:13px; line-height:1.25; }
-  @media (max-width:900px){ .groups{ grid-template-columns:1fr; } .group-note{ min-height:0; } .group .tools{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
-  @media (max-width:560px){ .group .tools{ grid-template-columns:repeat(3, minmax(0,1fr)); } }
-  /* ---- Zoeken in de bovenbalk ---- */
   .app-bar-inner{ display:flex; align-items:center; justify-content:space-between; gap:16px; }
-  .bar-search.finder{ margin:0; width:240px; max-width:50vw; flex:none; transition:width .2s ease; }
-  .bar-search.finder:focus-within{ width:320px; }
-  .bar-search.finder input{ min-height:38px; padding:7px 36px 7px 36px; border-radius:19px; font-size:14px; color:#fff;
-    background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35); box-shadow:none; }
-  .bar-search.finder input::placeholder{ color:rgba(255,255,255,.8); }
-  .bar-search.finder input:focus{ background:#fff; color:var(--ink); border-color:#fff; box-shadow:0 0 0 3px rgba(255,255,255,.35); }
-  .bar-search.finder input:focus::placeholder{ color:#8794A0; }
-  .bar-search.finder svg{ left:12px; color:#fff; }
-  .bar-search.finder input:focus ~ svg{ color:var(--ink-soft); }
-  .bar-search.finder kbd{ background:rgba(255,255,255,.2); color:#fff; border-color:rgba(255,255,255,.35); }
-  .page{ padding-top:28px; }
-  @media (max-width:560px){ .bar-search.finder{ width:150px; } .bar-search.finder:focus-within{ width:200px; } .bar-search.finder kbd{ display:none; } }
-  /* ---- Kolommen met tool-rijen ---- */
-  body{ --page-width:1180px; }
-  .page{ padding-top:40px; }
-  .groups{ gap:24px; align-items:stretch; }
-  .group{ padding:22px 18px 14px; border-radius:18px; box-shadow:0 1px 2px rgba(28,42,54,.04), 0 12px 32px -20px rgba(28,42,54,.18); }
-  .group h2{ display:flex; align-items:center; gap:10px; font-size:15px; font-weight:700; letter-spacing:-.1px; text-transform:none; color:var(--ink); margin:0 4px 4px; }
-  .g-num{ display:inline-grid; place-items:center; width:24px; height:24px; border-radius:50%; font-size:12.5px; font-weight:700; color:#fff; background:var(--brand, #439BDA); }
-  .group-note{ min-height:0; margin:0 4px 14px 38px; font-size:13px; }
-  .group .tools{ display:flex; flex-direction:column; gap:2px; }
-  .group .tool{ flex-direction:row; align-items:center; text-align:left; gap:14px; padding:10px; border:0; border-radius:12px; background:transparent; transform:none !important; }
-  .group .tool:hover, .group .tool:focus-visible{ background:var(--tool-soft, #EEF5FB); box-shadow:none; }
-  .group .tool-top{ flex-direction:row; flex:none; }
-  .group .tool-icon{ width:42px; height:42px; border-radius:11px; }
-  .group .tool-icon svg{ width:21px; height:21px; }
-  .group .tool:hover .tool-icon{ transform:none; }
-  .group .tool > span:nth-child(2){ flex:1; min-width:0; }
-  .group .tool-title{ display:flex; flex-direction:column; gap:2px; margin:0; }
-  .group .tool-title b{ font-size:14.5px; line-height:1.3; }
-  .tool-sub{ font-size:12.5px; line-height:1.35; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .group .tool::after{ content:""; flex:none; width:8px; height:8px; margin-right:6px; border-right:2px solid var(--ink-soft); border-top:2px solid var(--ink-soft); transform:rotate(45deg); opacity:0; transition:opacity .15s, margin .15s; }
-  .group .tool:hover::after, .group .tool:focus-visible::after{ opacity:.7; margin-right:2px; }
-  @media (max-width:900px){ .group .tools{ display:flex; } .page{ padding-top:24px; } }
+  .bar-search{ position:relative; display:block; width:260px; max-width:50vw; flex:none; transition:width .2s ease; }
+  .bar-search:focus-within{ width:320px; }
+  .bar-search input{ width:100%; box-sizing:border-box; min-height:38px; padding:7px 36px; border-radius:19px; font:inherit; font-size:14px; color:#fff;
+    background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35); outline:none; -webkit-appearance:none; appearance:none; }
+  .bar-search input::placeholder{ color:rgba(255,255,255,.85); }
+  .bar-search input:focus{ background:#fff; color:var(--ink); border-color:#fff; box-shadow:0 0 0 3px rgba(255,255,255,.35); }
+  .bar-search input:focus::placeholder{ color:#8794A0; }
+  .bar-search svg{ position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#fff; pointer-events:none; }
+  .bar-search input:focus ~ svg{ color:var(--ink-soft); }
+  .bar-search kbd{ position:absolute; right:10px; top:50%; transform:translateY(-50%); font:600 11px/1 var(--font); padding:4px 6px; border-radius:5px; background:rgba(255,255,255,.2); color:#fff; border:1px solid rgba(255,255,255,.35); }
+  .bar-search input:focus ~ kbd{ display:none; }
+  .sr-only{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+
+  .home{ min-height:calc(100vh - 140px); display:flex; align-items:center; justify-content:center; padding:32px 16px 96px; box-sizing:border-box; }
+  .grid{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3, 170px); gap:56px; justify-content:center; }
+  .folder, .app{ display:flex; flex-direction:column; align-items:center; gap:12px; text-decoration:none; color:var(--ink);
+    background:none; border:0; padding:0; font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .app-name{ font-size:15px; font-weight:600; text-align:center; line-height:1.25; }
+  .folder-icon{ width:156px; height:156px; box-sizing:border-box; padding:18px; border-radius:36px; display:grid; grid-template-columns:repeat(3, 34px); gap:10px; align-content:center; justify-content:center;
+    background:rgba(255,255,255,.85); border:1px solid var(--line); box-shadow:0 1px 2px rgba(28,42,54,.05), 0 16px 32px -18px rgba(28,42,54,.35);
+    transition:transform .18s ease, box-shadow .18s ease; }
+  .folder-icon > span{ aspect-ratio:1; border-radius:8px; display:grid; place-items:center; color:#fff;
+    background:linear-gradient(160deg, color-mix(in srgb, var(--c) 75%, #fff), var(--c)); }
+  .folder-icon > span{ width:34px; height:34px; } .folder-icon > span svg{ width:58%; height:58%; }
+  .folder-icon.n2{ grid-template-columns:repeat(2, 34px); }
+  .folder:hover .folder-icon, .folder:focus-visible .folder-icon{ transform:translateY(-4px) scale(1.03); box-shadow:0 1px 2px rgba(28,42,54,.05), 0 24px 40px -20px rgba(28,42,54,.45); }
+  .folder:focus-visible{ outline:none; } .folder:focus-visible .folder-icon{ outline:3px solid var(--brand); outline-offset:3px; }
+
+  .apps{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(var(--n, 4), 112px); gap:28px 20px; justify-content:center; }
+  .app-icon{ width:72px; height:72px; border-radius:20px; display:grid; place-items:center; color:#fff;
+    background:linear-gradient(160deg, color-mix(in srgb, var(--c) 72%, #fff), var(--c));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 10px 18px -10px var(--c); transition:transform .18s ease; }
+  .app-icon svg{ width:34px; height:34px; }
+  .app .app-name{ font-size:13.5px; }
+  .app:hover .app-icon, .app:focus-visible .app-icon{ transform:translateY(-3px) scale(1.05); }
+  .app:focus-visible{ outline:none; } .app:focus-visible .app-icon{ outline:3px solid var(--brand); outline-offset:3px; }
+
+  .sheet{ position:fixed; inset:0; z-index:50; display:grid; place-items:center; padding:16px; background:rgba(20,34,48,.35); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+  .sheet[hidden]{ display:none; }
+  .sheet-box{ width:auto; max-width:100%; box-sizing:border-box; background:#fff; border-radius:28px; padding:22px 24px 32px; box-shadow:0 30px 80px -20px rgba(20,34,48,.45); animation:pop .18s ease; }
+  @keyframes pop{ from{ opacity:0; transform:scale(.94); } to{ opacity:1; transform:none; } }
+  .sheet-head{ display:flex; align-items:center; justify-content:space-between; gap:24px; margin:0 0 26px; }
+  .sheet-box{ padding:24px 32px 34px; }
+  .sheet-head h2{ margin:0; font-size:20px; font-weight:700; color:var(--ink); }
+  .sheet-close{ width:36px; height:36px; border-radius:50%; border:0; background:#EEF3F8; color:var(--ink-soft); font-size:22px; line-height:1; cursor:pointer; }
+  .sheet-close:hover{ background:#E1EAF2; color:var(--ink); }
+
+  .results{ width:min(760px, 100%); } .results .apps{ grid-template-columns:repeat(auto-fill, 112px); }
+  .results[hidden], .grid[hidden]{ display:none; }
+  .results .app[hidden]{ display:none; }
+  .no-results{ text-align:center; color:var(--ink-soft); margin:24px 0 0; }
+
+  @media (max-width:560px){
+    .grid{ grid-template-columns:repeat(3, 1fr); gap:20px; width:100%; }
+    .folder-icon{ width:96px; height:96px; padding:10px; gap:5px; border-radius:24px; grid-template-columns:repeat(3, 22px); } .folder-icon > span{ width:22px; height:22px; } .folder-icon.n2{ grid-template-columns:repeat(2, 22px); }
+    .folder-icon > span{ border-radius:6px; }
+    .app-name{ font-size:13.5px; }
+    .apps, .results .apps{ grid-template-columns:repeat(3, 1fr); gap:22px 8px; } .sheet-box{ width:100%; padding:20px 16px 28px; }
+    .app-icon{ width:60px; height:60px; border-radius:16px; }
+    .bar-search{ width:160px; } .bar-search:focus-within{ width:200px; } .bar-search kbd{ display:none; }
+  }
+  @media (prefers-reduced-motion:reduce){ .sheet-box{ animation:none; } .folder-icon, .app-icon{ transition:none; } }
 </style>
 </head>
 <body>
@@ -240,158 +86,44 @@
       <kbd>/</kbd></label>
   </div>
 </header>
-
-<main class="page">
-  <div class="groups">
-  <section class="group" aria-labelledby="g-klant">
-    <h2 id="g-klant"><span class="g-num">1</span>Klant en contract</h2>
-    <p class="group-note">Begin hier: de rest opent al ingevuld.</p>
-    <ul class="tools">
-      <li class="featured">
-        <a class="tool" data-tool="statement" href="customer-statement.html">
-          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 8H16M8 12H16M8 16H12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="tool-kind">Overzicht</span></span>
-          <span><span class="tool-title"><b>Customer Statement</b><small class="tool-sub">Saldo en achterstand per contract</small></span>
-          <p>Openstaand saldo, te late betalingen en eventueel 15% incassokosten, per contract opgebouwd. Hiervandaan open je ook de lease, final notice en factoring, al ingevuld.</p></span>
-          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        </a>
-      </li>
-      <li>
-        <a class="tool" data-tool="lease" href="lease-agreement.html">
-          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="11" rx="1.2" stroke="currentColor" stroke-width="1.8"/><path d="M2 18.5H22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.5 15.5L8.7 18.5M14.5 15.5L15.3 18.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><span class="tool-kind">Huurovereenkomst</span></span>
-          <span><span class="tool-title"><b>Computer Lease Contract</b><small class="tool-sub">Huurovereenkomst met koopoptie</small></span>
-          <p>Huurovereenkomst met koopoptie. Looptijd, einddatum en contractnummer worden automatisch ingevuld.</p></span>
-          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        </a>
-      </li>
-      <li>
-        <a class="tool" data-tool="factoring" href="factoring.html">
-          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5H14L18 7.5V20.5H6V3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 14.5H15M15 14.5L12.8 12.3M15 14.5L12.8 16.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="tool-kind">Invoice of Sale</span></span>
-          <span><span class="tool-title"><b>Factoring</b><small class="tool-sub">Facturen verkopen aan Suave</small></span>
-          <p>Verkoop van facturen aan Suave Solutions LLC. MIMI VENTURE staat standaard als verkoper, de handtekeningen blijven leeg en de PDF krijgt de naam van het abonnement en de klant.</p></span>
-          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        </a>
-      </li>
-    </ul>
-  </section>
-  <section class="group" aria-labelledby="g-incasso">
-    <h2 id="g-incasso"><span class="g-num">2</span>Incasso</h2>
-    <p class="group-note">Op volgorde van escalatie.</p>
-    <ul class="tools">
-      <li>
-        <a class="tool" data-tool="reminders" href="herinneringen.html" style="--tool:#2E8B7A;--tool-soft:#E3F4F0">
-          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5H20V16.5H9L5 20V16.5H4V5.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 10H16M8 13H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="tool-kind">Herinnering</span></span>
-          <span><span class="tool-title"><b>Herinneringen via Intercom</b><small class="tool-sub">WhatsApp of e-mail via Intercom</small></span>
-          <p>Lees de past due list in Suave en stuur iedereen automatisch de juiste WhatsApp-template (of e-mail) via Intercom.</p></span>
-          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        </a>
-      </li>
-      <li>
-        <a class="tool" data-tool="notice" href="final-notice.html">
-          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5C4 4.67 4.67 4 5.5 4H18.5C19.33 4 20 4.67 20 5.5V16.5C20 17.33 19.33 18 18.5 18H5.5C4.67 18 4 17.33 4 16.5V5.5Z" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 5.5L12 12L19.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="tool-kind">Aanmaning</span></span>
-          <span><span class="tool-title"><b>Final Notice</b><small class="tool-sub">Laatste aanmaning als PDF</small></span>
-          <p>Laatste betalingsherinnering als e-mail, met automatische escalatiedatum. Klaar om als PDF te bewaren.</p></span>
-          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        </a>
-      </li>
-      <li>
-        <a class="tool" data-tool="claim" href="bevel-tot-betaling.html">
-          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="8 8 32 34" fill="none" aria-hidden="true"><path d="M13 19L24 12L35 19V29C35 34 30 37 24 39C18 37 13 34 13 29V19Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M19 25L23 29L30 21" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="tool-kind">Verzoekschrift</span></span>
-          <span><span class="tool-title"><b>Bevel tot Betaling</b><small class="tool-sub">Verzoekschrift aan het Gerecht</small></span>
-          <p>Verzoekschrift aan het Gerecht om de gedaagde te laten veroordelen tot betaling. Download als Word of PDF.</p></span>
-          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        </a>
-      </li>
-    </ul>
-  </section>
-  <section class="group" aria-labelledby="g-betalingen">
-    <h2 id="g-betalingen"><span class="g-num">3</span>Tools</h2>
-    <p class="group-note">Boeken, contacten en berekenen.</p>
-    <ul class="tools">
-      <li>
-        <a class="tool" data-tool="payments" href="betalingen-boeken.html">
-          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5H14L18 7.5V20.5H6V3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 14L11.2 16.2L15.2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="tool-kind">Betalingen</span></span>
-          <span><span class="tool-title"><b>Betalingen boeken</b><small class="tool-sub">Deurwaarderbetalingen in Suave</small></span>
-          <p>Boek de betalingen uit het rapport van de deurwaarder automatisch in Suave, met een lijst van wat wel en niet geboekt is.</p></span>
-          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        </a>
-      </li>
-      <li>
-        <a class="tool" data-tool="fraud" href="fraude.html" style="--tool:#B42318;--tool-soft:#FDEDEB">
-          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5L19 6.5V11.5C19 15.8 16 19.2 12 20.5C8 19.2 5 15.8 5 11.5V6.5L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 8V12.5M12 15.5V15.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="tool-kind">Fraude</span></span>
-          <span><span class="tool-title"><b>Fraude Contacten</b><small class="tool-sub">Fraudegebruikers en berichten</small></span>
-          <p>Lijst van fraudegebruikers met naam, e-mail, telefoon en maandbedrag, opgeslagen in Cloudflare. Stuur ze de collection_template via Intercom.</p></span>
-          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        </a>
-      </li>
-      <li>
-        <a class="tool" data-tool="careplan" href="care-plan.html" style="--tool:#439BDA;--tool-soft:#E6F2FC">
-          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 7H16M8 11H10M12 11H14M8 15H10M12 15H14M16 11V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="tool-kind">Calculator</span></span>
-          <span><span class="tool-title"><b>Care Plan Calculator</b><small class="tool-sub">Maandbedrag en care plan</small></span>
-          <p>Maandbedrag voor product (24% APR) en care plan per looptijd: 30 dagen 7%, 4 mnd 22%, 6 mnd 27%, 12 mnd 46,5%, 24 mnd 93% markup.</p></span>
-          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        </a>
-      </li>
-      <li>
-        <a class="tool" data-tool="balance" href="remaining-balance.html" style="--tool:#2E6FA3;--tool-soft:#E3EEF7">
-          <span class="tool-top"><span class="tool-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 7H16M8 11H10M12 11H14M8 15H10M12 15H14M16 11V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="tool-kind">Calculator</span></span>
-          <span><span class="tool-title"><b>Remaining Balance Calculator</b><small class="tool-sub">Openstaand saldo van een lease</small></span>
-          <p>Openstaand saldo van een lease na X betalingen, met de rentes die volgen uit de nieuwe markups (30 dagen 84%, 4 mnd 280,56%, 6 mnd 118,86%, 12 mnd 94,2%, 24 mnd 81,99% per jaar).</p></span>
-          <span class="tool-foot">Openen <svg class="tool-go" width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        </a>
-      </li>
-    </ul>
-  </section>
-  </div>
-  <p class="no-results" id="no-results">Geen documenten gevonden.</p>
+<main class="page home">
+  <ul class="grid" id="folders">
+<li><button class="folder" type="button" data-open="docs" aria-haspopup="dialog"><span class="folder-icon"><span style="--c:#1F6FA8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 8H16M8 12H16M8 16H12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span style="--c:#4F5AA8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="11" rx="1.2" stroke="currentColor" stroke-width="1.8"/><path d="M2 18.5H22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.5 15.5L8.7 18.5M14.5 15.5L15.3 18.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><span style="--c:#1F7A6A"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5H14L18 7.5V20.5H6V3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 14.5H15M15 14.5L12.8 12.3M15 14.5L12.8 16.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span style="--c:#D9772B"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5C4 4.67 4.67 4 5.5 4H18.5C19.33 4 20 4.67 20 5.5V16.5C20 17.33 19.33 18 18.5 18H5.5C4.67 18 4 17.33 4 16.5V5.5Z" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 5.5L12 12L19.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span style="--c:#8A6418"><svg width="22" height="22" viewBox="8 8 32 34" fill="none" aria-hidden="true"><path d="M13 19L24 12L35 19V29C35 34 30 37 24 39C18 37 13 34 13 29V19Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M19 25L23 29L30 21" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="app-name">Documenten</span></button></li>
+<li><button class="folder" type="button" data-open="tools" aria-haspopup="dialog"><span class="folder-icon"><span style="--c:#6B4A86"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5H14L18 7.5V20.5H6V3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 14L11.2 16.2L15.2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span style="--c:#2E8B7A"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5H20V16.5H9L5 20V16.5H4V5.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 10H16M8 13H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span style="--c:#B42318"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5L19 6.5V11.5C19 15.8 16 19.2 12 20.5C8 19.2 5 15.8 5 11.5V6.5L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 8V12.5M12 15.5V15.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span></span><span class="app-name">Tools</span></button></li>
+<li><button class="folder" type="button" data-open="calc" aria-haspopup="dialog"><span class="folder-icon n2"><span style="--c:#439BDA"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 7H16M8 11H10M12 11H14M8 15H10M12 15H14M16 11V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span style="--c:#2E6FA3"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 7H16M8 11H10M12 11H14M8 15H10M12 15H14M16 11V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span></span><span class="app-name">Calculators</span></button></li>
+  </ul>
+  <div class="results" id="results" hidden><ul class="apps"><li><a class="app" href="customer-statement.html" style="--c:#1F6FA8" title="Openstaand saldo, te late betalingen en eventueel 15% incassokosten, per contract opgebouwd. Hiervandaan open je ook de lease, final notice en factoring, al ingevuld." data-search="customer statement openstaand saldo, te late betalingen en eventueel 15% incassokosten, per contract opgebouwd. hiervandaan open je ook de lease, final notice en factoring, al ingevuld."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 8H16M8 12H16M8 16H12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="app-name">Customer Statement</span></a></li><li><a class="app" href="lease-agreement.html" style="--c:#4F5AA8" title="Huurovereenkomst met koopoptie. Looptijd, einddatum en contractnummer worden automatisch ingevuld." data-search="lease contract huurovereenkomst met koopoptie. looptijd, einddatum en contractnummer worden automatisch ingevuld."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="11" rx="1.2" stroke="currentColor" stroke-width="1.8"/><path d="M2 18.5H22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.5 15.5L8.7 18.5M14.5 15.5L15.3 18.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><span class="app-name">Lease Contract</span></a></li><li><a class="app" href="factoring.html" style="--c:#1F7A6A" title="Verkoop van facturen aan Suave Solutions LLC. MIMI VENTURE staat standaard als verkoper, de handtekeningen blijven leeg en de PDF krijgt de naam van het abonnement en de klant." data-search="factoring verkoop van facturen aan suave solutions llc. mimi venture staat standaard als verkoper, de handtekeningen blijven leeg en de pdf krijgt de naam van het abonnement en de klant."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5H14L18 7.5V20.5H6V3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 14.5H15M15 14.5L12.8 12.3M15 14.5L12.8 16.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="app-name">Factoring</span></a></li><li><a class="app" href="final-notice.html" style="--c:#D9772B" title="Laatste betalingsherinnering als e-mail, met automatische escalatiedatum. Klaar om als PDF te bewaren." data-search="final notice laatste betalingsherinnering als e-mail, met automatische escalatiedatum. klaar om als pdf te bewaren."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5C4 4.67 4.67 4 5.5 4H18.5C19.33 4 20 4.67 20 5.5V16.5C20 17.33 19.33 18 18.5 18H5.5C4.67 18 4 17.33 4 16.5V5.5Z" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 5.5L12 12L19.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="app-name">Final Notice</span></a></li><li><a class="app" href="bevel-tot-betaling.html" style="--c:#8A6418" title="Verzoekschrift aan het Gerecht om de gedaagde te laten veroordelen tot betaling. Download als Word of PDF." data-search="bevel tot betaling verzoekschrift aan het gerecht om de gedaagde te laten veroordelen tot betaling. download als word of pdf."><span class="app-icon"><svg width="22" height="22" viewBox="8 8 32 34" fill="none" aria-hidden="true"><path d="M13 19L24 12L35 19V29C35 34 30 37 24 39C18 37 13 34 13 29V19Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M19 25L23 29L30 21" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="app-name">Bevel tot Betaling</span></a></li><li><a class="app" href="betalingen-boeken.html" style="--c:#6B4A86" title="Boek de betalingen uit het rapport van de deurwaarder automatisch in Suave, met een lijst van wat wel en niet geboekt is." data-search="betalingen boeken boek de betalingen uit het rapport van de deurwaarder automatisch in suave, met een lijst van wat wel en niet geboekt is."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5H14L18 7.5V20.5H6V3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 14L11.2 16.2L15.2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="app-name">Betalingen boeken</span></a></li><li><a class="app" href="herinneringen.html" style="--c:#2E8B7A" title="Lees de past due list in Suave en stuur iedereen automatisch de juiste WhatsApp-template (of e-mail) via Intercom." data-search="herinneringen lees de past due list in suave en stuur iedereen automatisch de juiste whatsapp-template (of e-mail) via intercom."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5H20V16.5H9L5 20V16.5H4V5.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 10H16M8 13H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="app-name">Herinneringen</span></a></li><li><a class="app" href="fraude.html" style="--c:#B42318" title="Lijst van fraudegebruikers met naam, e-mail, telefoon en maandbedrag, opgeslagen in Cloudflare. Stuur ze de collection_template via Intercom." data-search="fraude contacten lijst van fraudegebruikers met naam, e-mail, telefoon en maandbedrag, opgeslagen in cloudflare. stuur ze de collection_template via intercom."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5L19 6.5V11.5C19 15.8 16 19.2 12 20.5C8 19.2 5 15.8 5 11.5V6.5L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 8V12.5M12 15.5V15.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="app-name">Fraude Contacten</span></a></li><li><a class="app" href="care-plan.html" style="--c:#439BDA" title="Maandbedrag voor product (24% APR) en care plan per looptijd: 30 dagen 7%, 4 mnd 22%, 6 mnd 27%, 12 mnd 46,5%, 24 mnd 93% markup." data-search="care plan maandbedrag voor product (24% apr) en care plan per looptijd: 30 dagen 7%, 4 mnd 22%, 6 mnd 27%, 12 mnd 46,5%, 24 mnd 93% markup."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 7H16M8 11H10M12 11H14M8 15H10M12 15H14M16 11V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="app-name">Care Plan</span></a></li><li><a class="app" href="remaining-balance.html" style="--c:#2E6FA3" title="Openstaand saldo van een lease na X betalingen, met de rentes die volgen uit de nieuwe markups (30 dagen 84%, 4 mnd 280,56%, 6 mnd 118,86%, 12 mnd 94,2%, 24 mnd 81,99% per jaar)." data-search="remaining balance openstaand saldo van een lease na x betalingen, met de rentes die volgen uit de nieuwe markups (30 dagen 84%, 4 mnd 280,56%, 6 mnd 118,86%, 12 mnd 94,2%, 24 mnd 81,99% per jaar)."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 7H16M8 11H10M12 11H14M8 15H10M12 15H14M16 11V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="app-name">Remaining Balance</span></a></li></ul><p class="no-results" id="no-results" hidden>Geen tools gevonden.</p></div>
 </main>
-
+<div class="sheet" id="sheet-docs" role="dialog" aria-modal="true" aria-label="Documenten" hidden><div class="sheet-box"><div class="sheet-head"><h2>Documenten</h2><button class="sheet-close" type="button" aria-label="Sluiten">&times;</button></div><ul class="apps" style="--n:5"><li><a class="app" href="customer-statement.html" style="--c:#1F6FA8" title="Openstaand saldo, te late betalingen en eventueel 15% incassokosten, per contract opgebouwd. Hiervandaan open je ook de lease, final notice en factoring, al ingevuld." data-search="customer statement openstaand saldo, te late betalingen en eventueel 15% incassokosten, per contract opgebouwd. hiervandaan open je ook de lease, final notice en factoring, al ingevuld."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 8H16M8 12H16M8 16H12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="app-name">Customer Statement</span></a></li><li><a class="app" href="lease-agreement.html" style="--c:#4F5AA8" title="Huurovereenkomst met koopoptie. Looptijd, einddatum en contractnummer worden automatisch ingevuld." data-search="lease contract huurovereenkomst met koopoptie. looptijd, einddatum en contractnummer worden automatisch ingevuld."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="11" rx="1.2" stroke="currentColor" stroke-width="1.8"/><path d="M2 18.5H22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.5 15.5L8.7 18.5M14.5 15.5L15.3 18.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><span class="app-name">Lease Contract</span></a></li><li><a class="app" href="factoring.html" style="--c:#1F7A6A" title="Verkoop van facturen aan Suave Solutions LLC. MIMI VENTURE staat standaard als verkoper, de handtekeningen blijven leeg en de PDF krijgt de naam van het abonnement en de klant." data-search="factoring verkoop van facturen aan suave solutions llc. mimi venture staat standaard als verkoper, de handtekeningen blijven leeg en de pdf krijgt de naam van het abonnement en de klant."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5H14L18 7.5V20.5H6V3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 14.5H15M15 14.5L12.8 12.3M15 14.5L12.8 16.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="app-name">Factoring</span></a></li><li><a class="app" href="final-notice.html" style="--c:#D9772B" title="Laatste betalingsherinnering als e-mail, met automatische escalatiedatum. Klaar om als PDF te bewaren." data-search="final notice laatste betalingsherinnering als e-mail, met automatische escalatiedatum. klaar om als pdf te bewaren."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5C4 4.67 4.67 4 5.5 4H18.5C19.33 4 20 4.67 20 5.5V16.5C20 17.33 19.33 18 18.5 18H5.5C4.67 18 4 17.33 4 16.5V5.5Z" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 5.5L12 12L19.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="app-name">Final Notice</span></a></li><li><a class="app" href="bevel-tot-betaling.html" style="--c:#8A6418" title="Verzoekschrift aan het Gerecht om de gedaagde te laten veroordelen tot betaling. Download als Word of PDF." data-search="bevel tot betaling verzoekschrift aan het gerecht om de gedaagde te laten veroordelen tot betaling. download als word of pdf."><span class="app-icon"><svg width="22" height="22" viewBox="8 8 32 34" fill="none" aria-hidden="true"><path d="M13 19L24 12L35 19V29C35 34 30 37 24 39C18 37 13 34 13 29V19Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M19 25L23 29L30 21" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="app-name">Bevel tot Betaling</span></a></li></ul></div></div>
+<div class="sheet" id="sheet-tools" role="dialog" aria-modal="true" aria-label="Tools" hidden><div class="sheet-box"><div class="sheet-head"><h2>Tools</h2><button class="sheet-close" type="button" aria-label="Sluiten">&times;</button></div><ul class="apps" style="--n:3"><li><a class="app" href="betalingen-boeken.html" style="--c:#6B4A86" title="Boek de betalingen uit het rapport van de deurwaarder automatisch in Suave, met een lijst van wat wel en niet geboekt is." data-search="betalingen boeken boek de betalingen uit het rapport van de deurwaarder automatisch in suave, met een lijst van wat wel en niet geboekt is."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5H14L18 7.5V20.5H6V3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 14L11.2 16.2L15.2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="app-name">Betalingen boeken</span></a></li><li><a class="app" href="herinneringen.html" style="--c:#2E8B7A" title="Lees de past due list in Suave en stuur iedereen automatisch de juiste WhatsApp-template (of e-mail) via Intercom." data-search="herinneringen lees de past due list in suave en stuur iedereen automatisch de juiste whatsapp-template (of e-mail) via intercom."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5H20V16.5H9L5 20V16.5H4V5.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 10H16M8 13H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="app-name">Herinneringen</span></a></li><li><a class="app" href="fraude.html" style="--c:#B42318" title="Lijst van fraudegebruikers met naam, e-mail, telefoon en maandbedrag, opgeslagen in Cloudflare. Stuur ze de collection_template via Intercom." data-search="fraude contacten lijst van fraudegebruikers met naam, e-mail, telefoon en maandbedrag, opgeslagen in cloudflare. stuur ze de collection_template via intercom."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5L19 6.5V11.5C19 15.8 16 19.2 12 20.5C8 19.2 5 15.8 5 11.5V6.5L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 8V12.5M12 15.5V15.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="app-name">Fraude Contacten</span></a></li></ul></div></div>
+<div class="sheet" id="sheet-calc" role="dialog" aria-modal="true" aria-label="Calculators" hidden><div class="sheet-box"><div class="sheet-head"><h2>Calculators</h2><button class="sheet-close" type="button" aria-label="Sluiten">&times;</button></div><ul class="apps" style="--n:2"><li><a class="app" href="care-plan.html" style="--c:#439BDA" title="Maandbedrag voor product (24% APR) en care plan per looptijd: 30 dagen 7%, 4 mnd 22%, 6 mnd 27%, 12 mnd 46,5%, 24 mnd 93% markup." data-search="care plan maandbedrag voor product (24% apr) en care plan per looptijd: 30 dagen 7%, 4 mnd 22%, 6 mnd 27%, 12 mnd 46,5%, 24 mnd 93% markup."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 7H16M8 11H10M12 11H14M8 15H10M12 15H14M16 11V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="app-name">Care Plan</span></a></li><li><a class="app" href="remaining-balance.html" style="--c:#2E6FA3" title="Openstaand saldo van een lease na X betalingen, met de rentes die volgen uit de nieuwe markups (30 dagen 84%, 4 mnd 280,56%, 6 mnd 118,86%, 12 mnd 94,2%, 24 mnd 81,99% per jaar)." data-search="remaining balance openstaand saldo van een lease na x betalingen, met de rentes die volgen uit de nieuwe markups (30 dagen 84%, 4 mnd 280,56%, 6 mnd 118,86%, 12 mnd 94,2%, 24 mnd 81,99% per jaar)."><span class="app-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 7H16M8 11H10M12 11H14M8 15H10M12 15H14M16 11V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="app-name">Remaining Balance</span></a></li></ul></div></div>
 <script>
 (function(){
-  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var cards = Array.prototype.slice.call(document.querySelectorAll('a.tool'));
-
-  // greeting by time of day
-
-  // show each description as a hover tooltip
-  cards.forEach(function(c){ var d = c.querySelector('p'); if (d) c.title = d.textContent.trim(); });
-
-  // staggered entrance, number shortcuts, shine layer
-  cards.forEach(function(c, i){
-    c.parentNode.classList.add('reveal'); c.parentNode.style.animationDelay = (120 + i * 70) + 'ms';
-    var k = document.createElement('span'); k.className = 'key'; k.textContent = (i + 1) % 10; k.setAttribute('aria-hidden','true'); c.appendChild(k);
-    if (i < 10) c.setAttribute('aria-keyshortcuts', String((i + 1) % 10));
+  var grid = document.getElementById('folders'), results = document.getElementById('results'), none = document.getElementById('no-results');
+  var f = document.getElementById('finder'), last = null;
+  function open(id, from){ var s = document.getElementById('sheet-' + id); if (!s) return; last = from; s.hidden = false; var a = s.querySelector('.app'); if (a) a.focus(); }
+  function closeAll(){ document.querySelectorAll('.sheet').forEach(function(s){ s.hidden = true; }); if (last) { last.focus(); last = null; } }
+  document.querySelectorAll('.folder').forEach(function(b){ b.addEventListener('click', function(){ open(b.getAttribute('data-open'), b); }); });
+  document.querySelectorAll('.sheet').forEach(function(s){
+    s.addEventListener('click', function(e){ if (e.target === s) closeAll(); });
+    s.querySelector('.sheet-close').addEventListener('click', closeAll);
   });
-
-  // 3D tilt toward the mouse
-  if (false) cards.forEach(function(c){
-    c.addEventListener('mousemove', function(e){
-      var r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-      c.style.transform = 'perspective(900px) rotateX(' + ((.5 - y) * 6).toFixed(2) + 'deg) rotateY(' + ((x - .5) * 8).toFixed(2) + 'deg) translateY(-4px)';
-    });
-    c.addEventListener('mouseleave', function(){ c.style.transform = ''; });
-    c.addEventListener('mousedown', function(){ c.classList.add('pressed'); });
-    c.addEventListener('mouseup', function(){ c.classList.remove('pressed'); });
-  });
-
-  // search filter
-  var f = document.getElementById('finder'), none = document.getElementById('no-results');
+  var apps = Array.prototype.slice.call(results.querySelectorAll('.app'));
   f.addEventListener('input', function(){
     var q = f.value.trim().toLowerCase(), shown = 0;
-    cards.forEach(function(c){ var hit = !q || c.textContent.toLowerCase().indexOf(q) > -1; c.parentNode.classList.toggle('hide', !hit); if (hit) shown++; });
-    document.querySelectorAll('.group').forEach(function(gr){ gr.style.display = gr.querySelector('li:not(.hide)') ? '' : 'none'; });
-    none.style.display = shown ? 'none' : 'block';
+    grid.hidden = !!q; results.hidden = !q;
+    apps.forEach(function(a){ var hit = q && a.getAttribute('data-search').indexOf(q) > -1; a.parentNode.hidden = !hit; if (hit) shown++; });
+    none.hidden = !q || shown > 0;
   });
   f.addEventListener('keydown', function(e){
-    if (e.key === 'Enter'){ var first = cards.filter(function(c){ return !c.parentNode.classList.contains('hide'); })[0]; if (first) first.click(); }
+    if (e.key === 'Enter'){ var first = apps.filter(function(a){ return !a.parentNode.hidden; })[0]; if (first) first.click(); }
     if (e.key === 'Escape'){ f.value = ''; f.dispatchEvent(new Event('input')); f.blur(); }
   });
-
-  // keyboard: "/" focuses search, 1-9 (and 0 for the 10th) opens a tool
   document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && document.querySelector('.sheet:not([hidden])')) { closeAll(); return; }
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     var t = e.target.tagName; if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
-    if (e.key === '/'){ e.preventDefault(); f.focus(); return; }
-    var n = e.key === '0' ? 10 : parseInt(e.key, 10); if (n >= 1 && n <= cards.length){ cards[n-1].classList.add('pressed'); setTimeout(function(){ cards[n-1].click(); }, 120); }
+    if (e.key === '/'){ e.preventDefault(); f.focus(); }
   });
 })();
 </script>
