@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Montserrat:wght@800;900&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
     @font-face { font-display: swap; }
 
@@ -407,7 +407,18 @@
         .desk > section { grid-column: auto; margin-top: 0; }
     }
 </style>
+<style>
+    /* ---- Suave theme (matches homepage) ---- */
+    body { background:#F2E9D8 linear-gradient(#347AF0 0, #347AF0 230px, #C2D0E8 480px, #F2E9D8 720px) no-repeat !important; }
+    .back-link { width:fit-content !important; justify-self:start; align-self:start; display:inline-flex; align-items:center; gap:6px; background:#fff; color:#347AF0; padding:8px 16px; border-radius:999px; text-decoration:none !important;
+        box-shadow:0 1px 2px rgba(20,40,80,.06), 0 10px 24px -14px rgba(20,40,80,.35); margin-bottom:22px; }
+    .back-link:hover { background:#EEF4FE; }
+    .storefront .eyebrow { color:rgba(255,255,255,.9) !important; }
+    .storefront h1 { font-family:"Montserrat", "Baloo 2", sans-serif !important; font-weight:900 !important; color:#fff !important; letter-spacing:-.5px !important; }
+    .storefront .logo-badge { box-shadow:0 14px 28px -12px rgba(10,30,80,.55) !important; }
+</style>
 </head>
+
 <body>
 <div class="desk">
     <a class="back-link" href="index.html">&larr; All documents</a>
