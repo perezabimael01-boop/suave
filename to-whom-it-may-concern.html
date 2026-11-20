@@ -22,6 +22,14 @@
   .c-head{ font-size:13.5px; font-weight:600; margin:0 0 6px; }
   .c-row{ margin:0 0 8px; }
   .c-row .x{ min-height:42px; padding:0; }
+  .c-item{ margin:0 0 10px; }
+  .c-item .c-row{ margin:0; }
+  .lf-row{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-top:6px; padding:8px 12px; background:var(--brand-soft);
+           border:1px solid var(--line); border-radius:var(--radius-sm); font-size:14px; }
+  .lf-row b{ font-weight:600; }
+  .lf-row select{ width:auto; min-height:36px; padding:4px 32px 4px 10px; }
+  .lf-row .lf-amt{ width:120px; min-height:36px; padding:4px 10px; }
+  .lf-row .lf-amt[hidden]{ display:none; }
   .check{ display:flex; align-items:center; gap:10px; font-weight:500; margin:6px 0 10px; }
   .bal-row{ display:none; }
   .bal-row.show{ display:grid; }
@@ -147,8 +155,11 @@ function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 
 /* ---------- contract rows ---------- */
 function addContract(c = {}){
+  const item = document.createElement('div');
+  item.className = 'c-item';
   const row = document.createElement('div');
   row.className = 'c-row';
+  item.appendChild(row);
   row.innerHTML = `
     <input type="text" class="c-no" placeholder="Contract #" aria-label="Contract number">
     <input type="text" class="c-merchant" placeholder="Merchant" aria-label="Merchant">
@@ -161,8 +172,40 @@ function addContract(c = {}){
   row.querySelector('.c-date').value = c.date || '';
   row.querySelector('.c-pay').value = c.monthly != null ? money(c.monthly) : '';
   row.querySelector('.c-months').value = c.months || '';
-  row.querySelector('.x').onclick = () => { row.remove(); if (!$('contracts').children.length) addContract(); };
-  $('contracts').appendChild(row);
+  row.querySelector('.x').onclick = () => { item.remove(); if (!$('contracts').children.length) addContract(); recalcBalance(); };
+  if (c.base != null){ item.dataset.base = c.base; item.dataset.lf = c.lf || 0; }
+  if (c.lf > 0){
+    const lf = document.createElement('div');
+    lf.className = 'lf-row';
+    lf.innerHTML = `<span>Late fees (LF): <b>${c.lfCount} unpaid, ${$('currency').value} ${money(c.lf)}</b></span>
+      <select class="lf-mode" aria-label="What to do with the late fees">
+        <option value="keep">Leave them in</option>
+        <option value="remove">Remove them</option>
+        <option value="adjust">Adjust amount</option>
+      </select>
+      <input type="text" class="lf-amt" inputmode="decimal" placeholder="Late fees" aria-label="Adjusted late fees" hidden>`;
+    const mode = lf.querySelector('.lf-mode'), amt = lf.querySelector('.lf-amt');
+    amt.value = money(c.lf);
+    mode.onchange = () => { amt.hidden = mode.value !== 'adjust'; if (!amt.hidden) amt.focus(); recalcBalance(); };
+    amt.oninput = recalcBalance;
+    item.appendChild(lf);
+  }
+  $('contracts').appendChild(item);
+}
+
+// Outstanding balance = unpaid payments + the late fees chosen per contract (never the legal fee)
+function recalcBalance(){
+  const items = [...document.querySelectorAll('.c-item')].filter(i => i.dataset.base != null);
+  if (!items.length) return;
+  let total = 0;
+  items.forEach(i => {
+    let lf = Number(i.dataset.lf) || 0;
+    const mode = i.querySelector('.lf-mode');
+    if (mode && mode.value === 'remove') lf = 0;
+    if (mode && mode.value === 'adjust') lf = num(i.querySelector('.lf-amt').value) || 0;
+    total += Number(i.dataset.base) + lf;
+  });
+  $('balAmount').value = money(Math.round(total * 100) / 100);
 }
 
 /* ---------- read the statement PDF ---------- */
@@ -187,12 +230,25 @@ function parseStatement(text){
   const re = /([A-Za-z]{2,}\d{3,})\s+([A-Za-z][A-Za-z&.'-]*(?:\s+[A-Za-z][A-Za-z&.'-]*)*?)\s+M1\s+(\d{2}-[A-Za-z]{3}-\d{4})\s+Monthly Payment/g;
   const hits = []; let m;
   while ((m = re.exec(text))) hits.push({ m, index: m.index });
+  const stop = text.search(/Legal Fee|\bTotal\b/);
   const contracts = hits.map((h, i) => {
-    const end = i + 1 < hits.length ? hits[i+1].index : text.length;
+    let end = i + 1 < hits.length ? hits[i+1].index : text.length;
+    if (stop > h.index && stop < end) end = stop;
     const seg = text.slice(h.index, end);
+    // every invoice row: M#/L# date type, then invoice amount, paid amount, balance
+    const rowRe = /\b([ML])\d+\s+\d{2}-[A-Za-z]{3}-\d{4}\s+(Monthly Payment|LF)\b([\s\S]*?)(?=\b[ML]\d+\s+\d{2}-[A-Za-z]{3}-\d{4}\s|$)/g;
+    let base = 0, lf = 0, lfCount = 0, rows = 0, r;
+    while ((r = rowRe.exec(seg))){
+      const amts = (r[3].match(/[\d,]+\.\d{2}/g) || []).map(num);
+      const open = amts.length >= 3 ? amts[2] : 0;
+      rows++;
+      if (r[2] === 'LF'){ if (open > 0){ lf += open; lfCount++; } } else base += open;
+    }
     const pay = seg.match(/M1\s+\d{2}-[A-Za-z]{3}-\d{4}\s+Monthly Payment\s+[A-Za-z.]{0,6}\s*([\d,]+\.\d{2})/);
     const months = (seg.match(/\bM\d+\s+\d{2}-[A-Za-z]{3}-\d{4}\s+Monthly Payment/g) || []).length;
-    return { contract: h.m[1], vendor: h.m[2].trim(), date: pdfDateToIso(h.m[3]), monthly: pay ? num(pay[1]) : null, months: months || '' };
+    const r2 = x => Math.round(x * 100) / 100;
+    return { contract: h.m[1], vendor: h.m[2].trim(), date: pdfDateToIso(h.m[3]), monthly: pay ? num(pay[1]) : null, months: months || '',
+             base: rows ? r2(base) : null, lf: r2(lf), lfCount };
   });
   return { name: name ? name.trim() : '', currency: bal ? bal[1].replace(/\.$/,'') : '', balance: subtotal, stmtDate, contracts };
 }
@@ -210,8 +266,11 @@ $('pdfUpload').addEventListener('change', async e => {
     $('contracts').innerHTML = '';
     if (!d.contracts.length){ addContract(); st.className = 'status bad'; st.textContent = 'No contracts found in this file. Fill them in by hand.'; return; }
     d.contracts.forEach(addContract);
+    recalcBalance();
     st.className = 'status ok';
-    st.textContent = `Read ${d.contracts.length} contract${d.contracts.length > 1 ? 's' : ''} for ${d.name || 'this customer'}. Check the details below.`;
+    const lfn = d.contracts.filter(c => c.lf > 0).length;
+    st.textContent = `Read ${d.contracts.length} contract${d.contracts.length > 1 ? 's' : ''} for ${d.name || 'this customer'}.` +
+      (lfn ? ` ${lfn === 1 ? 'One contract has' : lfn + ' contracts have'} late fees: choose below to leave them in, remove them or adjust them.` : '') + ' Check the details below.';
   } catch (err){
     console.error(err);
     st.className = 'status bad'; st.textContent = 'Could not read this PDF. Fill in the details by hand.';
