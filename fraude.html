@@ -17,7 +17,7 @@
   .note{ background:var(--danger-soft); border:1px solid color-mix(in srgb, var(--danger) 25%, transparent); border-left:4px solid var(--danger);
          border-radius:var(--radius-sm); padding:10px 14px; font-size:14px; color:var(--ink); line-height:1.55; }
   .addgrid{ display:grid; grid-template-columns:2fr 1.5fr 1.2fr 1fr auto; gap:12px; align-items:end; }
-  .addgrid input[type=tel]{ width:100%; font:inherit; font-size:15px; border:1px solid var(--line-strong); border-radius:var(--radius-sm); padding:9px 11px; background:var(--surface); color:var(--ink); }
+  .addgrid input[type=tel], .addgrid input[type=password]{ width:100%; font:inherit; font-size:15px; border:1px solid var(--line-strong); border-radius:var(--radius-sm); padding:9px 11px; background:var(--surface); color:var(--ink); }
   @media (max-width:760px){ .addgrid{ grid-template-columns:1fr 1fr; } .addgrid .full{ grid-column:1 / -1; } }
   .addgrid label{ margin:0 0 6px; }
   .tools{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
@@ -42,6 +42,7 @@
   .copybox{ width:100%; min-height:60px; margin-top:8px; font:12px ui-monospace, Menlo, Consolas, monospace; }
   .confirm{ font-size:13px; color:var(--danger); }
   .backup{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .settings{ margin-top:4px; }
 </style>
 </head>
 <body data-tool="fraud">
@@ -58,7 +59,22 @@
   </div>
 
   <section class="section">
-    <div class="note"><b>Privé op deze computer.</b> Deze website is openbaar, dus de lijst wordt níet op de website opgeslagen maar alleen in Chrome op deze computer. Andere computers zien hem niet. Gebruik <b>Back-up downloaden</b> en <b>Back-up laden</b> om de lijst naar een andere computer te brengen.</div>
+    <div class="note" id="cloudNote"><b>Opgeslagen in Cloudflare.</b> De lijst staat in jullie eigen Cloudflare-database (D1), niet op deze openbare website. Iedereen met het wachtwoord ziet dezelfde lijst, op elke computer.</div>
+    <div class="settings" id="settings">
+      <h2 class="section-title" style="margin-top:16px">Verbinding met Cloudflare</h2>
+      <div class="addgrid" style="grid-template-columns:2fr 1.5fr auto">
+        <div><label for="sUrl">Worker-adres</label><input type="text" id="sUrl" placeholder="https://suave-fraude.jouwnaam.workers.dev"></div>
+        <div><label for="sKey">Wachtwoord (FRAUDE_KEY)</label><input type="password" id="sKey" autocomplete="off"></div>
+        <div><button class="btn btn-primary" type="button" id="connectBtn">Verbinden</button></div>
+      </div>
+      <div class="hint">Eén keer per computer invullen; Chrome onthoudt het. Hoe je de Worker maakt staat in <a href="fraude-worker.js" target="_blank" rel="noopener">fraude-worker.js</a>.</div>
+      <div id="connMsg" role="status"></div>
+    </div>
+    <div id="migrate" hidden class="msg" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span id="migrateTxt" style="flex:1"></span>
+      <button class="btn btn-secondary" type="button" id="migrateBtn">Naar Cloudflare uploaden</button>
+    </div>
+    <div class="hint" id="connState" style="margin-top:10px"></div>
   </section>
 
   <section class="section">
@@ -93,8 +109,10 @@
 
   <section class="section">
     <h2 class="section-title">Back-up</h2>
+    <p>Download af en toe een kopie van de lijst uit Cloudflare. Met <b>Back-up laden</b> zet je een kopie (terug) in Cloudflare.</p>
     <div class="backup">
       <button class="btn btn-secondary" type="button" id="exportBtn">Back-up downloaden</button>
+      <button class="btn btn-quiet" type="button" id="changeConn">Verbinding wijzigen</button>
       <label class="btn btn-secondary" style="margin:0;cursor:pointer">Back-up laden<input type="file" id="importFile" accept=".json,application/json" hidden></label>
       <span class="hint" id="backupMsg" style="margin:0"></span>
     </div>
@@ -112,12 +130,14 @@
 
 <script>
 (() => {
-  const KEY = "suave.fraude.v1";
+  const LOCAL_KEY = "suave.fraude.v1";        // old browser-only list (for one-time upload)
+  const CONN_KEY = "suave.fraude.conn";
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  const load = () => { try { const v = JSON.parse(localStorage.getItem(KEY) || "[]"); return Array.isArray(v) ? v : []; } catch(e){ return []; } };
-  let rows = load();
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(rows)); return true; } catch(e){ msg("formMsg", "Opslaan in deze browser lukte niet.", true); return false; } };
+  const getConn = () => { try { return JSON.parse(localStorage.getItem(CONN_KEY) || "{}"); } catch(e){ return {}; } };
+  const setConn = c => { try { localStorage.setItem(CONN_KEY, JSON.stringify(c)); } catch(e){} };
+  let conn = getConn();
+  let rows = [], connected = false, busy = false;
   const selected = new Set();
   let editing = null, confirmDel = null;
 
@@ -133,15 +153,79 @@
   const day = iso => { if (!iso) return "—"; try { return new Date(iso).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" }); } catch(e){ return "—"; } };
   const msg = (id, text, err) => { $(id).innerHTML = text ? `<div class="msg ${err ? "err" : ""}">${esc(text)}</div>` : ""; };
 
+  // ---------- Cloudflare API ----------
+  async function api(path, body){
+    if (!conn.url || !conn.key) throw new Error("Vul eerst het Worker-adres en wachtwoord in.");
+    let r;
+    try {
+      r = await fetch(conn.url.replace(/\/+$/, "") + path, {
+        method: body ? "POST" : "GET",
+        headers: Object.assign({ "X-Fraude-Key": conn.key }, body ? { "Content-Type": "application/json" } : {}),
+        body: body ? JSON.stringify(body) : undefined, cache: "no-store"
+      });
+    } catch(e){ throw new Error("Cloudflare is niet bereikbaar. Klopt het Worker-adres, en staat deze website in ALLOWED_ORIGINS?"); }
+    let j = {}; try { j = await r.json(); } catch(e){}
+    if (r.status === 401) throw new Error("Verkeerd wachtwoord.");
+    if (!r.ok) throw new Error(j.error || ("Fout " + r.status));
+    return j;
+  }
+  function setRows(list){
+    rows = (list || []).map(x => ({ email: x.email, name: x.name || "", phone: x.phone || "", monthly: Number(x.monthly) || 0, addedAt: x.added_at, lastSent: x.last_sent || "" }));
+    render();
+  }
+  async function refresh(){
+    try {
+      const j = await api("/contacts");
+      connected = true; setRows(j.rows);
+      $("settings").hidden = true;
+      $("connState").textContent = `Verbonden met Cloudflare · bijgewerkt ${new Date().toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}`;
+      checkMigrate();
+    } catch(e){
+      connected = false; $("settings").hidden = false; msg("connMsg", e.message, true); render();
+    }
+  }
+  async function act(path, body, okText){
+    if (busy) return false; busy = true; setBusy(true);
+    try { const j = await api(path, body); setRows(j.rows); if (okText) msg("formMsg", okText); return true; }
+    catch(e){ msg("formMsg", e.message, true); return false; }
+    finally { busy = false; setBusy(false); }
+  }
+  function setBusy(on){ ["addBtn", "markBtn", "migrateBtn"].forEach(id => { if ($(id)) $(id).disabled = on || (id === "markBtn" && !selected.size); }); }
+
+  // ---------- one-time upload of the old browser-only list ----------
+  function localRows(){ try { const v = JSON.parse(localStorage.getItem(LOCAL_KEY) || "[]"); return Array.isArray(v) ? v : []; } catch(e){ return []; } }
+  function checkMigrate(){
+    const lr = localRows();
+    $("migrate").hidden = !lr.length;
+    if (lr.length) $("migrateTxt").textContent = `Er staan nog ${lr.length} contact${lr.length === 1 ? "" : "en"} alleen in deze browser. Upload ze naar Cloudflare zodat ze overal zichtbaar zijn.`;
+  }
+  $("migrateBtn").addEventListener("click", async () => {
+    const lr = localRows();
+    if (await act("/contacts/import", { rows: lr }, `${lr.length} contacten naar Cloudflare geüpload.`)){
+      try { localStorage.removeItem(LOCAL_KEY); } catch(e){}
+      checkMigrate();
+    }
+  });
+
+  // ---------- connection ----------
+  $("sUrl").value = conn.url || ""; $("sKey").value = conn.key || "";
+  $("connectBtn").addEventListener("click", async () => {
+    const url = $("sUrl").value.trim().replace(/\/+$/, "");
+    if (!/^https:\/\/[^\s/]+/.test(url)){ msg("connMsg", "Vul het Worker-adres in, beginnend met https://", true); return; }
+    conn = { url, key: $("sKey").value.trim() }; setConn(conn);
+    msg("connMsg", "Verbinden…"); await refresh(); if (connected) msg("connMsg", "");
+  });
+  $("changeConn").addEventListener("click", () => { $("settings").hidden = false; $("sUrl").focus(); });
+
+  // ---------- list ----------
   function visible(){
     const q = $("search").value.trim().toLowerCase();
-    const list = rows.slice().sort((a, b) => String(a.name || a.email).localeCompare(String(b.name || b.email)));
-    return q ? list.filter(r => [r.name, r.email, r.phone].some(v => String(v || "").toLowerCase().includes(q))) : list;
+    return q ? rows.filter(r => [r.name, r.email, r.phone].some(v => String(v || "").toLowerCase().includes(q))) : rows;
   }
-
   function render(){
     const list = visible(), tb = $("rows");
-    if (!rows.length) tb.innerHTML = `<tr><td colspan="6" class="empty">Nog geen fraudegebruikers. Voeg de eerste toe met het formulier hierboven.</td></tr>`;
+    if (!connected) tb.innerHTML = `<tr><td colspan="6" class="empty">${conn.url ? "Verbinden met Cloudflare…" : "Vul hierboven het Worker-adres en wachtwoord in om de lijst te laden."}</td></tr>`;
+    else if (!rows.length) tb.innerHTML = `<tr><td colspan="6" class="empty">Nog geen fraudegebruikers. Voeg de eerste toe met het formulier hierboven.</td></tr>`;
     else if (!list.length) tb.innerHTML = `<tr><td colspan="6" class="empty">Niemand gevonden voor deze zoekopdracht.</td></tr>`;
     else tb.innerHTML = list.map(r => editing === r.email ? `<tr data-id="${esc(r.email)}">
         <td></td>
@@ -163,7 +247,8 @@
     const n = selected.size;
     $("count").textContent = rows.length ? `${rows.length} contact${rows.length === 1 ? "" : "en"}` : "";
     $("all").checked = list.length > 0 && list.every(r => selected.has(r.email));
-    $("copyBtn").disabled = !n; $("markBtn").disabled = !n;
+    $("copyBtn").disabled = !n; $("markBtn").disabled = !n || busy;
+    $("addBtn").disabled = !connected || busy;
     $("copyBtn").textContent = n ? `Kopieer voor Intercom (${n})` : "Kopieer voor Intercom";
     $("barTxt").textContent = n ? `${n} geselecteerd. Kopieer en klik in Intercom op 2 · Intercom Versturen.` : "Selecteer contacten om ze een bericht te sturen.";
   }
@@ -177,36 +262,30 @@
   $("all").addEventListener("change", e => { visible().forEach(r => e.target.checked ? selected.add(r.email) : selected.delete(r.email)); render(); });
   $("search").addEventListener("input", render);
 
-  $("rows").addEventListener("click", e => {
+  $("rows").addEventListener("click", async e => {
     const b = e.target.closest("[data-act]"); if (!b) return;
-    const id = b.closest("tr").dataset.id, act = b.dataset.act;
-    const r = rows.find(x => x.email === id);
-    if (act === "edit"){ editing = id; confirmDel = null; }
-    else if (act === "cancel"){ editing = null; }
-    else if (act === "del"){ confirmDel = id; }
-    else if (act === "delNo"){ confirmDel = null; }
-    else if (act === "delYes"){ rows = rows.filter(x => x.email !== id); selected.delete(id); confirmDel = null; save(); }
-    else if (act === "save" && r){
-      r.name = $("eName").value.trim(); r.phone = normPhone($("ePhone").value); r.monthly = Number($("eMonthly").value) || 0;
-      editing = null; save();
+    const id = b.closest("tr").dataset.id, a = b.dataset.act;
+    if (a === "edit"){ editing = id; confirmDel = null; render(); return; }
+    if (a === "cancel"){ editing = null; render(); return; }
+    if (a === "del"){ confirmDel = id; render(); return; }
+    if (a === "delNo"){ confirmDel = null; render(); return; }
+    if (a === "delYes"){ confirmDel = null; selected.delete(id); await act("/contacts/delete", { email: id }, "Verwijderd."); return; }
+    if (a === "save"){
+      const body = { email: id, name: $("eName").value.trim(), phone: normPhone($("ePhone").value), monthly: Number($("eMonthly").value) || 0, replace: true };
+      if (await act("/contacts/save", body, "Opgeslagen.")){ editing = null; render(); }
     }
-    render();
   });
 
-  $("addForm").addEventListener("submit", e => {
+  $("addForm").addEventListener("submit", async e => {
     e.preventDefault();
     const email = $("fEmail").value.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ msg("formMsg", "Vul een geldig e-mailadres in.", true); return; }
-    const ex = rows.find(r => r.email === email);
-    const name = $("fName").value.trim(), phone = normPhone($("fPhone").value), m = $("fMonthly").value;
-    if (ex){
-      if (name) ex.name = name; if (phone) ex.phone = phone; if (m !== "") ex.monthly = Number(m) || 0;
-    } else rows.push({ email, name, phone, monthly: Number(m) || 0, addedAt: new Date().toISOString(), lastSent: "" });
-    if (save()){
-      msg("formMsg", ex ? `${(ex && ex.name) || email} bijgewerkt.` : `${name || email} toegevoegd.`);
+    const name = $("fName").value.trim(), existed = rows.some(r => r.email === email);
+    const body = { email, name, phone: normPhone($("fPhone").value) };
+    if ($("fMonthly").value !== "") body.monthly = Number($("fMonthly").value) || 0;
+    if (await act("/contacts/save", body, existed ? `${name || email} bijgewerkt.` : `${name || email} toegevoegd.`)){
       $("addForm").reset(); $("fEmail").focus();
     }
-    render();
   });
 
   $("copyBtn").addEventListener("click", () => {
@@ -223,10 +302,9 @@
     } catch(e){ fallback(); }
   });
 
-  $("markBtn").addEventListener("click", () => {
-    const now = new Date().toISOString();
-    rows.forEach(r => { if (selected.has(r.email)) r.lastSent = now; });
-    save(); selected.clear(); render();
+  $("markBtn").addEventListener("click", async () => {
+    const emails = [...selected];
+    if (await act("/contacts/mark-sent", { emails }, `${emails.length} gemarkeerd als verstuurd.`)){ selected.clear(); render(); }
   });
 
   $("exportBtn").addEventListener("click", () => {
@@ -234,29 +312,25 @@
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
     a.download = "fraude-contacten-" + new Date().toISOString().slice(0, 10) + ".json"; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-    $("backupMsg").textContent = "Back-up gedownload. Bewaar dit bestand op een veilige plek.";
+    $("backupMsg").textContent = "Back-up gedownload. Bewaar dit bestand op een veilige plek: het bevat namen en telefoonnummers.";
   });
   $("importFile").addEventListener("change", async e => {
     const f = e.target.files && e.target.files[0]; if (!f) return;
     try {
       const data = JSON.parse(await f.text());
-      const incoming = Array.isArray(data) ? data : data.rows;
-      if (!Array.isArray(incoming)) throw new Error("geen lijst");
-      let added = 0, updated = 0;
-      for (const x of incoming){
-        const email = String(x.email || "").trim().toLowerCase(); if (!email) continue;
-        const ex = rows.find(r => r.email === email);
-        const v = { email, name: String(x.name || ""), phone: normPhone(x.phone), monthly: Number(x.monthly != null ? x.monthly : x.amount) || 0, addedAt: x.addedAt || new Date().toISOString(), lastSent: x.lastSent || "" };
-        if (ex){ Object.assign(ex, { name: v.name || ex.name, phone: v.phone || ex.phone, monthly: v.monthly || ex.monthly, lastSent: v.lastSent || ex.lastSent }); updated++; }
-        else { rows.push(v); added++; }
-      }
-      save(); render();
-      $("backupMsg").textContent = `Back-up geladen: ${added} toegevoegd, ${updated} bijgewerkt.`;
+      const incoming = (Array.isArray(data) ? data : data.rows || []).map(x => ({ email: x.email, name: x.name, phone: normPhone(x.phone), monthly: x.monthly != null ? x.monthly : x.amount }));
+      if (!incoming.length) throw new Error();
+      const ok = await act("/contacts/import", { rows: incoming }, `Back-up geladen in Cloudflare: ${incoming.length} contacten.`);
+      $("backupMsg").textContent = ok ? `Back-up geladen: ${incoming.length} contacten.` : "Laden mislukt, zie de melding hierboven.";
     } catch(err){ $("backupMsg").textContent = "Dit bestand is geen back-up van Fraude Contacten."; }
     e.target.value = "";
   });
 
+  // Reload the list when you come back to the tab, so changes by colleagues show up.
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && connected && !busy && !editing) refresh(); });
+
   render();
+  if (conn.url && conn.key) refresh(); else { $("settings").hidden = false; checkMigrate(); }
 })();
 </script>
 <script src="help-chat.js"></script>
