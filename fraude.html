@@ -55,7 +55,7 @@
 <main class="page">
   <div class="page-head">
     <h1>Fraude Contacten</h1>
-    <p>Alle fraudegebruikers op één plek, met naam, e-mail, telefoon en maandbedrag. Selecteer wie een bericht moet krijgen, klik <b>Kopieer voor Intercom</b> en klik in Intercom op <b>2 · Intercom Versturen</b>. Ze krijgen de WhatsApp-template <b>collection_template</b>, of een e-mail met hun maandbedrag als er geen telefoon is.</p>
+    <p>Alle fraudegebruikers op één plek, met naam, e-mail, telefoon en maandbedrag. Selecteer wie een bericht moet krijgen, klik <b>Kopieer voor Intercom</b> en klik in Intercom op <b>2 · Intercom Versturen</b>. Ze krijgen de WhatsApp-template <b>collection_template</b>, of een e-mail met hun maandbedrag in dollars als er geen telefoon is.</p>
   </div>
 
   <section class="section">
@@ -83,7 +83,7 @@
       <div class="full"><label for="fEmail">E-mail *</label><input type="email" id="fEmail" required placeholder="naam@voorbeeld.com"></div>
       <div><label for="fName">Naam</label><input type="text" id="fName" placeholder="Voornaam Achternaam"></div>
       <div><label for="fPhone">Telefoon</label><input type="tel" id="fPhone" placeholder="592 5242"></div>
-      <div><label for="fMonthly">Maandbedrag (Afl.)</label><input type="number" id="fMonthly" min="0" step="0.01" placeholder="0.00"></div>
+      <div><label for="fMonthly">Maandbedrag ($)</label><input type="number" id="fMonthly" min="0" step="0.01" placeholder="0.00"></div>
       <div><button class="btn btn-primary" type="submit" id="addBtn">Toevoegen</button></div>
     </form>
     <div class="hint">Telefoon zonder landcode krijgt automatisch +297. Bestaat het e-mailadres al? Dan wordt die regel bijgewerkt.</div>
@@ -152,7 +152,7 @@
     if (d.startsWith("297") && d.length === 10) return "+" + d;
     return "+297" + d.replace(/^0+/, "");
   }
-  const money = n => (Number(n) || 0).toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const money = n => (Number(n) || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const day = iso => { if (!iso) return "—"; try { return new Date(iso).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" }); } catch(e){ return "—"; } };
   const msg = (id, text, err) => { $(id).innerHTML = text ? `<div class="msg ${err ? "err" : ""}">${esc(text)}</div>` : ""; };
 
@@ -242,7 +242,7 @@
         <td><input type="checkbox" data-sel ${selected.has(r.email) ? "checked" : ""} aria-label="Selecteer ${esc(r.name || r.email)}"></td>
         <td class="name">${esc(r.name || "—")}<span class="sub">${esc(r.email)}</span></td>
         <td>${esc(r.phone || "geen → e-mail")}</td>
-        <td class="num">${Number(r.monthly) > 0 ? "Afl. " + money(r.monthly) : "—"}</td>
+        <td class="num">${Number(r.monthly) > 0 ? "$" + money(r.monthly) : "—"}</td>
         <td>${esc(day(r.lastSent))}</td>
         <td>${confirmDel === r.email
           ? `<span class="confirm">Verwijderen? <button class="rowbtn del" data-act="delYes">Ja</button><button class="rowbtn" data-act="delNo">Nee</button></span>`
