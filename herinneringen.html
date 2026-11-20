@@ -87,6 +87,11 @@
   </section>
 
   <section class="section">
+    <h2 class="section-title">Fraudegebruikers <span class="tag">Apart</span></h2>
+    <p>Fraudegebruikers staan in een aparte, besloten lijst: <a href="https://claude.ai/artifact/4j2brTqE6tXxo52wP2Pzgg" target="_blank" rel="noopener"><b>Fraude Contacten</b></a> (alleen te openen voor wie toegang heeft gekregen). Daar voeg je iemand toe met e-mail, naam, telefoon en maandbedrag. Selecteer wie een bericht moet krijgen, klik <b>Kopieer voor Intercom</b>, en klik in Intercom op <b>2 · Intercom Versturen</b> → <b>Plak lijst</b> → <b>Versturen</b>. Zij krijgen de WhatsApp-template <b>collection_template</b> (of een e-mail met hun maandbedrag als er geen telefoon is). Staan ze nog niet in Intercom, dan worden ze eerst aangemaakt.</p>
+  </section>
+
+  <section class="section">
     <h2 class="section-title">Welke template wanneer</h2>
     <table class="t">
       <tr><th>Dagen te laat</th><th>WhatsApp-template</th><th>Ingevuld met</th></tr>
@@ -226,7 +231,12 @@ function intercomVersturen(){
     { min: 60, max: 99999, key: "60plus", label: "60+ dagen",
       wa: "60_days_", params: p => [p.first, "Afl.", p.amount, String(p.days)],
       title: "Final notice: please pay now",
-      text: p => `Hi ${p.first}, you owe Afl. ${p.amount}. Your payment is more than ${p.days} days late.\n\nWe have tried to reach you several times about this.\n\nPlease pay all late invoices within 14 days. Until you pay, you will be charged 25 FL every day for each late invoice.` }
+      text: p => `Hi ${p.first}, you owe Afl. ${p.amount}. Your payment is more than ${p.days} days late.\n\nWe have tried to reach you several times about this.\n\nPlease pay all late invoices within 14 days. Until you pay, you will be charged 25 FL every day for each late invoice.` },
+    // Used only for lists from the Fraude Contacten page (never picked by days).
+    { min: -2, max: -2, key: "fraude", label: "Fraude",
+      wa: "collection_template", params: p => [p.first],
+      title: "Important: Account Past Due",
+      text: p => `Hi ${p.first},\n\nMy name is David from the Collections Department at Suave Solutions.\n\nThis is a formal notification that your account is significantly past due.${Number(p.amount) > 0 ? ` Your monthly payment is Afl. ${p.amount}.` : ""}\n\nTo prevent further administrative action, restrictions on your services, or referral to external agencies, please contact us immediately.` }
   ];
 
   const LS = "suaveIc.";
@@ -257,7 +267,7 @@ function intercomVersturen(){
     th{ font-size:12px; color:#6b7884; font-weight:600; position:sticky; top:-12px; background:#fff; }
     td.r{ text-align:right; white-space:nowrap; } td.n{ cursor:pointer; color:#1f5f92; }
     .pill{ font-size:11.5px; padding:1px 7px; border-radius:999px; white-space:nowrap; }
-    .b0{ background:#e3f4f0; color:#1f6e60; } .b1{ background:#fff3d6; color:#8a5a00; } .b2{ background:#fdecea; color:#922; }
+    .b0{ background:#e3f4f0; color:#1f6e60; } .b1{ background:#fff3d6; color:#8a5a00; } .b2{ background:#fdecea; color:#922; } .b3{ background:#2b2f36; color:#fff; }
     .st{ font-size:12px; } .st.ok{ color:#1f6e60; } .st.err{ color:#c0392b; }
     .prev{ white-space:pre-wrap; background:#f7f9fa; border:1px solid #e3e8ec; border-radius:6px; padding:8px; margin-top:4px; font-size:12.5px; color:#1d2a36; }
     .f{ border-top:1px solid #e3e8ec; padding:10px 14px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; } .f .sp{ flex:1; }
@@ -345,21 +355,26 @@ function intercomVersturen(){
 
   // ---------- list ----------
   function tplOf(days){ return TEMPLATES.findIndex(t => days >= t.min && days <= t.max); }
-  function recently(p){ const l = S.log[p.user_id + ":" + p.tpl]; return l && (Date.now() - new Date(l).getTime()) < 7 * 864e5; }
+  function recently(p){ const l = S.log[(p.user_id || p.email) + ":" + p.tpl]; return l && (Date.now() - new Date(l).getTime()) < 7 * 864e5; }
   function load(text){
     text = String(text || "").trim();
-    if (!text.startsWith("SUAVE-HERINNERINGEN:")) { info("Dit is niet de lijst van <b>1 · Suave Lijst</b>. Klik daar eerst op <b>Kopieer voor Intercom</b>.", "err"); return; }
+    if (!text.startsWith("SUAVE-HERINNERINGEN:")) { info("Dit is geen lijst van <b>1 · Suave Lijst</b> of de <b>Fraude Contacten</b>-pagina. Klik daar eerst op <b>Kopieer voor Intercom</b>.", "err"); return; }
     let data; try { data = JSON.parse(text.slice(20)); } catch(e){ info("De lijst is niet compleet gekopieerd. Probeer opnieuw.", "err"); return; }
+    const fraud = data.kind === "fraude";
     S.rows = (data.rows || []).map(r => {
       const name = String(r.name || "").trim();
       const w = name.split(" ")[0] || "";
       const p = { ...r, first: w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : "there", phone: normPhone(r.phone), status: "", open: false };
-      p.tpl = tplOf(p.days);
+      p.email = String(p.email || "").trim().toLowerCase();
+      p.amount = (Number(p.amount) || 0).toFixed(2);
+      p.days = Number(p.days) || 0;
+      p.tpl = fraud ? TEMPLATES.findIndex(t => t.key === "fraude") : tplOf(p.days);
       p.on = p.tpl >= 0 && !recently(p);
       return p;
     }).sort((a, b) => b.days - a.days);
     const age = data.at ? Math.round((Date.now() - new Date(data.at).getTime()) / 60000) : 0;
-    info(`${S.rows.length} klanten geladen${age > 60 ? ` (lijst is ${Math.round(age / 60)} uur oud — haal hem liever opnieuw op)` : ""}.`, age > 60 ? "" : "good");
+    S.rows = S.rows.filter(p => p.email);
+    info(`${S.rows.length} ${fraud ? "fraude-contacten" : "klanten"} geladen${age > 60 ? ` (lijst is ${Math.round(age / 60)} uur oud — haal hem liever opnieuw op)` : ""}.`, age > 60 ? "" : "good");
     $("manual").value = "";
     render();
   }
@@ -378,7 +393,7 @@ function intercomVersturen(){
         <td><input type="checkbox" data-on="${i}" ${p.on ? "checked" : ""} ${p.tpl < 0 ? "disabled" : ""}></td>
         <td class="n" data-open="${i}">${esc(p.name || p.email)}<div class="muted">${esc(p.email)} · ${esc(p.phone || "geen telefoon → e-mail")}${recently(p) ? " · al gestuurd deze week" : ""}</div>
           ${p.open && t ? `<div class="prev"><b>${esc(t.title)}</b>\n\n${esc(t.text(p))}</div>` : ""}</td>
-        <td class="r">${p.days}</td><td class="r">${esc(p.amount)}</td>
+        <td class="r">${t && t.key === "fraude" ? "–" : p.days}</td><td class="r">${esc(p.amount)}</td>
         <td>${t ? `<span class="pill b${p.tpl}">${esc(t.label)}</span>` : `<span class="muted">geen</span>`}</td>
         <td class="st ${/^(WhatsApp|E-mail|Test)/.test(p.status) ? "ok" : p.status ? "err" : ""}">${esc(p.status)}</td></tr>`; }).join("")}</tbody></table>`;
     root.querySelectorAll("[data-on]").forEach(el => el.addEventListener("change", () => { S.rows[+el.dataset.on].on = el.checked; count(); }));
@@ -425,7 +440,7 @@ function intercomVersturen(){
           catch(e){ await sleep(500); await sendEmail(c.id, t, p); how = "E-mail (WhatsApp mislukt: " + e.message + ")"; em++; }
         } else { await sendEmail(c.id, t, p); how = "E-mail (geen telefoon)"; em++; }
         p.status = how + added; p.on = false;
-        S.log[p.user_id + ":" + p.tpl] = new Date().toISOString(); put("log", S.log);
+        S.log[(p.user_id || p.email) + ":" + p.tpl] = new Date().toISOString(); put("log", S.log);
       } catch (e){ p.status = "Fout: " + (e.message || e); bad++; }
       render(); await sleep(1200);
     }
