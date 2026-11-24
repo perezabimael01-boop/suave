@@ -73,7 +73,7 @@
   .doc{ position:relative; background:#fff; width:794px; min-height:1123px; max-width:100%; margin:0 auto; padding:64px 72px 170px; color:#1C2A36;
         font:15px/1.55 Cambria,Caladea,Georgia,serif; box-shadow:0 1px 4px rgba(0,0,0,.12); }
   .doc .lh{ display:flex; justify-content:space-between; align-items:center; gap:20px; padding-bottom:4px; margin-bottom:26px; }
-  .doc .top-logo{ width:170px; height:auto; display:block; margin-left:-6px; }
+  .doc .top-logo{ width:215px; height:auto; display:block; margin-left:-6px; }
   .doc .lh .from{ text-align:right; font-size:12px; }
   .doc .lh .from b{ font-size:13px; }
   .doc .n-date{ margin:0 0 26px; }
@@ -686,11 +686,11 @@ function buildPdf(d){
   };
 
   // letterhead: logo left, company details right, blue rule
-  pdf.addImage(SUAVE_LOGO, 'PNG', L - 1.5, 14, 48, 16);
-  pdf.setFont(F,'bold'); pdf.setFontSize(10.5); pdf.setTextColor(...ink); pdf.text(COMPANY.name, R, 19, { align:'right' });
+  pdf.addImage(SUAVE_LOGO, 'PNG', L - 2, 13, 60, 20);
+  pdf.setFont(F,'bold'); pdf.setFontSize(10.5); pdf.setTextColor(...ink); pdf.text(COMPANY.name, R, 20, { align:'right' });
   pdf.setFont(F,'normal'); pdf.setFontSize(9); pdf.setTextColor(...soft);
-  pdf.text(COMPANY.addr, R, 23.8, { align:'right' }); pdf.text(COMPANY.email, R, 28.3, { align:'right' });
-  y = 44;
+  pdf.text(COMPANY.addr, R, 24.8, { align:'right' }); pdf.text(COMPANY.email, R, 29.3, { align:'right' });
+  y = 47;
   if (d.type !== 'notice'){ pdf.setFont(F,'normal'); pdf.setFontSize(12); pdf.setTextColor(...ink); pdf.text(fmtDate(d.date), L, y); y += 13; }
 
   if (d.type === 'statement'){
