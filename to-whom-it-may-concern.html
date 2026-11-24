@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="site.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="caladea-font.js"></script>
 <style>
   .field{ margin:0 0 16px; }
@@ -50,6 +51,16 @@
   .pay-note{ font-size:13px; color:var(--ink-soft); margin:5px 2px 0; }
   .doc h4{ font-size:15px; margin:26px 0 8px; }
   .doc .num{ text-align:right; }
+  .doc .st-orig{ font-family:"Times New Roman", Times, serif; color:#000; }
+  .doc .st-logo{ width:227px; height:auto; display:block; }
+  .doc .st-co{ display:flex; justify-content:space-between; font-size:13.5px; line-height:1.45; margin-top:18px; }
+  .doc .st-co b{ font-size:14.5px; }
+  .doc .st-orig hr{ border:0; border-top:1.6px solid #000; margin:10px 0 26px; }
+  .doc .st-orig h2{ font-size:34px; font-weight:700; margin:0 0 10px; color:#000; letter-spacing:0; }
+  .doc .st-acc{ font-size:18px; margin:0 0 8px; }
+  .doc .st-orig table{ border-collapse:collapse; width:100%; font-size:12.5px; margin-top:10px; }
+  .doc .st-orig th, .doc .st-orig td{ border:.8px solid #000; padding:6px; text-align:left; color:#000; background:#fff; }
+  .doc .st-orig td.blank{ border:0; }
   .doc tr.total td{ font-weight:700; border-top:2px solid #439BDA; border-bottom:none; }
   .check{ display:flex; align-items:center; gap:10px; font-weight:500; margin:6px 0 10px; }
   .bal-row{ display:none; }
@@ -481,17 +492,20 @@ function renderPreview(d){
   const sign = `<div class="sign">Sincerely,<br><br>${t.sign.map((l, i) => i === 0 && d.signer ? `<b>${esc(l)}</b>` : esc(l)).join('<br>')}</div>`;
   const foot = `<div class="foot"><img src="${SUAVE_LOGO}" alt="Suave"><small>${COMPANY.name} · ${COMPANY.addr} · ${COMPANY.email}</small></div>`;
   if (d.type === 'statement'){
-    const a = adjusted(d), right = i => STMT_RIGHT.includes(i) ? ' class="num"' : '';
-    const sumRow = (label, v, cls) => `<tr class="${cls}"><td colspan="8">${esc(label)}</td><td class="num">${money(v)}</td></tr>`;
-    $('doc').innerHTML = `${head}<div class="date">${fmtDate(d.date)}</div>
-      <h3>CUSTOMER STATEMENT</h3>
-      <p class="kv">Account: <b>${esc(d.name)}</b></p>
-      <p class="kv">Original statement: ${esc(fmtDate(d.stmtDate) || '—')}</p>
-      <p>Open balance: <b>${d.cur} ${money(a.total)}</b></p>
-      <table class="stmt"><thead><tr>${STMT_COLS.map((h, i) => `<th${right(i)}>${h}</th>`).join('')}</tr></thead><tbody>
-      ${stmtRows(a).map(r => `<tr${r.adj ? ' class="adj"' : ''}>${r.cells.map((v, i) => `<td${right(i)}>${esc(v)}</td>`).join('')}</tr>`).join('')}
-      ${sumRow('Subtotal (' + d.cur + ')', a.subtotal, 'sub')}${a.legal ? sumRow('Legal fee 15% (' + d.cur + ')', a.legal, 'sub') : ''}${sumRow('Total (' + d.cur + ')', a.total, 'total')}
-      </tbody></table>${foot}`;
+    const a = adjusted(d), b = v => `<b>${esc(stMoney(v, d))}</b>`;
+    $('doc').innerHTML = `<div class="st-orig">
+      <img class="st-logo" src="${SUAVE_LOGO}" alt="Suave">
+      <div class="st-co"><div><b>${COMPANY.name}</b><br>9100 S Dadeland Blvd. Ste 912, Miami, Florida<br>${COMPANY.email}</div><div>${stDate(d.date)}</div></div>
+      <hr>
+      <h2>Customer Statement</h2>
+      <p class="st-acc">Account: ${esc(d.name)}</p>
+      <p class="st-acc">Open Balance : <b><u>${esc(stMoney(a.total, d))}</u></b></p>
+      <table><thead><tr>${ST_COLS.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>
+      ${stRows(a, d).map(r => `<tr>${r.map(v => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}
+      <tr><td colspan="7" class="blank"></td><td>${b(a.subtotal)}</td></tr>
+      ${a.legal ? `<tr><td colspan="6" class="blank"></td><td><b>Legal Fee</b></td><td>${b(a.legal)}</td></tr>` : ''}
+      <tr><td colspan="6" class="blank"></td><td><b>Total</b></td><td>${b(a.total)}</td></tr>
+      </tbody></table></div>`;
     return;
   }
   if (d.type === 'notice'){
@@ -516,7 +530,70 @@ function renderPreview(d){
     <p>${esc(t.issued)}</p>${sign}${foot}`;
 }
 
+// ---- Customer Statement in the original Suave statement layout ----
+const ST_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function stDate(iso){ if (!iso) return 'N/A'; const d = new Date(iso + 'T00:00:00'); return String(d.getDate()).padStart(2,'0') + '-' + ST_MONTHS[d.getMonth()] + '-' + d.getFullYear(); }
+const stCur = c => c === 'AWG' ? 'FL' : c;
+const stMoney = (n, d) => stCur(d.cur) + ' ' + money(n);
+const ST_COLS = ['Contract #','Vendor','Invoice','Invoice date','Invoice type','Invoice amount','Invoice paid','Balance'];
+function stRows(a, d){
+  const out = [];
+  a.groups.forEach(g => g.rows.forEach((i, k) => out.push([k ? '' : g.no, k ? '' : (g.merchant || ''),
+    i.type === 'LFADJ' ? 'LF' : i.inv, stDate(i.due), (i.type === 'LF' || i.type === 'LFADJ') ? 'LF' : 'Monthly Payment',
+    stMoney(i.amount, d), stMoney(i.paid, d), stMoney(i.open, d)])));
+  return out;
+}
+function buildStatementPdf(d){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'pt', 'a4');
+  const a = adjusted(d), margin = 40, pageWidth = doc.internal.pageSize.getWidth(), pageHeight = doc.internal.pageSize.getHeight();
+  doc.setTextColor(0,0,0); doc.setDrawColor(0,0,0);
+  const logoW = 170, logoH = logoW * 100 / 300;
+  doc.addImage(SUAVE_LOGO, 'PNG', margin, margin, logoW, logoH);
+  const leftY = margin + logoH + 16;
+  doc.setFont('times','bold'); doc.setFontSize(11); doc.text(COMPANY.name, margin, leftY);
+  doc.setFont('times','normal'); doc.setFontSize(10);
+  doc.text('9100 S Dadeland Blvd. Ste 912, Miami, Florida', margin, leftY + 14); doc.text(COMPANY.email, margin, leftY + 28);
+  doc.setFontSize(11); doc.text(stDate(d.date), pageWidth - margin, leftY, { align:'right' });
+  const headBottom = Math.max(leftY + 40, margin + logoH + 20) + 6;
+  doc.setLineWidth(1.2); doc.line(margin, headBottom, pageWidth - margin, headBottom);
+  let y = headBottom + 32;
+  doc.setFont('times','bold'); doc.setFontSize(26); doc.text('Customer Statement', margin, y); y += 26;
+  doc.setFont('times','normal'); doc.setFontSize(14); doc.text(`Account: ${d.name}`, margin, y); y += 22;
+  const obLabel = 'Open Balance : ', obAmount = stMoney(a.total, d);
+  doc.text(obLabel, margin, y);
+  const labelW = doc.getTextWidth(obLabel);
+  doc.setFont('times','bold'); doc.text(obAmount, margin + labelW, y);
+  doc.setLineWidth(1); doc.line(margin + labelW, y + 3, margin + labelW + doc.getTextWidth(obAmount), y + 3);
+  y += 20;
+
+  const body = stRows(a, d);
+  const styles = { font:'times', fontSize:9.5, textColor:[0,0,0], lineColor:[0,0,0], lineWidth:0.6, cellPadding:5, halign:'left', valign:'middle', overflow:'linebreak' };
+  doc.setFont('times','bold'); doc.setFontSize(styles.fontSize);
+  const colMax = ST_COLS.map(h => doc.getTextWidth(h));
+  body.forEach(r => r.forEach((c, i) => { colMax[i] = Math.max(colMax[i], doc.getTextWidth(String(c))); }));
+  colMax[6] = Math.max(colMax[6], doc.getTextWidth('Legal Fee'), doc.getTextWidth('Total'));
+  [a.subtotal, a.total, a.legal].forEach(v => { colMax[7] = Math.max(colMax[7], doc.getTextWidth(stMoney(v, d))); });
+  const pad = styles.cellPadding * 2 + 2, avail = pageWidth - margin * 2;
+  let widths = colMax.map(w => w + pad); const sc = avail / widths.reduce((p, q) => p + q, 0); widths = widths.map(w => w * sc);
+  const columnStyles = {}; widths.forEach((w, i) => { columnStyles[i] = { cellWidth: w }; });
+
+  doc.autoTable({ startY: y, margin: { left: margin, right: margin, bottom: margin }, showHead: 'firstPage',
+    head: [ST_COLS], body, theme: 'grid', styles, columnStyles,
+    headStyles: { fillColor:[255,255,255], textColor:[0,0,0], fontStyle:'bold', halign:'left', lineColor:[0,0,0], lineWidth:0.6 },
+    alternateRowStyles: { fillColor:[255,255,255] } });
+
+  const totals = [[{ content:'', colSpan:7 }, { content: stMoney(a.subtotal, d), styles:{ fontStyle:'bold' } }]];
+  if (a.legal) totals.push([{ content:'', colSpan:6 }, { content:'Legal Fee', styles:{ fontStyle:'bold' } }, { content: stMoney(a.legal, d), styles:{ fontStyle:'bold' } }]);
+  totals.push([{ content:'', colSpan:6 }, { content:'Total', styles:{ fontStyle:'bold' } }, { content: stMoney(a.total, d), styles:{ fontStyle:'bold' } }]);
+  let ty = doc.lastAutoTable.finalY;
+  if (ty + totals.length * 24 + 10 > pageHeight - margin){ doc.addPage(); ty = margin; }
+  doc.autoTable({ startY: ty, margin: { left: margin, right: margin, bottom: margin }, body: totals, theme:'grid', tableWidth:'wrap', styles, columnStyles, rowPageBreak:'avoid' });
+  return doc;
+}
+
 function buildPdf(d){
+  if (d.type === 'statement' && window.jspdf && window.jspdf.jsPDF.API.autoTable) return buildStatementPdf(d);
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ unit:'mm', format:'a4' });
   // Caladea = free twin of Cambria (same letter widths); falls back to Times if the font file did not load
