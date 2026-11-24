@@ -37,8 +37,6 @@
   .l-re span{ text-decoration:underline; text-underline-offset:3px; }
   .l-name{ font-weight:700; }
   .l-sign{ margin-top:34px; }
-  .l-sign .gap{ height:52px; }
-  .l-sign .line{ width:260px; border-top:1px solid #1A1F27; padding-top:6px; line-height:1.45; }
   .l-foot{ position:absolute; left:84px; right:84px; bottom:36px; padding-top:10px; border-top:.75px solid #C9D1DC; font-size:10.5px; color:#6B7685; display:flex; justify-content:space-between; gap:12px; }
   .zoom-box{ margin:0 auto; overflow:hidden; }
   .zoom{ width:794px; transform-origin:top left; }
@@ -89,11 +87,6 @@
         <p class="hint">Leave empty to leave it off the letter</p>
         <input type="text" id="acct" placeholder="e.g. 100245" autocomplete="off">
       </div>
-      <div class="field">
-        <label for="signer">Signed by <span class="hint" style="font-weight:400">(optional)</span></label>
-        <p class="hint">Name above the signature line</p>
-        <input type="text" id="signer" placeholder="e.g. David Perez" autocomplete="off">
-      </div>
     </div>
     <div class="actions">
       <button type="button" class="btn btn-primary" id="pdfBtn">Download PDF</button>
@@ -123,8 +116,7 @@
 
         <div class="l-sign">
           <p style="margin:0">Sincerely,</p>
-          <div class="gap"></div>
-          <div class="line"><b id="outSigner"></b><span id="outSignerBr"><br></span>Customer Accounts Department<br>Suave Solutions LLC</div>
+          <p style="margin:14px 0 0;line-height:1.45">Customer Accounts Department<br>Suave Solutions LLC</p>
         </div>
 
         <div class="l-foot"><span>Suave Solutions LLC &nbsp;·&nbsp; 9100 S Dadeland Blvd., Suite 912, Miami, FL 33156</span><span>paywithsuave.com</span></div>
@@ -136,7 +128,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 const $ = id => document.getElementById(id);
-const nameIn = $("fullName"), dateIn = $("letterDate"), acctIn = $("acct"), signerIn = $("signer");
+const nameIn = $("fullName"), dateIn = $("letterDate"), acctIn = $("acct");
 const pad = n => String(n).padStart(2, "0");
 const now = new Date();
 dateIn.value = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
@@ -149,13 +141,11 @@ function longDate(v){
 const clean = el => el.value.replace(/\s+/g, " ").trim();
 function cleanName(){ return clean(nameIn); }
 function render(){
-  const n = cleanName(), a = clean(acctIn), sg = clean(signerIn), d = longDate(dateIn.value);
+  const n = cleanName(), a = clean(acctIn), d = longDate(dateIn.value);
   $("outName").textContent = n || "[Customer full name]";
   $("outDate").textContent = d;
   $("outDate2").textContent = d;
   $("outRef").textContent = a ? "Account No. " + a : "";
-  $("outSigner").textContent = sg;
-  $("outSignerBr").style.display = sg ? "" : "none";
   if(n) { nameIn.classList.remove("bad"); $("msg").textContent = ""; }
 }
 function fit(){
@@ -170,7 +160,7 @@ function ok(){
   if(!dateIn.value){ $("msg").textContent = "Pick a letter date."; dateIn.focus(); return false; }
   return true;
 }
-[nameIn, dateIn, acctIn, signerIn].forEach(el => el.addEventListener("input", render));
+[nameIn, dateIn, acctIn].forEach(el => el.addEventListener("input", render));
 window.addEventListener("resize", fit);
 render(); fit();
 
