@@ -491,10 +491,7 @@ function renderPreview(d){
       <table class="stmt"><thead><tr>${STMT_COLS.map((h, i) => `<th${right(i)}>${h}</th>`).join('')}</tr></thead><tbody>
       ${stmtRows(a).map(r => `<tr${r.adj ? ' class="adj"' : ''}>${r.cells.map((v, i) => `<td${right(i)}>${esc(v)}</td>`).join('')}</tr>`).join('')}
       ${sumRow('Subtotal (' + d.cur + ')', a.subtotal, 'sub')}${a.legal ? sumRow('Legal fee 15% (' + d.cur + ')', a.legal, 'sub') : ''}${sumRow('Total (' + d.cur + ')', a.total, 'total')}
-      </tbody></table>
-      <h4>Adjustments</h4>
-      ${a.notes.length ? `<ul class="adj-list">${a.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : '<p>No late fees were removed or adjusted.</p>'}
-      <p>${esc(stmtNote(d))}</p>${foot}`;
+      </tbody></table>${foot}`;
     return;
   }
   if (d.type === 'notice'){
@@ -621,9 +618,6 @@ function buildPdf(d){
     if (a.legal) totals.push([`Legal fee 15% (${d.cur})`, ...blank.slice(1), money(a.legal)]);
     totals.push([`Total (${d.cur})`, ...blank.slice(1), money(a.total)]);
     table(STMT_COLS, [24, 16, 13, 20, 27, 17, 16, 18, 15], stmtRows(a), totals, false, { right: STMT_RIGHT, size: 9 });
-    heading('Adjustments');
-    if (a.notes.length) a.notes.forEach(n => para('•  ' + n, 2)); else para('No late fees were removed or adjusted.', 2);
-    y += 4; para(stmtNote(d), 4);
     footer();
     return pdf;
   }
