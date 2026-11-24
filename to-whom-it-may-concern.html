@@ -77,7 +77,9 @@
   .doc .lh .from{ text-align:right; font-size:12px; }
   .doc .lh .from b{ font-size:13px; }
   .doc .n-date{ margin:0 0 26px; }
-  .doc .n-title{ font-size:16px; letter-spacing:.06em; margin:0 0 22px; padding-bottom:8px; border-bottom:1px solid #D5DFEC; }
+  .doc .n-title{ display:flex; justify-content:space-between; align-items:baseline; gap:16px; margin:0 0 22px; padding-bottom:8px; border-bottom:1px solid #D5DFEC; }
+  .doc .n-title h3{ font-size:16px; letter-spacing:.06em; margin:0; }
+  .doc .n-title span{ font-size:14px; white-space:nowrap; }
   .doc .n-cust{ display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:0 0 16px; }
   .doc .n-cust span{ color:#5C7286; }
   .doc .n-payoff{ background:#F3F7FC; border-left:3px solid #347AF0; padding:12px 16px; margin:6px 0 20px; }
@@ -507,8 +509,7 @@ function renderPreview(d){
     return;
   }
   if (d.type === 'notice'){
-    $('doc').innerHTML = `${head}<p class="n-date">${fmtDate(d.date)}</p>
-      <h3 class="n-title">NOTICE OF OUTSTANDING OBLIGATIONS</h3>
+    $('doc').innerHTML = `${head}<div class="n-title"><h3>NOTICE OF OUTSTANDING OBLIGATIONS</h3><span>${fmtDate(d.date)}</span></div>
       <p>To Whom It May Concern,</p>
       <div class="n-cust"><span>Customer name</span><b>${esc(d.name)}</b></div>
       <p>${esc(t.noticeIntro)}</p>
@@ -690,9 +691,8 @@ function buildPdf(d){
   pdf.setFont(F,'normal'); pdf.setFontSize(9); pdf.setTextColor(...soft);
   pdf.text(COMPANY.addr, R, 23.8, { align:'right' }); pdf.text(COMPANY.email, R, 28.3, { align:'right' });
   pdf.setDrawColor(52,122,240); pdf.setLineWidth(0.6); pdf.line(L, 34, R, 34);
-  y = 46;
-  pdf.setFont(F,'normal'); pdf.setFontSize(12); pdf.setTextColor(...ink); pdf.text(fmtDate(d.date), L, y);
-  y += 13;
+  y = 48;
+  if (d.type !== 'notice'){ pdf.setFont(F,'normal'); pdf.setFontSize(12); pdf.setTextColor(...ink); pdf.text(fmtDate(d.date), L, y); y += 13; }
 
   if (d.type === 'statement'){
     const a = adjusted(d);
@@ -713,6 +713,7 @@ function buildPdf(d){
   if (d.type === 'notice'){
     pdf.setFont(F,'bold'); pdf.setFontSize(13); pdf.setTextColor(...ink); pdf.setCharSpace(0.5);
     pdf.text('NOTICE OF OUTSTANDING OBLIGATIONS', L, y); pdf.setCharSpace(0);
+    pdf.setFont(F,'normal'); pdf.setFontSize(11.5); pdf.text(fmtDate(d.date), R, y, { align:'right' });
     pdf.setDrawColor(213,223,236); pdf.setLineWidth(0.3); pdf.line(L, y + 3.5, R, y + 3.5);
     y += 14;
     para('To Whom It May Concern,', 4);
