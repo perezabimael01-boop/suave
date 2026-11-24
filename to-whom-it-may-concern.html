@@ -52,14 +52,14 @@
   .doc h4{ font-size:15px; margin:26px 0 8px; }
   .doc .num{ text-align:right; }
   .doc .st-orig{ font-family:"Times New Roman", Times, serif; color:#000; }
-  .doc .st-logo{ width:227px; height:auto; display:block; }
-  .doc .st-co{ display:flex; justify-content:space-between; font-size:13.5px; line-height:1.45; margin-top:18px; }
-  .doc .st-co b{ font-size:14.5px; }
-  .doc .st-orig hr{ border:0; border-top:1.6px solid #000; margin:10px 0 26px; }
-  .doc .st-orig h2{ font-size:34px; font-weight:700; margin:0 0 10px; color:#000; letter-spacing:0; }
-  .doc .st-acc{ font-size:18px; margin:0 0 8px; }
-  .doc .st-orig table{ border-collapse:collapse; width:100%; font-size:11px; margin-top:10px; }
-  .doc .st-orig th, .doc .st-orig td{ border:.8px solid #000; padding:5px 6px; text-align:left; color:#000; background:#fff; line-height:1.3; }
+  .doc .st-logo{ width:187px; height:auto; display:block; margin-left:-5px; }
+  .doc .st-co{ display:flex; justify-content:space-between; font-size:12.7px; line-height:1.4; margin-top:14px; }
+  .doc .st-co b{ font-size:14px; }
+  .doc .st-orig hr{ border:0; border-top:1.3px solid #000; margin:12px 0 30px; }
+  .doc .st-orig h2{ font-size:29px; font-weight:700; margin:0 0 12px; color:#000; letter-spacing:0; }
+  .doc .st-acc{ font-size:16px; margin:0 0 6px; }
+  .doc .st-orig table{ border-collapse:collapse; width:100%; font-size:12px; margin-top:20px; }
+  .doc .st-orig th, .doc .st-orig td{ border:.8px solid #000; padding:6px 7px; text-align:left; color:#000; background:#fff; line-height:1.3; }
   .doc .st-orig td:nth-child(n+4){ white-space:nowrap; }
   .doc .st-orig tr.st-tot td{ white-space:nowrap; font-weight:700; }
   .doc tr.total td{ font-weight:700; }
@@ -544,48 +544,57 @@ function stRows(a, d){
 function buildStatementPdf(d){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('p', 'pt', 'a4');
-  const a = adjusted(d), margin = 40, pageWidth = doc.internal.pageSize.getWidth(), pageHeight = doc.internal.pageSize.getHeight();
+  const a = adjusted(d), margin = 48, pageWidth = doc.internal.pageSize.getWidth(), pageHeight = doc.internal.pageSize.getHeight();
   doc.setTextColor(0,0,0); doc.setDrawColor(0,0,0);
-  const logoW = 170, logoH = logoW * 100 / 300;
-  doc.addImage(SUAVE_LOGO, 'PNG', margin, margin, logoW, logoH);
-  const leftY = margin + logoH + 16;
-  doc.setFont('times','bold'); doc.setFontSize(11); doc.text(COMPANY.name, margin, leftY);
-  doc.setFont('times','normal'); doc.setFontSize(10);
-  doc.text('9100 S Dadeland Blvd. Ste 912, Miami, Florida', margin, leftY + 14); doc.text(COMPANY.email, margin, leftY + 28);
-  doc.setFontSize(11); doc.text(stDate(d.date), pageWidth - margin, leftY, { align:'right' });
-  const headBottom = Math.max(leftY + 40, margin + logoH + 20) + 6;
-  doc.setLineWidth(1.2); doc.line(margin, headBottom, pageWidth - margin, headBottom);
-  let y = headBottom + 32;
-  doc.setFont('times','bold'); doc.setFontSize(26); doc.text('Customer Statement', margin, y); y += 26;
-  doc.setFont('times','normal'); doc.setFontSize(14); doc.text(`Account: ${d.name}`, margin, y); y += 22;
+  const logoW = 140, logoH = logoW * 100 / 300;
+  doc.addImage(SUAVE_LOGO, 'PNG', margin - 4, 40, logoW, logoH);
+  const leftY = 40 + logoH + 14;
+  doc.setFont('times','bold'); doc.setFontSize(10.5); doc.text(COMPANY.name, margin, leftY);
+  doc.setFont('times','normal'); doc.setFontSize(9.5);
+  doc.text('9100 S Dadeland Blvd. Ste 912, Miami, Florida', margin, leftY + 13); doc.text(COMPANY.email, margin, leftY + 26);
+  doc.setFontSize(10.5); doc.text(stDate(d.date), pageWidth - margin, leftY, { align:'right' });
+  const headBottom = leftY + 38;
+  doc.setLineWidth(1); doc.line(margin, headBottom, pageWidth - margin, headBottom);
+  let y = headBottom + 36;
+  doc.setFont('times','bold'); doc.setFontSize(22); doc.text('Customer Statement', margin, y); y += 24;
+  doc.setFont('times','normal'); doc.setFontSize(12); doc.text(`Account: ${d.name}`, margin, y); y += 18;
   const obLabel = 'Open Balance : ', obAmount = stMoney(a.total, d);
   doc.text(obLabel, margin, y);
   const labelW = doc.getTextWidth(obLabel);
   doc.setFont('times','bold'); doc.text(obAmount, margin + labelW, y);
-  doc.setLineWidth(1); doc.line(margin + labelW, y + 3, margin + labelW + doc.getTextWidth(obAmount), y + 3);
+  doc.setLineWidth(0.8); doc.line(margin + labelW, y + 2.5, margin + labelW + doc.getTextWidth(obAmount), y + 2.5);
   y += 20;
 
   const body = stRows(a, d);
-  const styles = { font:'times', fontSize:8.5, textColor:[0,0,0], lineColor:[0,0,0], lineWidth:0.6, cellPadding:4, halign:'left', valign:'middle', overflow:'linebreak' };
+  const styles = { font:'times', fontSize:9, textColor:[0,0,0], lineColor:[0,0,0], lineWidth:0.5, cellPadding:{ top:4.5, bottom:4.5, left:5, right:5 }, halign:'left', valign:'middle', overflow:'linebreak' };
   const totals = [[{ content:'', colSpan:6 }, 'Subtotal', stMoney(a.subtotal, d)]];
   if (a.legal) totals.push([{ content:'', colSpan:6 }, 'Legal Fee', stMoney(a.legal, d)]);
   totals.push([{ content:'', colSpan:6 }, 'Total', stMoney(a.total, d)]);
-  // measure every column (bold, so totals fit); vendor + invoice type take what is left and may wrap
-  doc.setFont('times','bold'); doc.setFontSize(styles.fontSize);
-  const colMax = ST_COLS.map(h => doc.getTextWidth(h));
-  body.forEach(r => r.forEach((c, i) => { colMax[i] = Math.max(colMax[i], doc.getTextWidth(String(c))); }));
-  totals.forEach(r => { colMax[6] = Math.max(colMax[6], doc.getTextWidth(r[1])); colMax[7] = Math.max(colMax[7], doc.getTextWidth(r[2])); });
-  const pad = styles.cellPadding * 2 + 2, avail = pageWidth - margin * 2;
-  let widths = colMax.map(w => w + pad);
-  const fixed = widths.reduce((p, q, i) => p + (i === 1 || i === 4 ? 0 : q), 0);
-  const flex = widths[1] + widths[4], room = avail - fixed;
-  if (room > 0 && room < flex){ widths[1] = room * widths[1] / flex; widths[4] = room * widths[4] / flex; }
-  else { const sc = avail / widths.reduce((p, q) => p + q, 0); widths = widths.map(w => w * sc); }
+  // pick the biggest text size (9 down to 7.5) where every column fits on one line; only the vendor may wrap
+  const pad = 10, avail = pageWidth - margin * 2;
+  let widths;
+  for (let fs = 9; fs >= 7.5; fs -= 0.5){
+    styles.fontSize = fs;
+    doc.setFont('times','bold'); doc.setFontSize(fs);
+    const colMax = ST_COLS.map(h => doc.getTextWidth(h));
+    body.forEach(r => r.forEach((c, i) => { colMax[i] = Math.max(colMax[i], doc.getTextWidth(String(c))); }));
+    totals.forEach(r => { colMax[6] = Math.max(colMax[6], doc.getTextWidth(r[1])); colMax[7] = Math.max(colMax[7], doc.getTextWidth(r[2])); });
+    widths = colMax.map(w => w + pad);
+    const others = widths.reduce((p, q, i) => p + (i === 1 ? 0 : q), 0);
+    const vendorMin = doc.getTextWidth('Vendor') + pad + 18;
+    if (avail - others >= vendorMin || fs === 7.5){
+      const spare = avail - others;
+      if (spare >= widths[1]) { const extra = spare - widths[1]; widths = widths.map((w, i) => w + extra * w / (avail - spare + widths[1])); }
+      else widths[1] = Math.max(spare, vendorMin);
+      break;
+    }
+  }
+  styles.cellPadding = { top:4.5, bottom:4.5, left:5, right:5 };
   const columnStyles = {}; widths.forEach((w, i) => { columnStyles[i] = { cellWidth: w }; });
   const bodyAll = body.concat(totals.map(r => r.map(c => typeof c === 'string' ? { content: c, styles:{ fontStyle:'bold' } } : c)));
   doc.autoTable({ startY: y, margin: { left: margin, right: margin, bottom: margin }, showHead: 'firstPage',
     head: [ST_COLS], body: bodyAll, theme: 'grid', styles, columnStyles, rowPageBreak: 'avoid',
-    headStyles: { fillColor:[255,255,255], textColor:[0,0,0], fontStyle:'bold', halign:'left', lineColor:[0,0,0], lineWidth:0.6 },
+    headStyles: { fillColor:[255,255,255], textColor:[0,0,0], fontStyle:'bold', halign:'left', lineColor:[0,0,0], lineWidth:0.5 },
     alternateRowStyles: { fillColor:[255,255,255] } });
   return doc;
 }
