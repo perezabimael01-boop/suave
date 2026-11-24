@@ -159,19 +159,6 @@
       <label class="check" data-for="twimc notice"><input type="checkbox" id="showUsd" checked> Also show the pay-off amount in USD (rate 1.79)</label>
     </div>
 
-    <div class="section" data-for="twimc notice">
-      <h2>Signature</h2>
-      <div class="row">
-        <div class="field">
-          <label for="signer">Signed by <span class="opt">optional</span></label>
-          <input type="text" id="signer" placeholder="e.g. Gio">
-        </div>
-        <div class="field">
-          <label for="signTitle">Title</label>
-          <input type="text" id="signTitle" value="Suave Customer Support, Authorized Representative">
-        </div>
-      </div>
-    </div>
 
     <div class="actions">
       <button type="button" class="btn btn-primary" id="createBtn">Create letter</button>
@@ -377,7 +364,7 @@ function collect(){
     type, name: $('custName').value.trim(), date: $('letterDate').value || todayIso(), cur: $('currency').value,
     showBal: type === 'notice' || $('showBal').checked, bal: num($('balAmount').value), balDate: $('balDate').value,
     showPays: type === 'twimc' && $('showPays').checked, showUsd: $('showUsd').checked && $('currency').value !== 'USD',
-    signer: $('signer').value.trim(), signTitle: $('signTitle').value.trim(), contracts,
+    signer: '', signTitle: '', contracts,
     addLegal: $('addLegal').checked, stmtDate: $('balDate').value
   };
 }
