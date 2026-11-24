@@ -31,7 +31,7 @@
   .lf-row select{ width:auto; min-height:36px; padding:4px 32px 4px 10px; }
   .lf-row .lf-amt{ width:120px; min-height:36px; padding:4px 10px; }
   .lf-row .lf-amt[hidden]{ display:none; }
-  .types{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:0 0 18px; }
+  .types{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin:0 0 18px; }
   .type-card{ display:flex; gap:12px; align-items:flex-start; border:1.5px solid var(--line); border-radius:var(--radius); padding:13px 14px; cursor:pointer; background:var(--surface); }
   .type-card input{ margin-top:3px; }
   .type-card b{ display:block; font-size:15px; }
@@ -109,8 +109,7 @@
     <div class="section">
       <h2>Letter</h2>
       <div class="types" role="radiogroup" aria-label="Type of letter">
-        <label class="type-card"><input type="radio" name="ltype" value="twimc" checked><div><b>To Whom It May Concern</b><span>Full letter: every subscription with what was paid in total, outstanding balance and pay-off amount.</span></div></label>
-        <label class="type-card"><input type="radio" name="ltype" value="notice"><div><b>Notice of Outstanding Obligations</b><span>Short letter: open payment plans, monthly amount, pending payments and the pay-off amount.</span></div></label>
+        <label class="type-card"><input type="radio" name="ltype" value="notice" checked><div><b>Notice of Outstanding Obligations</b><span>Short letter: open payment plans, monthly amount, pending payments and the pay-off amount.</span></div></label>
         <label class="type-card"><input type="radio" name="ltype" value="statement"><div><b>Customer Statement</b><span>The customer statement again, with your late-fee choices applied and a list of what was adjusted.</span></div></label>
       </div>
       <div class="row">

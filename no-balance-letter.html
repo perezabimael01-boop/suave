@@ -6,7 +6,7 @@
 <title>No Balance Letter – Suave</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Caladea:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="site.css">
 <style>
@@ -23,21 +23,28 @@
   .msg{ font-size:13.5px; color:#B42318; min-height:1.2em; margin:10px 0 0; }
 
   .paper-wrap{ background:#EEF2F7; border-radius:18px; padding:22px; overflow:auto; }
-  .letter{ width:794px; min-height:1060px; margin:0 auto; background:#fff; color:#1C2A36; box-sizing:border-box; padding:72px 80px 64px;
-    font:15px/1.65 "IBM Plex Sans", Arial, sans-serif; box-shadow:0 10px 30px -18px rgba(20,40,80,.4); position:relative; }
-  .l-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:24px; padding-bottom:22px; border-bottom:3px solid #347AF0; }
-  .l-logo{ width:150px; height:auto; display:block; }
-  .l-co{ text-align:right; font-size:12.5px; line-height:1.55; color:#5C7286; }
-  .l-co b{ color:#1C2A36; font-size:13.5px; }
-  .letter .l-date{ margin:34px 0 28px; }
-  .letter .l-re{ font-weight:700; margin:0 0 22px; }
-  .letter p{ margin:0 0 16px; }
+  .letter{ width:794px; height:1123px; margin:0 auto; background:#fff; color:#1A1F27; box-sizing:border-box; padding:64px 84px 0;
+    font:15px/1.6 Cambria, Caladea, Georgia, "Times New Roman", serif; box-shadow:0 10px 30px -18px rgba(20,40,80,.4); position:relative; overflow:hidden; }
+  .l-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:24px; padding-bottom:16px; border-bottom:1.5px solid #1A2B45; }
+  .l-logo{ width:138px; height:auto; display:block; }
+  .l-co{ text-align:right; font-size:11.5px; line-height:1.5; color:#4A5566; letter-spacing:.01em; }
+  .l-co b{ color:#1A2B45; font-size:12.5px; letter-spacing:.04em; text-transform:uppercase; }
+  .l-rule2{ height:0; border-top:.75px solid #1A2B45; margin-top:2px; }
+  .l-meta{ display:flex; justify-content:space-between; margin:30px 0 26px; font-size:14px; }
+  .l-meta .ref{ color:#4A5566; }
+  .letter p{ margin:0 0 14px; text-align:justify; }
+  .l-re{ font-weight:700; margin:0 0 20px !important; text-align:left !important; }
+  .l-re span{ text-decoration:underline; text-underline-offset:3px; }
   .l-name{ font-weight:700; }
-  .l-seal{ display:flex; align-items:center; gap:14px; margin:28px 0; padding:16px 20px; border-radius:14px; background:#E9F7F0; border:1px solid #BFE6D2; }
-  .l-seal svg{ flex:none; }
-  .l-seal div{ font-weight:600; color:#1F7A55; }
-  .l-sign{ margin-top:40px; }
-  .l-foot{ position:absolute; left:80px; right:80px; bottom:40px; padding-top:14px; border-top:1px solid #E3E9F0; font-size:11.5px; color:#8A99A8; display:flex; justify-content:space-between; }
+  .l-sum{ width:100%; border-collapse:collapse; margin:22px 0 24px; font-size:14px; }
+  .l-sum caption{ text-align:left; font-weight:700; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:#1A2B45; padding:0 0 6px; }
+  .l-sum th, .l-sum td{ border:1px solid #C9D1DC; padding:8px 14px; text-align:left; }
+  .l-sum th{ width:42%; background:#F4F6F9; font-weight:400; color:#4A5566; }
+  .l-sum td{ font-weight:700; }
+  .l-sign{ margin-top:34px; }
+  .l-sign .gap{ height:52px; }
+  .l-sign .line{ width:260px; border-top:1px solid #1A1F27; padding-top:6px; line-height:1.45; }
+  .l-foot{ position:absolute; left:84px; right:84px; bottom:36px; padding-top:10px; border-top:.75px solid #C9D1DC; font-size:10.5px; color:#6B7685; display:flex; justify-content:space-between; gap:12px; }
   .zoom-box{ margin:0 auto; overflow:hidden; }
   .zoom{ width:794px; transform-origin:top left; }
   @media (max-width:900px){ .paper-wrap{ padding:12px; } }
@@ -47,7 +54,7 @@
     .page{ padding:0 !important; max-width:none !important; animation:none !important; }
     .section{ box-shadow:none !important; padding:0 !important; margin:0 !important; background:none !important; }
     .paper-wrap{ background:none; padding:0; }
-    .letter{ box-shadow:none; margin:0; width:auto; min-height:0; }
+    .letter{ box-shadow:none; margin:0; width:210mm; height:296mm; }
     .zoom{ transform:none !important; width:auto; } .zoom-box{ width:auto !important; height:auto !important; overflow:visible; }
     @page{ size:A4; margin:0; }
   }
@@ -64,7 +71,7 @@
 <main class="page">
   <div class="page-head">
     <h1>No Balance Letter</h1>
-    <p>A letter confirming that a customer has no open balance with Suave. Just type the customer's full name and download the PDF.</p>
+    <p>A formal letter confirming that a customer has no outstanding balance with Suave. Type the customer's full name, add an account number if you have one, and download the PDF.</p>
   </div>
 
   <div class="section no-print">
@@ -81,6 +88,18 @@
         <input type="date" id="letterDate">
       </div>
     </div>
+    <div class="row2">
+      <div class="field">
+        <label for="acct">Account number <span class="hint" style="font-weight:400">(optional)</span></label>
+        <p class="hint">Leave empty to leave it off the letter</p>
+        <input type="text" id="acct" placeholder="e.g. 100245" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="signer">Signed by <span class="hint" style="font-weight:400">(optional)</span></label>
+        <p class="hint">Name above the signature line</p>
+        <input type="text" id="signer" placeholder="e.g. David Perez" autocomplete="off">
+      </div>
+    </div>
     <div class="actions">
       <button type="button" class="btn btn-primary" id="pdfBtn">Download PDF</button>
       <button type="button" class="btn" id="printBtn">Print</button>
@@ -93,24 +112,37 @@
     <div class="paper-wrap"><div class="zoom-box" id="zoomBox"><div class="zoom" id="zoom">
       <div class="letter" id="letter">
         <div class="l-head">
-          <img class="l-logo" alt="Suave" width="150" height="29" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5OTAgMTkzIiBmaWxsPSIjMzQ3QUYwIj48cGF0aCBkPSJNMCAxODYuMVYxMjIuN0g0Ny4xQzQ3LjEgMTI3LjQgNDguNiAxMzEuMyA1MS41IDEzNC40QzU0LjUgMTM3LjQgNTcuOSAxMzkuOCA2MS45IDE0MS42QzY1LjkgMTQzLjMgNzAgMTQ0LjYgNzQuMiAxNDUuM0M3OC40IDE0NiA4MS44IDE0Ni4zIDg0LjQgMTQ2LjNDODcuOSAxNDYuMyA5MS40IDE0NS41IDk0LjggMTQ0Qzk4LjIgMTQyLjUgOTkuOSAxMzkuMyA5OS45IDEzNC40Qzk5LjkgMTMxLjEgOTcuNSAxMjguNCA5Mi43IDEyNi40Qzg3LjkgMTI0LjQgODEuOCAxMjIuNSA3NC40IDEyMC42QzY3IDExOC44IDU5LjEgMTE2LjUgNTAuNiAxMTRDNDIuMiAxMTEuNCAzNC4zIDEwNy44IDI2LjkgMTAzLjJDMTkuNSA5OC43IDEzLjQgOTIuNyA4LjYgODUuM0MzLjggNzcuOSAxLjQgNjguNSAxLjQgNTdDMS40IDQ4LjEgMy41IDQwLjQgNy42IDMzLjlDMTEuNyAyNy41IDE2LjggMjIuMiAyMyAxOC4xQzI5LjMgMTQgMzUuOSAxMSA0My4xIDlDNTAuMiA3IDU3IDYgNjMuMyA2Qzc1LjMgNiA4Ni4xIDguNyA5NS43IDE0LjFDMTA1LjMgMTkuNSAxMTIgMjUuOSAxMTUuNyAzMy40TDExOC41IDEwLjJIMTYxLjhWNzMuNUgxMTYuMUMxMTYuMSA2OS44IDExNSA2Ni4zIDExMi45IDYzLjFDMTEwLjggNjAgMTA4IDU3LjIgMTA0LjYgNTQuN0MxMDEuMiA1Mi4yIDk3LjQgNTAuMyA5My4yIDQ4LjlDODkgNDcuNSA4NC42IDQ2LjggODAuMiA0Ni44Qzc2LjQgNDYuOCA3My4yIDQ3LjggNzAuNSA0OS44QzY3LjggNTEuOCA2Ni41IDU1IDY2LjUgNTkuNEM2Ni41IDYzLjQgNjguOSA2Ni42IDczLjkgNjguOUM3OC44IDcxLjMgODQuOSA3My42IDkyLjMgNzUuOEM5OS43IDc4IDEwNy43IDgwLjUgMTE2LjQgODMuMkMxMjUuMSA4NS45IDEzMy4xIDg5LjUgMTQwLjUgOTMuOUMxNDcuOSA5OC40IDE1NCAxMDQgMTU5IDExMUMxNjMuOSAxMTcuOSAxNjYuNCAxMjYuNyAxNjYuNCAxMzcuNUMxNjYuNCAxNDUuNyAxNjQuNSAxNTMuMSAxNjAuOSAxNTkuN0MxNTcuMyAxNjYuMiAxNTIuNSAxNzEuOCAxNDYuNSAxNzYuNEMxNDAuNSAxODEgMTMzLjUgMTg0LjQgMTI1LjYgMTg2LjhDMTE3LjYgMTg5LjEgMTA5LjQgMTkwLjMgMTAwLjkgMTkwLjNDODguMyAxOTAuMyA3Ny4yIDE4Ny43IDY3LjcgMTgyLjVDNTguMiAxNzcuNCA1MS4zIDE3MS40IDQ3LjEgMTY0LjZMNDQgMTg2LjFIMFoiLz48cGF0aCBkPSJNMTc4LjcgMTAuMkgyNjMuOFY5NUMyNjMuOCAxMTAuMiAyNjUuMSAxMjEuNCAyNjcuOCAxMjguNUMyNzAuNSAxMzUuNyAyNzUuNSAxMzkuMyAyODIuOCAxMzkuM0MyODguOSAxMzkuMyAyOTQuMSAxMzYuOCAyOTguNCAxMzEuOUMzMDIuOCAxMjcgMzA0LjkgMTIwLjUgMzA0LjkgMTEyLjVWNTYuNkgyODEuN1YxMC4ySDM3Mi44VjEzOS4zSDM5MFYxODYuMUgzMjMuNkwzMTQuMSAxNjMuOUMzMTIuMiAxNjYgMzA5LjkgMTY4LjYgMzA3LjIgMTcxLjhDMzA0LjUgMTc1IDMwMS4yIDE3OCAyOTcuNCAxODAuOEMyOTMuNSAxODMuNiAyODguOSAxODYgMjgzLjUgMTg4QzI3OC4xIDE5MCAyNzEuNiAxOTEgMjY0LjEgMTkxQzI1MC44IDE5MSAyMzkuNiAxODkuMiAyMzAuNSAxODUuN0MyMjEuNSAxODIuMiAyMTQuMiAxNzYuOSAyMDguNyAxNjkuOUMyMDMuMiAxNjIuOCAxOTkuMyAxNTMuOSAxOTcgMTQzLjFDMTk0LjYgMTMyLjQgMTkzLjQgMTE5LjcgMTkzLjQgMTA1LjJWNTYuNkgxNzguN1YxMC4yWiIvPjxwYXRoIGQ9Ik00MDggMjVDNDExLjUgMjIuOSA0MTYgMjAuNCA0MjEuMyAxNy42QzQyNi43IDE0LjggNDMyLjggMTIgNDM5LjUgOS4zQzQ0Ni4xIDYuNiA0NTMuMyA0LjQgNDYwLjkgMi42QzQ2OC41IDAuOSA0NzYuNCAwIDQ4NC43IDBDNDk1LjIgMCA1MDYuMSAxLjEgNTE3LjQgMy4zQzUyOC42IDUuNiA1MzguOSA5LjQgNTQ4LjEgMTQuOUM1NTcuNCAyMC41IDU2NSAyNy45IDU3MSAzNy4zQzU3NyA0Ni43IDU4MCA1OC40IDU4MCA3Mi41VjE0MUg2MDEuMVYxODYuMUg1MjUuOEw1MTcuNCAxNzAuMkM1MTQuMSAxNzQuNyA1MTAuNCAxNzguNCA1MDYuMyAxODEuM0M1MDIuMiAxODQuMiA0OTggMTg2LjUgNDkzLjYgMTg4LjJDNDg5LjMgMTg5LjggNDg1IDE5MSA0ODAuOCAxOTEuN0M0NzYuNiAxOTIuNCA0NzIuOSAxOTIuNyA0NjkuOSAxOTIuN0M0NjEuNCAxOTIuNyA0NTMuMSAxOTEuNiA0NDQuOSAxODkuMkM0MzYuNyAxODYuOSA0MjkuMyAxODMuNCA0MjIuOCAxNzguN0M0MTYuMiAxNzQgNDEwLjkgMTY3LjkgNDA2LjcgMTYwLjZDNDAyLjYgMTUzLjIgNDAwLjYgMTQ0LjMgNDAwLjYgMTM0QzQwMC42IDEyNC4yIDQwMi41IDExNS4yIDQwNi40IDEwNy4zQzQxMC4zIDk5LjMgNDE1LjUgOTIuNSA0MjIuMiA4Ni45QzQyOC45IDgxLjIgNDM2LjcgNzYuOSA0NDUuNiA3My45QzQ1NC41IDcwLjggNDYzLjkgNjkuMyA0NzMuOCA2OS4zQzQ3OC45IDY5LjMgNDgzLjUgNjkuOCA0ODcuNiA3MC45QzQ5MS43IDcxLjkgNDk1LjMgNzMuMiA0OTguMiA3NC42QzUwMS4xIDc2IDUwMy41IDc3LjQgNTA1LjIgNzguOEM1MDcgODAuMiA1MDguMSA4MS4xIDUwOC42IDgxLjZWNjkuM0M1MDguNiA2MS4zIDUwNS40IDU2IDQ5OS4xIDUzLjVDNDkyLjcgNTAuOSA0ODQuOCA0OS42IDQ3NS4yIDQ5LjZDNDY0LjYgNDkuNiA0NTQuOSA1MS4zIDQ0Ni4xIDU0LjlDNDM3LjMgNTguNCA0MjkuNiA2MiA0MjIuOCA2NS44TDQwOCAyNVpNNDg2LjEgMTQ3QzQ5MS41IDE0NyA0OTYuMSAxNDUuNyA1MDAuMSAxNDMuMUM1MDQuMSAxNDAuNiA1MDYuOSAxMzggNTA4LjYgMTM1LjRWMTIyQzUwOC4zIDEyMS42IDUwNy44IDEyMC44IDUwNyAxMTkuOEM1MDYuMiAxMTguNyA1MDQuOSAxMTcuNiA1MDMuMyAxMTYuNEM1MDEuNyAxMTUuMiA0OTkuNiAxMTQuMiA0OTcuMSAxMTMuM0M0OTQuNyAxMTIuMyA0OTEuNiAxMTEuOCA0ODcuOCAxMTEuOEM0ODAuOCAxMTEuOCA0NzUuNiAxMTMuNiA0NzIuMyAxMTcuMUM0NjkuMSAxMjAuNiA0NjcuNCAxMjUuMSA0NjcuNCAxMzAuNUM0NjcuNCAxMzUuNCA0NjkuMiAxMzkuNCA0NzIuNyAxNDIuNEM0NzYuMiAxNDUuNSA0ODAuNyAxNDcgNDg2LjEgMTQ3WiIvPjxwYXRoIGQ9Ik03MDUuMSAxMjkuMUM3MDUuMSAxMjcuMiA3MDUuNCAxMjQuOCA3MDYgMTIxLjlDNzA2LjYgMTE4LjkgNzA3LjMgMTE1LjcgNzA4LjMgMTEyLjJDNzA5LjIgMTA4LjcgNzEwLjMgMTA1IDcxMS42IDEwMS4zQzcxMi45IDk3LjUgNzE0LjMgOTMuOSA3MTUuNyA5MC40TDczMi41IDU0LjlINzEzLjlWMTAuMkg4MDQuNlY1NC45SDc4Ni40TDcyNS41IDE4Ni4xSDY3MUw2MDUuNiA1NC45SDU4OVYxMC4ySDY5NlY1NC45SDY3OC40TDY5NC42IDkyLjFDNjk2LjkgOTguOSA2OTguOSAxMDUuOSA3MDAuNSAxMTIuOUM3MDIuMiAxMTkuOSA3MDMuMiAxMjUuMyA3MDMuNyAxMjkuMUg3MDUuMVoiLz48cGF0aCBkPSJNOTkwIDE2MS44Qzk3Ni45IDE3MyA5NjMgMTgxIDk0OC41IDE4NS41QzkzNCAxOTAuMSA5MTcuNSAxOTIuNCA4OTkuMyAxOTIuNEM4ODguMiAxOTIuNCA4NzcuMiAxOTAuNiA4NjYuMiAxODYuOUM4NTUuMiAxODMuMyA4NDUuMyAxNzcuNyA4MzYuNSAxNzAuMUM4MjcuNyAxNjIuNCA4MjAuNSAxNTIuNiA4MTQuOCAxNDAuNUM4MDkuMiAxMjguNCA4MDYuNCAxMTQgODA2LjQgOTcuMUM4MDYuNCA4Mi44IDgwOC45IDY5LjkgODEzLjggNTguNkM4MTguNyA0Ny4yIDgyNS40IDM3LjUgODMzLjggMjkuNUM4NDIuMyAyMS42IDg1Mi4yIDE1LjUgODYzLjcgMTEuNEM4NzUuMiA3LjMgODg3LjcgNS4zIDkwMSA1LjNDOTE1LjYgNS4zIDkyOC40IDcuNCA5MzkuNSAxMS42Qzk1MC43IDE1LjggOTYwIDIxLjcgOTY3LjUgMjkuMkM5NzUgMzYuNyA5ODAuNiA0NS41IDk4NC40IDU1LjdDOTg4LjEgNjUuOSA5OTAgNzcgOTkwIDg5Qzk5MCA5My43IDk4OS42IDk4LjMgOTg4LjkgMTAyLjlDOTg4LjIgMTA3LjQgOTg3LjIgMTExLjcgOTg1LjggMTE1LjdIODc1Qzg3NS41IDExOC4xIDg3Ni4yIDEyMC45IDg3Ny4zIDEyNC4yQzg3OC4zIDEyNy40IDg4MC4xIDEzMC42IDg4Mi43IDEzMy42Qzg4NS4zIDEzNi43IDg4OC44IDEzOS4zIDg5My4zIDE0MS40Qzg5Ny43IDE0My41IDkwMy43IDE0NC42IDkxMS4yIDE0NC42QzkxNC4zIDE0NC42IDkxNy42IDE0NC40IDkyMS4yIDE0NC4yQzkyNC45IDE0NCA5MjguOCAxNDMuMyA5MzMgMTQyLjFDOTM3LjIgMTQwLjkgOTQxLjcgMTM5LjIgOTQ2LjQgMTM3Qzk1MS4xIDEzNC44IDk1NS44IDEzMS43IDk2MC41IDEyNy43TDk5MCAxNjEuOFpNOTAzLjEgNTIuOEM4OTcuNyA1Mi44IDg5My4zIDUzLjggODg5LjkgNTUuOUM4ODYuNSA1OCA4ODMuOCA2MC42IDg4MS44IDYzLjVDODc5LjkgNjYuNCA4NzguNSA2OS41IDg3Ny42IDcyLjhDODc2LjggNzYuMSA4NzYuMyA3OC44IDg3NiA4MC45SDkyOS4yQzkyOS4yIDc3LjYgOTI4LjggNzQuMyA5MjguMSA3MC45QzkyNy40IDY3LjUgOTI2LjIgNjQuNCA5MjQuNCA2MS43QzkyMi42IDU5IDkyMC4xIDU2LjkgOTE2LjcgNTUuMkM5MTMuMyA1My42IDkwOC44IDUyLjggOTAzLjEgNTIuOFoiLz48L3N2Zz4=">
-          <div class="l-co"><b>Suave Solutions LLC</b><br>9100 S Dadeland Blvd. Ste 912<br>Miami, Florida 33156<br>support@paywithsuave.com · paywithsuave.com</div>
+          <img class="l-logo" alt="Suave" width="138" height="27" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5OTAgMTkzIiBmaWxsPSIjMzQ3QUYwIj48cGF0aCBkPSJNMCAxODYuMVYxMjIuN0g0Ny4xQzQ3LjEgMTI3LjQgNDguNiAxMzEuMyA1MS41IDEzNC40QzU0LjUgMTM3LjQgNTcuOSAxMzkuOCA2MS45IDE0MS42QzY1LjkgMTQzLjMgNzAgMTQ0LjYgNzQuMiAxNDUuM0M3OC40IDE0NiA4MS44IDE0Ni4zIDg0LjQgMTQ2LjNDODcuOSAxNDYuMyA5MS40IDE0NS41IDk0LjggMTQ0Qzk4LjIgMTQyLjUgOTkuOSAxMzkuMyA5OS45IDEzNC40Qzk5LjkgMTMxLjEgOTcuNSAxMjguNCA5Mi43IDEyNi40Qzg3LjkgMTI0LjQgODEuOCAxMjIuNSA3NC40IDEyMC42QzY3IDExOC44IDU5LjEgMTE2LjUgNTAuNiAxMTRDNDIuMiAxMTEuNCAzNC4zIDEwNy44IDI2LjkgMTAzLjJDMTkuNSA5OC43IDEzLjQgOTIuNyA4LjYgODUuM0MzLjggNzcuOSAxLjQgNjguNSAxLjQgNTdDMS40IDQ4LjEgMy41IDQwLjQgNy42IDMzLjlDMTEuNyAyNy41IDE2LjggMjIuMiAyMyAxOC4xQzI5LjMgMTQgMzUuOSAxMSA0My4xIDlDNTAuMiA3IDU3IDYgNjMuMyA2Qzc1LjMgNiA4Ni4xIDguNyA5NS43IDE0LjFDMTA1LjMgMTkuNSAxMTIgMjUuOSAxMTUuNyAzMy40TDExOC41IDEwLjJIMTYxLjhWNzMuNUgxMTYuMUMxMTYuMSA2OS44IDExNSA2Ni4zIDExMi45IDYzLjFDMTEwLjggNjAgMTA4IDU3LjIgMTA0LjYgNTQuN0MxMDEuMiA1Mi4yIDk3LjQgNTAuMyA5My4yIDQ4LjlDODkgNDcuNSA4NC42IDQ2LjggODAuMiA0Ni44Qzc2LjQgNDYuOCA3My4yIDQ3LjggNzAuNSA0OS44QzY3LjggNTEuOCA2Ni41IDU1IDY2LjUgNTkuNEM2Ni41IDYzLjQgNjguOSA2Ni42IDczLjkgNjguOUM3OC44IDcxLjMgODQuOSA3My42IDkyLjMgNzUuOEM5OS43IDc4IDEwNy43IDgwLjUgMTE2LjQgODMuMkMxMjUuMSA4NS45IDEzMy4xIDg5LjUgMTQwLjUgOTMuOUMxNDcuOSA5OC40IDE1NCAxMDQgMTU5IDExMUMxNjMuOSAxMTcuOSAxNjYuNCAxMjYuNyAxNjYuNCAxMzcuNUMxNjYuNCAxNDUuNyAxNjQuNSAxNTMuMSAxNjAuOSAxNTkuN0MxNTcuMyAxNjYuMiAxNTIuNSAxNzEuOCAxNDYuNSAxNzYuNEMxNDAuNSAxODEgMTMzLjUgMTg0LjQgMTI1LjYgMTg2LjhDMTE3LjYgMTg5LjEgMTA5LjQgMTkwLjMgMTAwLjkgMTkwLjNDODguMyAxOTAuMyA3Ny4yIDE4Ny43IDY3LjcgMTgyLjVDNTguMiAxNzcuNCA1MS4zIDE3MS40IDQ3LjEgMTY0LjZMNDQgMTg2LjFIMFoiLz48cGF0aCBkPSJNMTc4LjcgMTAuMkgyNjMuOFY5NUMyNjMuOCAxMTAuMiAyNjUuMSAxMjEuNCAyNjcuOCAxMjguNUMyNzAuNSAxMzUuNyAyNzUuNSAxMzkuMyAyODIuOCAxMzkuM0MyODguOSAxMzkuMyAyOTQuMSAxMzYuOCAyOTguNCAxMzEuOUMzMDIuOCAxMjcgMzA0LjkgMTIwLjUgMzA0LjkgMTEyLjVWNTYuNkgyODEuN1YxMC4ySDM3Mi44VjEzOS4zSDM5MFYxODYuMUgzMjMuNkwzMTQuMSAxNjMuOUMzMTIuMiAxNjYgMzA5LjkgMTY4LjYgMzA3LjIgMTcxLjhDMzA0LjUgMTc1IDMwMS4yIDE3OCAyOTcuNCAxODAuOEMyOTMuNSAxODMuNiAyODguOSAxODYgMjgzLjUgMTg4QzI3OC4xIDE5MCAyNzEuNiAxOTEgMjY0LjEgMTkxQzI1MC44IDE5MSAyMzkuNiAxODkuMiAyMzAuNSAxODUuN0MyMjEuNSAxODIuMiAyMTQuMiAxNzYuOSAyMDguNyAxNjkuOUMyMDMuMiAxNjIuOCAxOTkuMyAxNTMuOSAxOTcgMTQzLjFDMTk0LjYgMTMyLjQgMTkzLjQgMTE5LjcgMTkzLjQgMTA1LjJWNTYuNkgxNzguN1YxMC4yWiIvPjxwYXRoIGQ9Ik00MDggMjVDNDExLjUgMjIuOSA0MTYgMjAuNCA0MjEuMyAxNy42QzQyNi43IDE0LjggNDMyLjggMTIgNDM5LjUgOS4zQzQ0Ni4xIDYuNiA0NTMuMyA0LjQgNDYwLjkgMi42QzQ2OC41IDAuOSA0NzYuNCAwIDQ4NC43IDBDNDk1LjIgMCA1MDYuMSAxLjEgNTE3LjQgMy4zQzUyOC42IDUuNiA1MzguOSA5LjQgNTQ4LjEgMTQuOUM1NTcuNCAyMC41IDU2NSAyNy45IDU3MSAzNy4zQzU3NyA0Ni43IDU4MCA1OC40IDU4MCA3Mi41VjE0MUg2MDEuMVYxODYuMUg1MjUuOEw1MTcuNCAxNzAuMkM1MTQuMSAxNzQuNyA1MTAuNCAxNzguNCA1MDYuMyAxODEuM0M1MDIuMiAxODQuMiA0OTggMTg2LjUgNDkzLjYgMTg4LjJDNDg5LjMgMTg5LjggNDg1IDE5MSA0ODAuOCAxOTEuN0M0NzYuNiAxOTIuNCA0NzIuOSAxOTIuNyA0NjkuOSAxOTIuN0M0NjEuNCAxOTIuNyA0NTMuMSAxOTEuNiA0NDQuOSAxODkuMkM0MzYuNyAxODYuOSA0MjkuMyAxODMuNCA0MjIuOCAxNzguN0M0MTYuMiAxNzQgNDEwLjkgMTY3LjkgNDA2LjcgMTYwLjZDNDAyLjYgMTUzLjIgNDAwLjYgMTQ0LjMgNDAwLjYgMTM0QzQwMC42IDEyNC4yIDQwMi41IDExNS4yIDQwNi40IDEwNy4zQzQxMC4zIDk5LjMgNDE1LjUgOTIuNSA0MjIuMiA4Ni45QzQyOC45IDgxLjIgNDM2LjcgNzYuOSA0NDUuNiA3My45QzQ1NC41IDcwLjggNDYzLjkgNjkuMyA0NzMuOCA2OS4zQzQ3OC45IDY5LjMgNDgzLjUgNjkuOCA0ODcuNiA3MC45QzQ5MS43IDcxLjkgNDk1LjMgNzMuMiA0OTguMiA3NC42QzUwMS4xIDc2IDUwMy41IDc3LjQgNTA1LjIgNzguOEM1MDcgODAuMiA1MDguMSA4MS4xIDUwOC42IDgxLjZWNjkuM0M1MDguNiA2MS4zIDUwNS40IDU2IDQ5OS4xIDUzLjVDNDkyLjcgNTAuOSA0ODQuOCA0OS42IDQ3NS4yIDQ5LjZDNDY0LjYgNDkuNiA0NTQuOSA1MS4zIDQ0Ni4xIDU0LjlDNDM3LjMgNTguNCA0MjkuNiA2MiA0MjIuOCA2NS44TDQwOCAyNVpNNDg2LjEgMTQ3QzQ5MS41IDE0NyA0OTYuMSAxNDUuNyA1MDAuMSAxNDMuMUM1MDQuMSAxNDAuNiA1MDYuOSAxMzggNTA4LjYgMTM1LjRWMTIyQzUwOC4zIDEyMS42IDUwNy44IDEyMC44IDUwNyAxMTkuOEM1MDYuMiAxMTguNyA1MDQuOSAxMTcuNiA1MDMuMyAxMTYuNEM1MDEuNyAxMTUuMiA0OTkuNiAxMTQuMiA0OTcuMSAxMTMuM0M0OTQuNyAxMTIuMyA0OTEuNiAxMTEuOCA0ODcuOCAxMTEuOEM0ODAuOCAxMTEuOCA0NzUuNiAxMTMuNiA0NzIuMyAxMTcuMUM0NjkuMSAxMjAuNiA0NjcuNCAxMjUuMSA0NjcuNCAxMzAuNUM0NjcuNCAxMzUuNCA0NjkuMiAxMzkuNCA0NzIuNyAxNDIuNEM0NzYuMiAxNDUuNSA0ODAuNyAxNDcgNDg2LjEgMTQ3WiIvPjxwYXRoIGQ9Ik03MDUuMSAxMjkuMUM3MDUuMSAxMjcuMiA3MDUuNCAxMjQuOCA3MDYgMTIxLjlDNzA2LjYgMTE4LjkgNzA3LjMgMTE1LjcgNzA4LjMgMTEyLjJDNzA5LjIgMTA4LjcgNzEwLjMgMTA1IDcxMS42IDEwMS4zQzcxMi45IDk3LjUgNzE0LjMgOTMuOSA3MTUuNyA5MC40TDczMi41IDU0LjlINzEzLjlWMTAuMkg4MDQuNlY1NC45SDc4Ni40TDcyNS41IDE4Ni4xSDY3MUw2MDUuNiA1NC45SDU4OVYxMC4ySDY5NlY1NC45SDY3OC40TDY5NC42IDkyLjFDNjk2LjkgOTguOSA2OTguOSAxMDUuOSA3MDAuNSAxMTIuOUM3MDIuMiAxMTkuOSA3MDMuMiAxMjUuMyA3MDMuNyAxMjkuMUg3MDUuMVoiLz48cGF0aCBkPSJNOTkwIDE2MS44Qzk3Ni45IDE3MyA5NjMgMTgxIDk0OC41IDE4NS41QzkzNCAxOTAuMSA5MTcuNSAxOTIuNCA4OTkuMyAxOTIuNEM4ODguMiAxOTIuNCA4NzcuMiAxOTAuNiA4NjYuMiAxODYuOUM4NTUuMiAxODMuMyA4NDUuMyAxNzcuNyA4MzYuNSAxNzAuMUM4MjcuNyAxNjIuNCA4MjAuNSAxNTIuNiA4MTQuOCAxNDAuNUM4MDkuMiAxMjguNCA4MDYuNCAxMTQgODA2LjQgOTcuMUM4MDYuNCA4Mi44IDgwOC45IDY5LjkgODEzLjggNTguNkM4MTguNyA0Ny4yIDgyNS40IDM3LjUgODMzLjggMjkuNUM4NDIuMyAyMS42IDg1Mi4yIDE1LjUgODYzLjcgMTEuNEM4NzUuMiA3LjMgODg3LjcgNS4zIDkwMSA1LjNDOTE1LjYgNS4zIDkyOC40IDcuNCA5MzkuNSAxMS42Qzk1MC43IDE1LjggOTYwIDIxLjcgOTY3LjUgMjkuMkM5NzUgMzYuNyA5ODAuNiA0NS41IDk4NC40IDU1LjdDOTg4LjEgNjUuOSA5OTAgNzcgOTkwIDg5Qzk5MCA5My43IDk4OS42IDk4LjMgOTg4LjkgMTAyLjlDOTg4LjIgMTA3LjQgOTg3LjIgMTExLjcgOTg1LjggMTE1LjdIODc1Qzg3NS41IDExOC4xIDg3Ni4yIDEyMC45IDg3Ny4zIDEyNC4yQzg3OC4zIDEyNy40IDg4MC4xIDEzMC42IDg4Mi43IDEzMy42Qzg4NS4zIDEzNi43IDg4OC44IDEzOS4zIDg5My4zIDE0MS40Qzg5Ny43IDE0My41IDkwMy43IDE0NC42IDkxMS4yIDE0NC42QzkxNC4zIDE0NC42IDkxNy42IDE0NC40IDkyMS4yIDE0NC4yQzkyNC45IDE0NCA5MjguOCAxNDMuMyA5MzMgMTQyLjFDOTM3LjIgMTQwLjkgOTQxLjcgMTM5LjIgOTQ2LjQgMTM3Qzk1MS4xIDEzNC44IDk1NS44IDEzMS43IDk2MC41IDEyNy43TDk5MCAxNjEuOFpNOTAzLjEgNTIuOEM4OTcuNyA1Mi44IDg5My4zIDUzLjggODg5LjkgNTUuOUM4ODYuNSA1OCA4ODMuOCA2MC42IDg4MS44IDYzLjVDODc5LjkgNjYuNCA4NzguNSA2OS41IDg3Ny42IDcyLjhDODc2LjggNzYuMSA4NzYuMyA3OC44IDg3NiA4MC45SDkyOS4yQzkyOS4yIDc3LjYgOTI4LjggNzQuMyA5MjguMSA3MC45QzkyNy40IDY3LjUgOTI2LjIgNjQuNCA5MjQuNCA2MS43QzkyMi42IDU5IDkyMC4xIDU2LjkgOTE2LjcgNTUuMkM5MTMuMyA1My42IDkwOC44IDUyLjggOTAzLjEgNTIuOFoiLz48L3N2Zz4=">
+          <div class="l-co"><b>Suave Solutions LLC</b><br>9100 S Dadeland Blvd., Suite 912<br>Miami, Florida 33156<br>support@paywithsuave.com &nbsp;|&nbsp; paywithsuave.com</div>
         </div>
-        <p class="l-date" id="outDate"></p>
-        <p>To whom it may concern,</p>
-        <p class="l-re">Re: Confirmation of no outstanding balance</p>
-        <p>This letter confirms that <span class="l-name" id="outName"></span> has no open balance with Suave Solutions LLC as of <span id="outDate2"></span>.</p>
-        <div class="l-seal">
-          <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#2E9E6B"/><path d="M12 20.5l5.5 5.5L28.5 15" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <div>Account status: no open balance</div>
-        </div>
-        <p>According to our records, no amount is currently due from this customer to Suave.</p>
-        <p>If you have any questions about this letter, please contact us at support@paywithsuave.com.</p>
+        <div class="l-rule2"></div>
+
+        <div class="l-meta"><span id="outDate"></span><span class="ref" id="outRef"></span></div>
+
+        <p style="text-align:left">To Whom It May Concern:</p>
+        <p class="l-re">Re: <span>Confirmation of Zero Balance</span></p>
+
+        <p>This letter serves as formal confirmation that, as of <span id="outDate2"></span>, <span class="l-name" id="outName"></span> has no outstanding balance with Suave Solutions LLC. According to our records, the account reflects a balance of $0.00, and no payment is currently due.</p>
+
+        <table class="l-sum">
+          <caption>Account Summary</caption>
+          <tr><th>Account holder</th><td id="sumName"></td></tr>
+          <tr id="sumAcctRow"><th>Account number</th><td id="sumAcct"></td></tr>
+          <tr><th>Balance due</th><td>$0.00</td></tr>
+          <tr><th>Account status</th><td>No balance due</td></tr>
+          <tr><th>Effective date</th><td id="sumDate"></td></tr>
+        </table>
+
+        <p>This confirmation reflects the status of the account as of the effective date stated above and is issued at the request of the account holder. It does not apply to any charges, transactions, or account activity that may occur after that date.</p>
+        <p>Should you require further verification, please contact our Customer Accounts Department at support@paywithsuave.com.</p>
+
         <div class="l-sign">
-          <p>Sincerely,</p>
-          <p><b>Suave Solutions LLC</b><br>Customer Accounts</p>
+          <p style="margin:0">Sincerely,</p>
+          <div class="gap"></div>
+          <div class="line"><b id="outSigner"></b><span id="outSignerBr"><br></span>Customer Accounts Department<br>Suave Solutions LLC</div>
         </div>
-        <div class="l-foot"><span>Suave Solutions LLC · Miami, Florida</span><span>paywithsuave.com</span></div>
+
+        <div class="l-foot"><span>Suave Solutions LLC &nbsp;·&nbsp; 9100 S Dadeland Blvd., Suite 912, Miami, FL 33156</span><span>paywithsuave.com</span></div>
       </div>
     </div></div></div>
   </div>
@@ -119,7 +151,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 const $ = id => document.getElementById(id);
-const nameIn = $("fullName"), dateIn = $("letterDate");
+const nameIn = $("fullName"), dateIn = $("letterDate"), acctIn = $("acct"), signerIn = $("signer");
 const pad = n => String(n).padStart(2, "0");
 const now = new Date();
 dateIn.value = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
@@ -129,12 +161,20 @@ function longDate(v){
   const [y, m, d] = v.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" });
 }
-function cleanName(){ return nameIn.value.replace(/\s+/g, " ").trim(); }
+const clean = el => el.value.replace(/\s+/g, " ").trim();
+function cleanName(){ return clean(nameIn); }
 function render(){
-  const n = cleanName();
+  const n = cleanName(), a = clean(acctIn), sg = clean(signerIn), d = longDate(dateIn.value);
   $("outName").textContent = n || "[Customer full name]";
-  $("outDate").textContent = longDate(dateIn.value);
-  $("outDate2").textContent = longDate(dateIn.value);
+  $("sumName").textContent = n || "[Customer full name]";
+  $("outDate").textContent = d;
+  $("outDate2").textContent = d;
+  $("sumDate").textContent = d;
+  $("outRef").textContent = a ? "Account No. " + a : "";
+  $("sumAcct").textContent = a;
+  $("sumAcctRow").style.display = a ? "" : "none";
+  $("outSigner").textContent = sg;
+  $("outSignerBr").style.display = sg ? "" : "none";
   if(n) { nameIn.classList.remove("bad"); $("msg").textContent = ""; }
 }
 function fit(){
@@ -149,8 +189,7 @@ function ok(){
   if(!dateIn.value){ $("msg").textContent = "Pick a letter date."; dateIn.focus(); return false; }
   return true;
 }
-nameIn.addEventListener("input", render);
-dateIn.addEventListener("input", render);
+[nameIn, dateIn, acctIn, signerIn].forEach(el => el.addEventListener("input", render));
 window.addEventListener("resize", fit);
 render(); fit();
 
@@ -174,8 +213,10 @@ $("pdfBtn").onclick = async () => {
   const btn = $("pdfBtn"), label = btn.textContent;
   btn.disabled = true; btn.textContent = "Making PDF…";
   try{
+    if(document.fonts && document.fonts.ready) await document.fonts.ready;
     const clone = $("letter").cloneNode(true);
     clone.removeAttribute("id");
+    clone.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
     clone.style.cssText = "box-shadow:none;margin:0;";
     const file = "No-Balance-Letter-" + cleanName().replace(/[^A-Za-z0-9À-ſ]+/g, "-").replace(/^-|-$/g, "") + ".pdf";
     await html2pdf().set({
