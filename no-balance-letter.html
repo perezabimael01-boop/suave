@@ -6,7 +6,7 @@
 <title>No Balance Letter – Suave</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Caladea:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="site.css">
 <style>
@@ -24,7 +24,7 @@
 
   .paper-wrap{ background:#EEF2F7; border-radius:18px; padding:22px; overflow:auto; }
   .letter{ width:794px; height:1123px; margin:0 auto; background:#fff; color:#1A1F27; box-sizing:border-box; padding:64px 84px 0;
-    font:15px/1.6 Cambria, Caladea, Georgia, "Times New Roman", serif; box-shadow:0 10px 30px -18px rgba(20,40,80,.4); position:relative; overflow:hidden; }
+    font:16px/1.6 "Times New Roman", Times, serif; box-shadow:0 10px 30px -18px rgba(20,40,80,.4); position:relative; overflow:hidden; }
   .l-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:24px; padding-bottom:16px; border-bottom:1.5px solid #1A2B45; }
   .l-logo{ width:138px; height:auto; display:block; }
   .l-co{ text-align:right; font-size:11.5px; line-height:1.5; color:#4A5566; letter-spacing:.01em; }
@@ -36,11 +36,6 @@
   .l-re{ font-weight:700; margin:0 0 20px !important; text-align:left !important; }
   .l-re span{ text-decoration:underline; text-underline-offset:3px; }
   .l-name{ font-weight:700; }
-  .l-sum{ width:100%; border-collapse:collapse; margin:22px 0 24px; font-size:14px; }
-  .l-sum caption{ text-align:left; font-weight:700; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:#1A2B45; padding:0 0 6px; }
-  .l-sum th, .l-sum td{ border:1px solid #C9D1DC; padding:8px 14px; text-align:left; }
-  .l-sum th{ width:42%; background:#F4F6F9; font-weight:400; color:#4A5566; }
-  .l-sum td{ font-weight:700; }
   .l-sign{ margin-top:34px; }
   .l-sign .gap{ height:52px; }
   .l-sign .line{ width:260px; border-top:1px solid #1A1F27; padding-top:6px; line-height:1.45; }
@@ -71,7 +66,7 @@
 <main class="page">
   <div class="page-head">
     <h1>No Balance Letter</h1>
-    <p>A formal letter confirming that a customer has no outstanding balance with Suave. Type the customer's full name, add an account number if you have one, and download the PDF.</p>
+    <p>A formal letter confirming that a customer has no outstanding balance with Suave. Type the customer's full name, and download the PDF.</p>
   </div>
 
   <div class="section no-print">
@@ -120,20 +115,10 @@
         <div class="l-meta"><span id="outDate"></span><span class="ref" id="outRef"></span></div>
 
         <p style="text-align:left">To Whom It May Concern:</p>
-        <p class="l-re">Re: <span>Confirmation of Zero Balance</span></p>
+        <p class="l-re">Re: <span>Confirmation of No Open Balance</span></p>
 
-        <p>This letter serves as formal confirmation that, as of <span id="outDate2"></span>, <span class="l-name" id="outName"></span> has no outstanding balance with Suave Solutions LLC. According to our records, the account reflects a balance of $0.00, and no payment is currently due.</p>
+        <p>This letter confirms that <span class="l-name" id="outName"></span> has no open balance with Suave Solutions LLC as of <span id="outDate2"></span>. According to our records, no amount is currently due on this account.</p>
 
-        <table class="l-sum">
-          <caption>Account Summary</caption>
-          <tr><th>Account holder</th><td id="sumName"></td></tr>
-          <tr id="sumAcctRow"><th>Account number</th><td id="sumAcct"></td></tr>
-          <tr><th>Balance due</th><td>$0.00</td></tr>
-          <tr><th>Account status</th><td>No balance due</td></tr>
-          <tr><th>Effective date</th><td id="sumDate"></td></tr>
-        </table>
-
-        <p>This confirmation reflects the status of the account as of the effective date stated above and is issued at the request of the account holder. It does not apply to any charges, transactions, or account activity that may occur after that date.</p>
         <p>Should you require further verification, please contact our Customer Accounts Department at support@paywithsuave.com.</p>
 
         <div class="l-sign">
@@ -166,13 +151,9 @@ function cleanName(){ return clean(nameIn); }
 function render(){
   const n = cleanName(), a = clean(acctIn), sg = clean(signerIn), d = longDate(dateIn.value);
   $("outName").textContent = n || "[Customer full name]";
-  $("sumName").textContent = n || "[Customer full name]";
   $("outDate").textContent = d;
   $("outDate2").textContent = d;
-  $("sumDate").textContent = d;
   $("outRef").textContent = a ? "Account No. " + a : "";
-  $("sumAcct").textContent = a;
-  $("sumAcctRow").style.display = a ? "" : "none";
   $("outSigner").textContent = sg;
   $("outSignerBr").style.display = sg ? "" : "none";
   if(n) { nameIn.classList.remove("bad"); $("msg").textContent = ""; }
