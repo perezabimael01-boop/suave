@@ -72,7 +72,16 @@
   .preview-wrap{ background:#DDE3E8; border-radius:var(--radius); padding:20px; overflow:auto; margin-top:16px; }
   .doc{ position:relative; background:#fff; width:794px; min-height:1123px; max-width:100%; margin:0 auto; padding:64px 72px 170px; color:#1C2A36;
         font:15px/1.55 Cambria,Caladea,Georgia,serif; box-shadow:0 1px 4px rgba(0,0,0,.12); }
-  .doc .top-logo{ width:165px; height:auto; display:block; margin:-14px 0 14px -6px; }
+  .doc .lh{ display:flex; justify-content:space-between; align-items:center; gap:20px; padding-bottom:16px; border-bottom:2px solid #347AF0; margin-bottom:28px; }
+  .doc .top-logo{ width:170px; height:auto; display:block; margin-left:-6px; }
+  .doc .lh .from{ text-align:right; font-size:12px; }
+  .doc .lh .from b{ font-size:13px; }
+  .doc .n-date{ margin:0 0 26px; }
+  .doc .n-title{ font-size:16px; letter-spacing:.06em; margin:0 0 22px; padding-bottom:8px; border-bottom:1px solid #D5DFEC; }
+  .doc .n-cust{ display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:0 0 16px; }
+  .doc .n-cust span{ color:#5C7286; }
+  .doc .n-payoff{ background:#F3F7FC; border-left:3px solid #347AF0; padding:12px 16px; margin:6px 0 20px; }
+  .doc .n-sec{ font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:#1C2A36; margin:24px 0 8px; }
   .doc .from{ font-size:13px; color:#5C7286; line-height:1.5; }
   .doc .from b{ color:#1C2A36; font-size:14px; }
   .doc .date{ text-align:right; margin:-58px 0 46px; }
@@ -477,7 +486,7 @@ function stmtNote(d){
 
 function renderPreview(d){
   const t = texts(d);
-  const head = `<img class="top-logo" src="${SUAVE_LOGO}" alt="Suave"><div class="from"><b>${COMPANY.name}</b><br>${COMPANY.addr}<br>${COMPANY.email}</div>`;
+  const head = `<div class="lh"><img class="top-logo" src="${SUAVE_LOGO}" alt="Suave"><div class="from"><b>${COMPANY.name}</b><br>${COMPANY.addr}<br>${COMPANY.email}</div></div>`;
   const sign = `<div class="sign">Sincerely,<br><br>${t.sign.map((l, i) => i === 0 && d.signer ? `<b>${esc(l)}</b>` : esc(l)).join('<br>')}</div>`;
   const foot = `<div class="foot"><small>${COMPANY.name} · ${COMPANY.addr} · ${COMPANY.email}</small></div>`;
   if (d.type === 'statement'){
@@ -498,14 +507,14 @@ function renderPreview(d){
     return;
   }
   if (d.type === 'notice'){
-    $('doc').innerHTML = `${head}<div class="date">Date: ${fmtNumeric(d.date)}</div>
-      <h3 class="center-title">NOTICE OF OUTSTANDING OBLIGATIONS</h3>
+    $('doc').innerHTML = `${head}<p class="n-date">${fmtDate(d.date)}</p>
+      <h3 class="n-title">NOTICE OF OUTSTANDING OBLIGATIONS</h3>
       <p>To Whom It May Concern,</p>
-      <p>Customer Name: <b>${esc(d.name)}</b></p>
+      <div class="n-cust"><span>Customer name</span><b>${esc(d.name)}</b></div>
       <p>${esc(t.noticeIntro)}</p>
-      <h4>Payment plans</h4>
+      <h4 class="n-sec">Payment plans</h4>
       ${htmlTable(['Contract #', 'Monthly payment', 'Pending payments'], t.noticeRows, null, false)}
-      <p class="payoff">${esc(t.noticePayoff)}</p>
+      <div class="n-payoff">${esc(t.noticePayoff.replace(/^"|"$/g, ''))}</div>
       <p>${esc(t.noticeClose)}</p>${sign}${foot}`;
     return;
   }
@@ -666,15 +675,15 @@ function buildPdf(d){
     });
   };
 
-  // logo top left, then sender + date
-  pdf.addImage(SUAVE_LOGO, 'PNG', L - 1.5, 12, 45, 15);
-  y = 36;
-  pdf.setFont(F,'bold'); pdf.setFontSize(12.5); pdf.setTextColor(...ink); pdf.text(COMPANY.name, L, y);
-  pdf.setFont(F,'normal'); pdf.setFontSize(10.5); pdf.setTextColor(...soft);
-  pdf.text(COMPANY.addr, L, y + 5); pdf.text(COMPANY.email, L, y + 10);
-  pdf.setFontSize(12); pdf.setTextColor(...ink);
-  pdf.text(d.type === 'notice' ? `Date: ${fmtNumeric(d.date)}` : fmtDate(d.date), R, y, { align:'right' });
-  y += 30;
+  // letterhead: logo left, company details right, blue rule
+  pdf.addImage(SUAVE_LOGO, 'PNG', L - 1.5, 14, 48, 16);
+  pdf.setFont(F,'bold'); pdf.setFontSize(10.5); pdf.setTextColor(...ink); pdf.text(COMPANY.name, R, 19, { align:'right' });
+  pdf.setFont(F,'normal'); pdf.setFontSize(9); pdf.setTextColor(...soft);
+  pdf.text(COMPANY.addr, R, 23.8, { align:'right' }); pdf.text(COMPANY.email, R, 28.3, { align:'right' });
+  pdf.setDrawColor(52,122,240); pdf.setLineWidth(0.6); pdf.line(L, 34, R, 34);
+  y = 46;
+  pdf.setFont(F,'normal'); pdf.setFontSize(12); pdf.setTextColor(...ink); pdf.text(fmtDate(d.date), L, y);
+  y += 13;
 
   if (d.type === 'statement'){
     const a = adjusted(d);
@@ -693,15 +702,27 @@ function buildPdf(d){
   }
 
   if (d.type === 'notice'){
-    pdf.setFont(F,'bold'); pdf.setFontSize(14); pdf.setCharSpace(0.3);
-    pdf.text('NOTICE OF OUTSTANDING OBLIGATIONS', W / 2, y, { align:'center' }); pdf.setCharSpace(0);
+    pdf.setFont(F,'bold'); pdf.setFontSize(13); pdf.setTextColor(...ink); pdf.setCharSpace(0.5);
+    pdf.text('NOTICE OF OUTSTANDING OBLIGATIONS', L, y); pdf.setCharSpace(0);
+    pdf.setDrawColor(213,223,236); pdf.setLineWidth(0.3); pdf.line(L, y + 3.5, R, y + 3.5);
     y += 14;
     para('To Whom It May Concern,', 4);
-    labelled('Customer Name:', d.name);
+    pdf.setFont(F,'normal'); pdf.setFontSize(12); pdf.setTextColor(...soft); pdf.text('Customer name', L, y);
+    pdf.setFont(F,'bold'); pdf.setTextColor(...ink); pdf.text(d.name, L + 34, y); y += 9;
     para(t.noticeIntro, 6);
-    heading('Payment plans');
+    newPageIfNeeded(24); y += 2;
+    pdf.setFont(F,'bold'); pdf.setFontSize(10.5); pdf.setTextColor(...ink); pdf.setCharSpace(0.4); pdf.text('PAYMENT PLANS', L, y); pdf.setCharSpace(0); y += 9;
     table(['Contract #', 'Monthly payment', 'Pending payments'], [60, 56, 50], t.noticeRows, null, false);
-    y += 2; para(t.noticePayoff, 8, { style:'italic', center:true });
+    { // pay-off callout
+      const txt = t.noticePayoff.replace(/^"|"$/g, '');
+      pdf.setFont(F,'normal'); pdf.setFontSize(12);
+      const lines = pdf.splitTextToSize(txt, R - L - 12), h = lines.length * 5.6 + 7;
+      newPageIfNeeded(h + 6);
+      pdf.setFillColor(243,247,252); pdf.rect(L, y - 3, R - L, h, 'F');
+      pdf.setFillColor(52,122,240); pdf.rect(L, y - 3, 1, h, 'F');
+      pdf.setTextColor(...ink); pdf.text(lines, L + 6, y + 3.5, { lineHeightFactor:1.45 });
+      y += h + 7;
+    }
     para(t.noticeClose, 4);
     signature(); footer();
     return pdf;
