@@ -61,7 +61,7 @@
   .doc .st-orig table{ border-collapse:collapse; width:100%; font-size:12.5px; margin-top:10px; }
   .doc .st-orig th, .doc .st-orig td{ border:.8px solid #000; padding:6px; text-align:left; color:#000; background:#fff; }
   .doc .st-orig td.blank{ border:0; }
-  .doc tr.total td{ font-weight:700; border-top:2px solid #439BDA; border-bottom:none; }
+  .doc tr.total td{ font-weight:700; }
   .check{ display:flex; align-items:center; gap:10px; font-weight:500; margin:6px 0 10px; }
   .bal-row{ display:none; }
   .bal-row.show{ display:grid; }
@@ -77,8 +77,8 @@
   .doc h3{ font-size:17px; letter-spacing:.06em; margin:0 0 22px; }
   .doc p{ margin:0 0 14px; }
   .doc table{ width:100%; border-collapse:collapse; margin:4px 0 18px; font-size:13px; }
-  .doc th{ text-align:left; background:#E6F2FC; color:#1C2A36; font-weight:600; padding:7px 9px; border-bottom:2px solid #439BDA; }
-  .doc td{ padding:7px 9px; border-bottom:1px solid #CFE0EE; }
+  .doc th{ text-align:left; background:#fff; color:#000; font-weight:700; padding:7px 9px; border:.8px solid #000; }
+  .doc td{ padding:7px 9px; border:.8px solid #000; color:#000; }
   .doc .sign{ margin-top:30px; }
   .doc .foot{ position:absolute; left:72px; right:72px; bottom:44px; text-align:center; border-top:1px solid #CFE0EE; padding-top:16px; }
   .doc .foot img{ height:46px; display:block; margin:0 auto 6px; }
@@ -644,25 +644,29 @@ function buildPdf(d){
       const txt = noClip ? String(v) : pdf.splitTextToSize(String(v), widths[i] - 2)[0];
       if (right.includes(i)) pdf.text(txt, x + widths[i] - 3, y, { align:'right' }); else pdf.text(txt, x, y);
     };
+    const grid = (top, h) => {
+      pdf.setDrawColor(0,0,0); pdf.setLineWidth(0.2);
+      let x = L; pdf.rect(L, top, widths.reduce((p, q) => p + q, 0), h);
+      widths.slice(0, -1).forEach(w => { x += w; pdf.line(x, top, x, top + h); });
+    };
     const head = () => {
-      pdf.setFillColor(230,242,252); pdf.rect(L, y - 5, R - L, 8, 'F');
-      pdf.setDrawColor(...blue); pdf.setLineWidth(0.6); pdf.line(L, y + 3, R, y + 3);
-      pdf.setFont(F,'bold'); pdf.setFontSize(size); pdf.setTextColor(...ink);
-      let x = L + 2; heads.forEach((h, i) => { cell(h, i, x); x += widths[i]; }); y += 8.5;
+      grid(y - 5, 8);
+      pdf.setFont(F,'bold'); pdf.setFontSize(size); pdf.setTextColor(0,0,0);
+      let x = L + 2; heads.forEach((h, i) => { cell(h, i, x); x += widths[i]; }); y += 8;
     };
     newPageIfNeeded(18); head();
     rows.forEach(r => {
       if (y + 7 > H - 44){ newPage(); head(); }
       const cells = Array.isArray(r) ? r : r.cells;
-      pdf.setFont(F, r.adj ? 'italic' : 'normal'); pdf.setFontSize(size); pdf.setTextColor(...(r.adj ? [47,132,198] : ink));
-      let x = L + 2; cells.forEach((v, i) => { cell(v, i, x); x += widths[i]; });
-      pdf.setDrawColor(207,224,238); pdf.setLineWidth(0.2); pdf.line(L, y + 2.8, R, y + 2.8); y += 7;
+      grid(y - 4.2, 7);
+      pdf.setFont(F,'normal'); pdf.setFontSize(size); pdf.setTextColor(0,0,0);
+      let x = L + 2; cells.forEach((v, i) => { cell(v, i, x); x += widths[i]; }); y += 7;
     });
     (total ? (Array.isArray(total[0]) ? total : [total]) : []).forEach(tr => {
       if (y + 8 > H - 44){ newPage(); head(); }
-      pdf.setFont(F,'bold'); pdf.setFontSize(size); pdf.setTextColor(...ink);
-      let x = L + 2; tr.forEach((v, i) => { cell(v, i, x, i === 0); x += widths[i]; });
-      pdf.setDrawColor(...blue); pdf.setLineWidth(0.4); pdf.line(L, y + 2.8, R, y + 2.8); y += 7;
+      grid(y - 4.2, 7);
+      pdf.setFont(F,'bold'); pdf.setFontSize(size); pdf.setTextColor(0,0,0);
+      let x = L + 2; tr.forEach((v, i) => { cell(v, i, x, i === 0); x += widths[i]; }); y += 7;
     });
     y += 6;
   };
