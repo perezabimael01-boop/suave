@@ -432,6 +432,7 @@ function texts(d){
     // Notice of Outstanding Obligations
     noticeIntro: `This letter is to confirm that the above-referenced customer has a total of ${open.length} open balance${plural ? '' : 's'} with Suave.`,
     noticeRows: open.map(c => [c.no, c.pay != null ? `${cur} ${money(c.pay)} p/m` : '—', pend(c)]),
+    noticeAmount: amount,
     noticePayoff: `"If the client wishes to pay off ${plural ? 'the payment plan' : 'all payment plans'} in one single payment, this comes to a total of ${amount}. Upon payment, the payment ${plural ? 'plan' : 'plans'} will be closed immediately."`,
     noticeClose: 'Should you have any questions or require additional information, please feel free to contact us.',
     sign: [d.signer, ...(d.signTitle ? d.signTitle.split(/\s*,\s*/) : []), 'Suave', 'www.paywithsuave.com'].filter(Boolean)
@@ -515,7 +516,8 @@ function renderPreview(d){
       <p>${esc(t.noticeIntro)}</p>
       <h4 class="n-sec">Payment plans</h4>
       ${htmlTable(['Contract #', 'Monthly payment', 'Pending payments'], t.noticeRows, null, false)}
-      <div class="n-payoff">${esc(t.noticePayoff.replace(/^"|"$/g, ''))}</div>
+      <div class="n-payoff">${(() => { const p = t.noticePayoff.replace(/^"|"$/g, ''), k = t.noticeAmount ? p.indexOf(t.noticeAmount) : -1;
+        return k < 0 ? esc(p) : esc(p.slice(0, k)) + `<b><u>${esc(t.noticeAmount)}</u></b>` + esc(p.slice(k + t.noticeAmount.length)); })()}</div>
       <p>${esc(t.noticeClose)}</p>${sign}${foot}`;
     return;
   }
@@ -722,13 +724,36 @@ function buildPdf(d){
     pdf.setFont(F,'bold'); pdf.setFontSize(10.5); pdf.setTextColor(...ink); pdf.setCharSpace(0.4); pdf.text('PAYMENT PLANS', L, y); pdf.setCharSpace(0); y += 9;
     table(['Contract #', 'Monthly payment', 'Pending payments'], [60, 56, 50], t.noticeRows, null, false);
     { // pay-off callout
-      const txt = t.noticePayoff.replace(/^"|"$/g, '');
-      pdf.setFont(F,'normal'); pdf.setFontSize(12);
-      const lines = pdf.splitTextToSize(txt, R - L - 12), h = lines.length * 5.6 + 7;
+      // words with a bold flag; the pay-off amount is bold + underlined
+      const txt = t.noticePayoff.replace(/^"|"$/g, ''), amt = t.noticeAmount || '', k = amt ? txt.indexOf(amt) : -1;
+      const parts = k < 0 ? [[txt, false]] : [[txt.slice(0, k), false], [amt, true], [txt.slice(k + amt.length), false]];
+      const words = [];
+      parts.forEach(([p, b]) => p.split(/(\s+)/).forEach(w => { if (w) words.push({ w, b }); }));
+      pdf.setFontSize(12);
+      const maxW = R - L - 12, lines = [[]]; let lw = 0;
+      words.forEach(o => {
+        pdf.setFont(F, o.b ? 'bold' : 'normal'); const ww = pdf.getTextWidth(o.w);
+        if (/^\s+$/.test(o.w)){ if (lines[lines.length - 1].length) { lines[lines.length - 1].push({ ...o, ww }); lw += ww; } return; }
+        if (lw + ww > maxW && lines[lines.length - 1].length){
+          const cur = lines[lines.length - 1]; while (cur.length && /^\s+$/.test(cur[cur.length - 1].w)) cur.pop();
+          lines.push([]); lw = 0;
+        }
+        lines[lines.length - 1].push({ ...o, ww }); lw += ww;
+      });
+      const lh = 5.6, h = lines.length * lh + 7;
       newPageIfNeeded(h + 6);
       pdf.setFillColor(243,247,252); pdf.rect(L, y - 3, R - L, h, 'F');
       pdf.setFillColor(52,122,240); pdf.rect(L, y - 3, 1, h, 'F');
-      pdf.setTextColor(...ink); pdf.text(lines, L + 6, y + 3.5, { lineHeightFactor:1.45 });
+      pdf.setTextColor(...ink); pdf.setDrawColor(...ink); pdf.setLineWidth(0.25);
+      lines.forEach((ln, li) => {
+        let x = L + 6; const by = y + 3.5 + li * lh;
+        ln.forEach((o, oi) => {
+          pdf.setFont(F, o.b ? 'bold' : 'normal'); pdf.text(o.w, x, by);
+          const nxt = ln[oi + 1];
+          if (o.b && (!/^\s+$/.test(o.w) || (nxt && nxt.b))) pdf.line(x, by + 0.9, x + o.ww, by + 0.9);
+          x += o.ww;
+        });
+      });
       y += h + 7;
     }
     para(t.noticeClose, 4);
