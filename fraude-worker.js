@@ -121,11 +121,13 @@ function cleanAgencyUser(u){
 // ---------- Claude (AI insights) ----------
 // Only anonymous totals are sent to Claude (no names, e-mails or phone numbers).
 let cachedModel = "";
+const apiKey = env => String(env.ANTHROPIC_API_KEY || "").trim();
 async function pickModel(env){
-  if (env.ANTHROPIC_MODEL) return env.ANTHROPIC_MODEL;
+  if (env.ANTHROPIC_MODEL) return String(env.ANTHROPIC_MODEL).trim();
   if (cachedModel) return cachedModel;
-  const r = await fetch("https://api.anthropic.com/v1/models?limit=50", { headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" } });
+  const r = await fetch("https://api.anthropic.com/v1/models?limit=100", { headers: { "x-api-key": apiKey(env), "anthropic-version": "2023-06-01" } });
   const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error("Claude API said: " + ((j.error && j.error.message) || ("error " + r.status)) + (r.status === 401 ? " – check that the ANTHROPIC_API_KEY secret is the full key from Claude Console." : ""));
   const ids = (j.data || []).map(m => m.id);
   cachedModel = ids.find(id => /sonnet/i.test(id)) || ids[0] || "";
   if (!cachedModel) throw new Error("No Claude model available for this API key");
@@ -139,7 +141,7 @@ async function aiInsights(env, summary){
     "Point out risks, patterns, where the assumptions may be off, and what to do this week. Plain English, one finding per line starting with '- ', at most 40 words each, no headings.";
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    headers: { "x-api-key": apiKey(env), "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({ model, max_tokens: 900, system, messages: [{ role: "user", content: "Data (JSON):\n" + JSON.stringify(summary).slice(0, 60000) }] })
   });
   const j = await r.json().catch(() => ({}));
@@ -182,7 +184,7 @@ export default {
 
     const url = new URL(request.url);
     if (request.method === "GET" && url.pathname === "/"){
-      return json({ status: "Fraude worker is running.", database: !!env.DB, key: !!env.FRAUDE_KEY, allowedOrigins: env.ALLOWED_ORIGINS || "(default)" }, 200, { "Access-Control-Allow-Origin": "*" });
+      return json({ status: "Fraude worker is running.", database: !!env.DB, key: !!env.FRAUDE_KEY, claudeKey: apiKey(env) ? "set (" + apiKey(env).length + " chars, starts " + apiKey(env).slice(0, 7) + ")" : "missing", allowedOrigins: env.ALLOWED_ORIGINS || "(default)" }, 200, { "Access-Control-Allow-Origin": "*" });
     }
     if (h["Access-Control-Allow-Origin"] === "null") return json({ error: "Website not allowed: " + (origin || "(unknown)") }, 403, h);
     if (!env.DB || !env.FRAUDE_KEY) return json({ error: "Worker niet ingesteld: D1-binding DB en secret FRAUDE_KEY zijn nodig." }, 500, h);
@@ -243,7 +245,7 @@ export default {
         return json({ ok: true, ...(await agencyGet(env)) }, 200, h);
       }
       if (url.pathname === "/agency/ai"){
-        if (!env.ANTHROPIC_API_KEY) return json({ error: "No Claude API key yet: add the secret ANTHROPIC_API_KEY to this worker in Cloudflare." }, 400, h);
+        if (!apiKey(env)) return json({ error: "No Claude API key yet: add the secret ANTHROPIC_API_KEY to this worker in Cloudflare." }, 400, h);
         try { return json({ ok: true, ...(await aiInsights(env, body.summary || {})), at: now }, 200, h); }
         catch (e){ return json({ error: String(e && e.message || e) }, 502, h); }
       }
