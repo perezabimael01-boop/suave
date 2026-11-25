@@ -151,6 +151,14 @@
     table.d td{ border:0 !important; padding:4px 12px !important; text-align:left !important; }
     table.d td[data-l]::before{ content:attr(data-l); display:block; font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:#8a8a8a; }
   }
+
+  .upd-menu{ position:relative; }
+  .icon-btn{ width:38px; height:38px; border-radius:50%; border:0; background:#EEF4FE; color:#347AF0; display:grid; place-items:center; cursor:pointer; transition:background .15s; }
+  .icon-btn:hover, .icon-btn[aria-expanded="true"]{ background:#347AF0; color:#fff; }
+  .menu{ position:absolute; right:0; top:calc(100% + 8px); z-index:20; min-width:210px; background:#fff; border-radius:10px; box-shadow:0 12px 32px -8px rgba(20,40,80,.3); padding:6px; }
+  .menu button, .menu label{ display:flex; align-items:center; gap:10px; width:100%; box-sizing:border-box; padding:10px 12px; border:0; background:none; border-radius:7px; font:500 14px Montserrat, var(--font); color:#2C2C2C; cursor:pointer; text-align:left; margin:0; }
+  .menu button:hover, .menu label:hover{ background:#F3F7FF; color:#347AF0; }
+  .menu .danger{ color:#B42318; } .menu .danger:hover{ background:#FDEDEB; color:#B42318; }
 </style>
 </head>
 <body data-tool="collection-agency">
@@ -167,11 +175,18 @@
   </div>
 
   <div class="bar-row none" id="updated"><span class="dot"></span><span id="updatedTxt"><b>Last update:</b> loading…</span><span class="sp"></span>
-    <button type="button" class="btn btn-primary" id="paste" style="min-height:36px">Paste new list</button>
-    <label class="btn btn-secondary" style="cursor:pointer;min-height:36px">Upload Excel <input type="file" id="file" accept=".xlsx,.xls" hidden></label>
-    <button type="button" class="btn btn-quiet" id="clearSaved" hidden style="min-height:32px;padding:4px 10px;font-size:13.5px">Delete saved list</button>
+    <div class="upd-menu">
+      <button type="button" class="icon-btn" id="updBtn" aria-haspopup="true" aria-expanded="false" title="Update the list">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+      </button>
+      <div class="menu" id="updMenu" hidden role="menu">
+        <button type="button" role="menuitem" id="paste"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h2"/></svg>Paste new list</button>
+        <label role="menuitem"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg>Upload Excel<input type="file" id="file" accept=".xlsx,.xls" hidden></label>
+        <button type="button" role="menuitem" id="clearSaved" hidden class="danger"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Delete saved list</button>
+      </div>
+    </div>
     <span class="status" id="status" hidden></span></div>
-  <div class="bar-row none" id="login" hidden><span class="dot" style="background:#D9772B"></span><span style="flex:1;min-width:220px"><b>Log in to Cloudflare</b> to see and save the shared list (same password as Fraud Contacts).</span>
+  <div class="bar-row none" id="login" hidden><span class="dot" style="background:#D9772B"></span><span style="flex:1;min-width:220px"><b>Log in</b> to see the list (same password as Fraud Contacts).</span>
     <input type="text" name="username" value="suave-fraude" autocomplete="username" hidden><input type="password" id="sKey" name="password" autocomplete="current-password" placeholder="Password" style="padding:8px 10px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);font:inherit">
     <button type="button" class="btn btn-primary" id="loginBtn" style="min-height:36px">Log in</button><span id="loginMsg" style="width:100%;font-size:13.5px"></span></div>
 
@@ -184,7 +199,7 @@
 
   <!-- ================= OVERVIEW ================= -->
   <div data-panel="overview">
-    <div class="empty" id="noData">No list loaded yet. In Suave click <b>Agency Check → Read list → Copy for analysis</b>, then click <b>Paste new list</b> above. First time? See <a href="#" data-goto="setup">Setup &amp; logic</a>.</div>
+    <div class="empty" id="noData">No list loaded yet. In Suave click <b>Agency Check → Read list → Copy for analysis</b>, then click the <b>update icon</b> (↻) above and choose <b>Paste new list</b>. First time? See <a href="#" data-goto="setup">Setup &amp; logic</a>.</div>
     <div id="overview" hidden>
       <div class="kpis" id="kpis"></div>
       <div class="charts">
@@ -261,7 +276,7 @@
       <ol class="steps">
         <li>Open <b>admin.paywithsuave.com</b> (logged in) and click <b>Agency Check</b> in your bookmarks bar, then <b>Read list</b> (about 5–8 minutes for ~470 users).</li>
         <li>Click <b>Copy for analysis</b> in the panel.</li>
-        <li>Come back here and click <b>Paste new list</b>. The new list is saved in Cloudflare and the old one is deleted.</li>
+        <li>Come back here, click the <b>update icon</b> (↻) at the top and choose <b>Paste new list</b>. The new list replaces the old one.</li>
       </ol>
     </section>
     <section class="section">
@@ -596,7 +611,7 @@ function status(t,err){ $('status').hidden=!t; $('status').textContent=t||''; $(
 async function api(path, body){
  if(!conn.key) throw new Error('LOGIN');
  let r; try{ r=await fetch(WORKER+path,{method:body?'POST':'GET',headers:Object.assign({'X-Fraude-Key':conn.key},body?{'Content-Type':'application/json'}:{}),body:body?JSON.stringify(body):undefined,cache:'no-store'}); }
- catch(e){ throw new Error('Cloudflare is not reachable right now.'); }
+ catch(e){ throw new Error('the server is not reachable right now.'); }
  let j={}; try{ j=await r.json(); }catch(e){}
  if(r.status===401) throw new Error('LOGIN');
  if(!r.ok) throw new Error(j.error||('Cloudflare error '+r.status));
@@ -606,10 +621,10 @@ function fmtDate(d){ return new Date(d).toLocaleString('en-GB',{day:'numeric',mo
 function ago(d){ const m=Math.round((Date.now()-new Date(d))/6e4); if(m<1)return 'just now'; if(m<60)return m+' min ago'; const h=Math.round(m/60); if(h<24)return h+' hour'+(h===1?'':'s')+' ago'; const dd=Math.round(h/24); return dd+' day'+(dd===1?'':'s')+' ago'; }
 function showUpdated(note){
  const box=$('updated');
- if(!META){ box.className='bar-row none'; $('updatedTxt').innerHTML='<b>Last update:</b> '+esc(note||'never – no list saved yet.'); $('clearSaved').hidden=true; return; }
+ if(!META){ box.className='bar-row none'; $('updatedTxt').innerHTML='<b>Last updated:</b> '+esc(note||'never – no list yet.'); $('clearSaved').hidden=true; return; }
  const old=(Date.now()-new Date(META.at))>7*864e5;
  box.className='bar-row'+(old?' old':'');
- $('updatedTxt').innerHTML=`<b>Last update: ${esc(fmtDate(META.at))}</b> (${ago(META.at)}) · ${META.n} user${META.n===1?'':'s'} · saved in Cloudflare`+(old?' · <b style="color:#D9772B">older than a week – update the list</b>':'');
+ $('updatedTxt').innerHTML=`<b>Last updated: ${esc(fmtDate(META.at))}</b> (${ago(META.at)})`+(old?' · <b style="color:#D9772B">older than a week – update the list</b>':'');
  $('updatedTxt').title=META.source||''; $('clearSaved').hidden=false;
 }
 function needLogin(note){ conn.key=''; setConn(conn); $('login').hidden=false; $('loginMsg').textContent=note||''; META=null; showUpdated('log in to see the saved list.'); }
@@ -623,18 +638,18 @@ async function loadSaved(){
  catch(e){ if(e.message==='LOGIN') needLogin(conn.key?'Wrong password.':''); else showUpdated(e.message); render(); }
 }
 async function save(){
- status('Saving to Cloudflare – the old list is deleted and replaced…');
+ status('Saving…');
  try{
   const j=await api('/agency/save',{meta:META,users:USERS.map(u=>({id:u.id,name:u.name,cty:u.cty,dpd:u.dpd,pd:u.pd,op:u.op,paid:u.paid,tot:u.tot,last:u.last,lastAmt:u.lastAmt,a30:u.a30,a90:u.a90,notes:u.notes,stripe:u.stripe,blocked:u.blocked}))});
-  META=j.meta; showUpdated(); status(`Saved in Cloudflare: ${META.n} users. The previous list was deleted.`);
+  META=j.meta; showUpdated(); status('List updated.');
   setTimeout(()=>status(''),8000);
  }catch(e){
-  if(e.message==='LOGIN'){ needLogin('Log in, then load the list again to save it.'); status('Not saved – log in to Cloudflare first.',true); }
-  else status('Not saved in Cloudflare: '+e.message+' The results are only shown, not saved.',true);
+  if(e.message==='LOGIN'){ needLogin('Log in, then load the list again to save it.'); status('Not saved – log in first.',true); }
+  else status('Not saved: '+e.message+' The results are only shown, not saved.',true);
  }
 }
 $('clearSaved').addEventListener('click',async()=>{
- if(!confirm('Delete the saved list from Cloudflare for everyone?'))return;
+ if(!confirm('Delete the saved list for everyone?'))return;
  try{ await api('/agency/delete',{}); META=null; USERS=[]; render(); status('Saved list deleted.'); showUpdated(); }
  catch(e){ status(e.message==='LOGIN'?'Log in first.':e.message,true); }
 });
@@ -663,6 +678,13 @@ $('file').addEventListener('change',async e=>{
  e.target.value='';
 });
 
+// ---------- update menu ----------
+function closeMenu(){ $('updMenu').hidden=true; $('updBtn').setAttribute('aria-expanded','false'); }
+$('updBtn').addEventListener('click',e=>{ e.stopPropagation(); const open=$('updMenu').hidden; $('updMenu').hidden=!open; $('updBtn').setAttribute('aria-expanded',String(open)); });
+document.addEventListener('click',e=>{ if(!e.target.closest('.upd-menu')) closeMenu(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeMenu(); });
+['paste','clearSaved'].forEach(id=>$(id).addEventListener('click',closeMenu));
+$('file').addEventListener('click',closeMenu);
 // ---------- start ----------
 try{ const lv=JSON.parse(localStorage.getItem(LSTORE)||'null'); if(lv) Object.entries(lv).forEach(([k,v])=>{ const el=$('k_'+k); if(el) el.value=v; }); }catch(e){}
 try{ const t=localStorage.getItem('suave.agencyCheck.tab'); if(t&&document.querySelector(`[data-panel="${t}"]`)) openTab(t); }catch(e){}
