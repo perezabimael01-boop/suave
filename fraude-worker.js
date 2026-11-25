@@ -86,13 +86,26 @@ async function ensureSchema(env){
   schemaReady = true;
 }
 
+// Extra decision signals per user: a small flat object of numbers / short text (max 12 keys).
+function cleanSig(g){
+  if (!g || typeof g !== "object" || Array.isArray(g)) return null;
+  const o = {};
+  for (const k of Object.keys(g).slice(0, 12)){
+    const v = g[k], key = String(k).slice(0, 20);
+    if (v === null || typeof v === "number" && isFinite(v)) o[key] = v;
+    else if (typeof v === "boolean") o[key] = v ? 1 : 0;
+    else if (typeof v === "string") o[key] = v.slice(0, 40);
+  }
+  return o;
+}
 // Keep only the fields the Agency Check page needs, with sane types and lengths.
 function cleanAgencyUser(u){
   const n = v => { const x = Number(v); return isFinite(x) ? Math.round(x * 100) / 100 : 0; };
   return {
     id: String(u.id == null ? "" : u.id).slice(0, 30), name: String(u.name || "").slice(0, 120), cty: String(u.cty || "").slice(0, 4),
     dpd: n(u.dpd), pd: n(u.pd), op: n(u.op), rem: n(u.rem), paid: n(u.paid), tot: n(u.tot), last: String(u.last || "").slice(0, 10), lastAmt: u.lastAmt == null || u.lastAmt === "" ? null : n(u.lastAmt),
-    a30: n(u.a30), a90: n(u.a90), notes: n(u.notes), stripe: u.stripe ? 1 : 0, blocked: u.blocked ? 1 : 0
+    a30: n(u.a30), a90: n(u.a90), notes: n(u.notes), stripe: u.stripe ? 1 : 0, blocked: u.blocked ? 1 : 0,
+    sig: cleanSig(u.sig)
   };
 }
 async function agencyGet(env){
