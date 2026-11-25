@@ -419,7 +419,9 @@ function intercomVersturen(){
   $("send").addEventListener("click", async () => {
     const list = selected(), test = $("test").checked;
     if (!list.length) return;
-    if (!test && !confirm(`${list.length} klanten een herinnering sturen via Intercom (WhatsApp, of e-mail als dat niet kan)?`)) return;
+    // Auto-send from the Collection Agency Check page: the user already confirmed there.
+    const pre = S.autoConfirmed; S.autoConfirmed = false;
+    if (!test && !pre && !confirm(`${list.length} klanten een herinnering sturen via Intercom (WhatsApp, of e-mail als dat niet kan)?`)) return;
     S.running = true; S.stop = false; $("stop").hidden = false; $("paste").disabled = true; count();
     let wa = 0, em = 0, bad = 0;
     for (const p of list){
@@ -476,7 +478,10 @@ function intercomVersturen(){
   });
 
   $("x").addEventListener("click", () => { host.style.display = "none"; });
-  window.__icVersturen = { show(){ host.style.display = ""; } };
+  window.__icVersturen = { show(){ host.style.display = ""; },
+    // Used by the "Suave Auto-Send" add-on: load a list and start sending right away.
+    auto(text, confirmed){ host.style.display = ""; $("test").checked = false; load(text); S.autoConfirmed = !!confirmed;
+      if (selected().length) setTimeout(() => $("send").click(), 400); else info("Niemand om te versturen (iedereen kreeg deze week al hetzelfde bericht).", "good"); } };
 }
 
 // ================= This page =================

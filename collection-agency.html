@@ -220,7 +220,8 @@
       <div class="kpis" id="kpis"></div>
       <section class="section ic" style="margin-top:1.5rem">
         <h2 class="section-title">Send messages via Intercom</h2>
-        <p>Pick a group: the list is copied for Intercom and Intercom opens in a new tab. There click <b>2 · Intercom Versturen</b> → <b>Plak lijst</b>, check the list and click <b>Versturen</b>. Same WhatsApp templates (or e-mail) as the Reminders tool; anyone who got the same message in the last 7 days is unticked automatically.</p>
+        <p>Press a group: after you confirm, Intercom opens and starts sending by itself – the same WhatsApp templates (or e-mail) as the Reminders tool. Anyone who got the same message in the last 7 days is skipped. You can follow (and stop) it in the panel in Intercom.</p>
+        <p class="hint">One-time setup on each computer: install the free <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener">Tampermonkey</a> extension for Chrome, then click <a href="suave-autosend.user.js" target="_blank" rel="noopener"><b>Install Suave Auto-Send</b></a> and press <b>Install</b>. Without it, the list is copied and you click <b>2 · Intercom Versturen</b> → <b>Plak lijst</b> → <b>Versturen</b> yourself.</p>
         <div class="icb" id="icButtons"></div>
         <div class="status" id="icStatus" hidden></div>
       </section>
@@ -292,6 +293,10 @@
           <li>Name: <b>Agency Check</b>. In URL paste the code (<kbd>Ctrl</kbd>+<kbd>V</kbd>) and click <b>Save</b>.</li>
         </ol>
       </details>
+    </section>
+    <section class="section">
+      <h2 class="section-title">1b. Automatic sending in Intercom <span class="tag">Once</span></h2>
+      <p>Install the free <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener">Tampermonkey</a> extension for Chrome, then click <a href="suave-autosend.user.js" target="_blank" rel="noopener"><b>Install Suave Auto-Send</b></a> and press <b>Install</b>. After that, the buttons under <b>Send messages via Intercom</b> (Overview tab) open Intercom and start sending by themselves. Be logged in to Intercom in the same Chrome.</p>
     </section>
     <section class="section">
       <h2 class="section-title">2. Update the list <span class="tag">Every time</span></h2>
@@ -746,15 +751,19 @@ function drawIc(){
   return `<button type="button" class="icbtn" data-ic="${k}" ${ok?'':'disabled'}><b>${l}</b><span>${ok} user${ok===1?'':'s'}${list.length>ok?` · ${list.length-ok} without e-mail`:''}</span><small>${sub}</small></button>`; }).join('');
  document.querySelectorAll('[data-ic]').forEach(b=>b.onclick=()=>copyIc(b.dataset.ic));
 }
+function b64url(str){ const bytes=new TextEncoder().encode(str); let bin=''; for(let i=0;i<bytes.length;i+=8192) bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+8192)); return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 async function copyIc(k){
  const g=IC_GROUPS.find(x=>x[0]===k); const list=VIS.filter(g[3]).filter(u=>u.email);
+ if(!list.length) return;
+ if(!confirm(`Send “${g[1]}” to ${list.length} customer${list.length===1?'':'s'} via Intercom now?\n\nIntercom opens and starts sending right away (WhatsApp, or e-mail when that is not possible). Anyone who got this message in the last 7 days is skipped.`)) return;
  const rows=list.map(u=>({user_id:u.id,name:u.name,email:u.email,phone:u.phone||'',days:u.dpd,amount:(+u.pd||0).toFixed(2),due:'',...(g[4]?{tpl:g[4]}:{})}));
  const text='SUAVE-HERINNERINGEN:'+JSON.stringify({kind:'agency-check',at:new Date().toISOString(),rows});
  const st=$('icStatus'); st.hidden=false; st.className='status';
  try{ await navigator.clipboard.writeText(text); }
  catch(e){ st.className='status err'; st.textContent='Copying was blocked by the browser – click the button again.'; return; }
- st.innerHTML=`Copied <b>${rows.length}</b> for “${esc(g[1])}”. In the Intercom tab: click <b>2 · Intercom Versturen</b> → <b>Plak lijst</b> → <b>Versturen</b>.`;
- window.open('https://app.intercom.com/','suave-intercom');
+ st.innerHTML=`Sending <b>${rows.length}</b> “${esc(g[1])}” messages – Intercom opened in a new tab and starts by itself. Nothing happening? Install <a href="suave-autosend.user.js" target="_blank" rel="noopener">Suave Auto-Send</a> (one time), or there click <b>2 · Intercom Versturen</b> → <b>Plak lijst</b> → <b>Versturen</b> (the list is already copied).`;
+ const payload={confirmed:true,list:{kind:'agency-check',at:new Date().toISOString(),rows}};
+ window.open('https://app.intercom.com/#suave-send='+b64url(JSON.stringify(payload)),'suave-intercom');
 }
 // ---------- island filter ----------
 function island(){ const b=document.querySelector('.island [aria-pressed="true"]'); return b?b.dataset.isl:''; }
