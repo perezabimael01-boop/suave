@@ -91,7 +91,7 @@ function cleanAgencyUser(u){
   const n = v => { const x = Number(v); return isFinite(x) ? Math.round(x * 100) / 100 : 0; };
   return {
     id: String(u.id == null ? "" : u.id).slice(0, 30), name: String(u.name || "").slice(0, 120), cty: String(u.cty || "").slice(0, 4),
-    dpd: n(u.dpd), pd: n(u.pd), op: n(u.op), paid: n(u.paid), tot: n(u.tot), last: String(u.last || "").slice(0, 10), lastAmt: u.lastAmt == null || u.lastAmt === "" ? null : n(u.lastAmt),
+    dpd: n(u.dpd), pd: n(u.pd), op: n(u.op), rem: n(u.rem), paid: n(u.paid), tot: n(u.tot), last: String(u.last || "").slice(0, 10), lastAmt: u.lastAmt == null || u.lastAmt === "" ? null : n(u.lastAmt),
     a30: n(u.a30), a90: n(u.a90), notes: n(u.notes), stripe: u.stripe ? 1 : 0, blocked: u.blocked ? 1 : 0
   };
 }

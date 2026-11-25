@@ -204,7 +204,7 @@
       <div class="kpis" id="kpis"></div>
       <div class="charts">
         <div class="chart" id="chartA">
-          <h3>Principal at risk by days late</h3><p class="sub">Fl, stacked by what to do</p>
+          <h3>Balance owed by days late</h3><p class="sub">Fl principal + interest, stacked by what to do</p>
           <div class="legend" id="legendA"></div>
           <div id="svgA"></div>
           <div class="viewtoggle"><a href="#" id="tglA">Show as table</a></div><div id="tblA" hidden></div>
@@ -281,11 +281,11 @@
     </section>
     <section class="section">
       <h2 class="section-title">How the logic works</h2>
-      <p><b>Expected recovery internally</b> = principal still at risk × chance the user pays on their own (by days late; ×0.5 if they paid &lt;10% of installments; ×0.75 with 2+ collection notes; ×1.5 if they paid in the last 30 days; ×0.5 if no payment in 90+ days).<br>
-      <b>Expected recovery via the agency</b> = principal at risk × agency recovery rate for the country (Aruba 45%, Curaçao/other 2%) − Fl 250 agency cost.</p>
+      <p><b>Expected recovery internally</b> = balance still owed (principal + interest) × chance the user pays on their own (by days late; ×0.5 if they paid &lt;10% of installments; ×0.75 with 2+ collection notes; ×1.5 if they paid in the last 30 days; ×0.5 if no payment in 90+ days).<br>
+      <b>Expected recovery via the agency</b> = balance still owed × agency recovery rate for the country (Aruba 45%, Curaçao/other 2%) − Fl 250 agency cost.</p>
       <ol class="steps">
         <li><span class="pill internal">Keep internal – reminders</span> 0–30 days late.</li>
-        <li><span class="pill notworth">Small balance</span> less than Fl 1,000 principal at risk (break-even = 250 ÷ (45% − 20%)). Keep chasing; block &amp; write off from day 120.</li>
+        <li><span class="pill notworth">Small balance</span> less than Fl 300 still owed (principal + interest): hidden from the lists – not worth the agency. Keep reminding; write off from day 120.</li>
         <li><span class="pill internal">Keep internal – still paying</span> late, but paid at least 20% of their past due amount in the last 30 days (a smaller token payment doesn't count).</li>
         <li><span class="pill notworth">Agency not effective</span> / <span class="pill internal">payment plan</span> when the agency doesn't come out ahead – e.g. Curaçao, where it recovers ~2%.</li>
         <li><span class="pill send">Send to agency NOW</span> 70+ days late and all criteria met.</li>
@@ -295,7 +295,7 @@
         <summary>Logic levers (change and everything recalculates)</summary>
         <div class="lev" id="levers"></div>
       </details>
-      <p class="hint" style="margin-top:12px">Principal at risk = per open plan, original principal × unpaid installments ÷ total installments. Agency figures come from the Deurwaarder dashboard (only 45% of agency cases ever paid anything; first payment after ~13 months). Cure chances are estimates. The latest list is saved in Suave's Cloudflare database (password protected, the same login as Fraud Contacts); loading a new list deletes the old one.</p>
+      <p class="hint" style="margin-top:12px">Balance owed = what is still unpaid on the open plans: principal balance + interest balance. Both the internal and the agency recovery are calculated on that full balance. Agency figures come from the Deurwaarder dashboard (only 45% of agency cases ever paid anything; first payment after ~13 months). Cure chances are estimates. The latest list is saved in Suave's Cloudflare database (password protected, the same login as Fraud Contacts); loading a new list deletes the old one.</p>
     </section>
   </div>
 </main>
@@ -355,18 +355,18 @@ function agencyCheck(){
       let i = 0, done = 0, fails = 0;
       async function worker(){
         while (i < list.length){
-          const u = list[i++]; let op = 0, paid = 0, tot = 0, last = "", a30 = 0, a90 = 0, lastAmt = 0; const pays = [];
+          const u = list[i++]; let op = 0, rem = 0, paid = 0, tot = 0, last = "", a30 = 0, a90 = 0, lastAmt = 0; const pays = [];
           try {
             const j = await (await fetch("/api/v1/admin/manage-user/detail/" + u.id, { method: "POST", headers: H(), body: "{}" })).json();
             ((j.data && j.data.payment_history) || []).forEach(pl => {
               const ms = (pl.payment_monthly || []).filter(m => !m.is_canceled), N = ms.length || 1, pd = ms.filter(m => m.status === 1).length;
               paid += pd; tot += ms.length;
-              if (!pl.is_completed && !pl.is_paid_off && !pl.is_canceled) op += num(pl.amount) * Math.max(0, N - pd) / N;
+              if (!pl.is_completed && !pl.is_paid_off && !pl.is_canceled){ op += num(pl.amount) * Math.max(0, N - pd) / N; ms.forEach(m => { if (m.status !== 1) rem += num(m.amount); }); }
               ms.forEach(m => { if (m.status === 1 && m.payment_date && m.payment_date <= today){ pays.push([m.payment_date, num(m.amount)]); if (m.payment_date > last) last = m.payment_date; if (m.payment_date >= d30) a30 += num(m.amount); if (m.payment_date >= d90) a90 += num(m.amount); } });
             });
           } catch(e){ fails++; }
           pays.forEach(x => { if (x[0] === last) lastAmt += x[1]; });
-          Object.assign(u, { op: Math.round(op * 100) / 100, paid, tot, last, lastAmt: Math.round(lastAmt * 100) / 100, a30: Math.round(a30 * 100) / 100, a90: Math.round(a90 * 100) / 100 });
+          Object.assign(u, { op: Math.round(op * 100) / 100, rem: Math.round(Math.max(rem, op) * 100) / 100, paid, tot, last, lastAmt: Math.round(lastAmt * 100) / 100, a30: Math.round(a30 * 100) / 100, a90: Math.round(a90 * 100) / 100 });
           done++; info(`Reading loans & payments: ${done} of ${list.length} users…`); $("prog").style.width = (100 * done / list.length) + "%";
         }
       }
@@ -408,8 +408,8 @@ document.addEventListener('click',e=>{ const g=e.target.closest('[data-goto]'); 
 
 // ---------- levers ----------
 const L=[
- ['min','Minimum principal to send (Fl)',1000],['cost','Agency cost per case (Fl)',250],
- ['aw','Agency recovery Aruba (%)',45],['cw','Agency recovery Curaçao / other (%)',2],
+ ['min','Hide balances under (Fl) – principal + interest',300],['cost','Agency cost per case (Fl)',250],
+ ['aw','Agency recovery Aruba (% of balance owed)',45],['cw','Agency recovery Curaçao / other (%)',2],
  ['c1','Cure chance 1–15 days (%)',85],['c2','Cure chance 16–30 days (%)',65],['c3','Cure chance 31–60 days (%)',40],
  ['c4','Cure chance 61–90 days (%)',20],['c5','Cure chance 91+ days (%)',10],
  ['fpd','“Barely paid” threshold (%)',10],['send','Send to agency from day',70],
@@ -426,7 +426,7 @@ const GROUPS=[['internal','Keep chasing internally','var(--g-internal)','#257de0
 const GCOL=Object.fromEntries(GROUPS.map(g=>[g[0],g[3]])), GNAME=Object.fromEntries(GROUPS.map(g=>[g[0],g[1]]));
 Object.values(ACT).forEach(a=>$('fAct').insertAdjacentHTML('beforeend',`<option>${a}</option>`));
 
-let USERS=[],sortKey='adv',sortDir=-1;
+let USERS=[],VIS=[],HIDDEN=[],sortKey='adv',sortDir=-1;
 const fl=v=>'Fl '+Math.round(v).toLocaleString('en-US');
 const flk=v=>v>=1000?'Fl '+(v/1000).toFixed(v>=100000?0:1).replace(/\.0$/,'')+'k':'Fl '+Math.round(v);
 const TODAY=new Date();TODAY.setHours(0,0,0,0);
@@ -436,7 +436,7 @@ const num=s=>+String(s??0).replace(/,/g,'')||0;
 const n=(x,w)=>`${x} ${x===1?w:w+'s'}`;
 
 function evaluate(u,k){
- const d=u.dpd,p=u.op,ratio=u.tot?u.paid/u.tot:0,ds=daysSince(u.last);
+ const tb=Math.max(num(u.rem),num(u.op)), interest=Math.max(0,tb-num(u.op)), d=u.dpd,p=tb,ratio=u.tot?u.paid/u.tot:0,ds=daysSince(u.last);
  const pctLast=(u.lastAmt!=null&&u.lastAmt!==''&&u.pd>0)?num(u.lastAmt)/u.pd:null;
  const recentAny=ds!==null&&ds<=k.recent, token=recentAny&&pctLast!==null&&pctLast<k.minpct/100;
  const recent=recentAny&&!token, stopped=ds===null||ds>=k.stale;
@@ -450,13 +450,13 @@ function evaluate(u,k){
  const cr={days:d>=k.send, bal:p>=k.min, nopay:!recent, wins:adv>0};
  let act,why;
  if(d<=30){act=ACT.rem;why=`Only ${d} days late – most users pay on their own at this stage.`}
- else if(p<k.min){act=d>=k.wo?ACT.wo:ACT.small;why=`Only ${fl(p)} principal left – below the ${fl(k.min)} minimum, the agency would cost more than it recovers.`}
+ else if(p<k.min){act=d>=k.wo?ACT.wo:ACT.small;why=`Only ${fl(p)} left to collect – below ${fl(k.min)}, not worth the agency.`}
  else if(recent&&d<k.wo){act=ACT.still;why=`${d} days late but ${lastTxt} – still engaged, push a catch-up plan.`}
  else if(adv<=0){act=u.cty==='AW'?ACT.plan:ACT.noteff;why=u.cty==='AW'?`Internal (${fl(evI)}) still beats the agency (${fl(evA)}). Offer a payment plan.`:`The agency recovers only ${Math.round(rec*100)}% in ${u.cty}. Final notice / payment plan instead.`}
- else if(d>=k.send){act=ACT.send;why=`${d} days late, ${lastTxt}${token?' – only a token payment':''}, ${fl(p)} at risk. Agency expected ${fl(evA)} vs internal ${fl(evI)}.`}
+ else if(d>=k.send){act=ACT.send;why=`${d} days late, ${lastTxt}${token?' – only a token payment':''}, ${fl(p)} still owed (${fl(u.op)} principal + ${fl(interest)} interest). Agency expected ${fl(evA)} vs internal ${fl(evI)}.`}
  else{act=ACT.final;why=`${lastTxt[0].toUpperCase()+lastTxt.slice(1)}. Agency would win (${fl(evA)} vs ${fl(evI)}). Send final notice; if still unpaid at day ${k.send} → agency.`}
  const score=(d<=15?0:d<=30?10:d<=60?25:d<=90?35:45)+(p>=5000?20:p>=3000?15:p>=1500?10:p>=500?5:0)+(ratio<k.fpd/100?15:ratio<.25?10:ratio<.5?5:0)+(u.notes>=2?10:0)+(u.stripe?5:0)+(u.blocked?5:0)+(stopped?10:0);
- return Object.assign(u,{ratio,cure,rec,evI,evA,adv,act,why,cr,pctLast:pctLast===null?-1:pctLast,token,grp:GROUP_OF[act],score:Math.min(100,score),ds:ds===null?99999:ds,lastShow:u.last?String(u.last).slice(0,10):'never'});
+ return Object.assign(u,{tb,interest,ratio,cure,rec,evI,evA,adv,act,why,cr,pctLast:pctLast===null?-1:pctLast,token,grp:GROUP_OF[act],score:Math.min(100,score),ds:ds===null?99999:ds,lastShow:u.last?String(u.last).slice(0,10):'never'});
 }
 
 // ---------- charts (plain SVG) ----------
@@ -470,7 +470,7 @@ function niceMax(v){ if(v<=0)return 1; const p=Math.pow(10,Math.floor(Math.log10
 
 function chartA(k){
  const B=[['0–15',0,15],['16–30',16,30],['31–60',31,60],['61–'+(k.send-1),61,k.send-1],[k.send+'–90',k.send,90],['91+',91,1e9]].filter(b=>b[1]<=b[2]);
- const data=B.map(([lab,a,b])=>{ const o={lab,tot:0,n:0}; GROUPS.forEach(g=>o[g[0]]=0); USERS.forEach(u=>{ if(u.dpd>=a&&u.dpd<=b){ o[u.grp]+=u.op; o.tot+=u.op; o.n++; } }); return o; });
+ const data=B.map(([lab,a,b])=>{ const o={lab,tot:0,n:0}; GROUPS.forEach(g=>o[g[0]]=0); VIS.forEach(u=>{ if(u.dpd>=a&&u.dpd<=b){ o[u.grp]+=u.tb; o.tot+=u.tb; o.n++; } }); return o; });
  const W=640,H=280,ml=56,mr=8,mt=8,mb=34, iw=W-ml-mr, ih=H-mt-mb, max=niceMax(Math.max(...data.map(d=>d.tot))), bw=Math.min(64,iw/data.length*0.6), step=iw/data.length;
  const y=v=>mt+ih-v/max*ih;
  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Principal at risk by days late, stacked by action">`;
@@ -496,9 +496,9 @@ function chartA(k){
  $('tblA').innerHTML=`<table class="mini"><tr><th>Days late</th>${GROUPS.map(g=>`<th>${g[1]}</th>`).join('')}<th>Total</th></tr>`+data.map(d=>`<tr><td>${d.lab}</td>${GROUPS.map(g=>`<td>${fl(d[g[0]])}</td>`).join('')}<td>${fl(d.tot)}</td></tr>`).join('')+'</table>';
 }
 function chartB(k){
- const late=USERS.filter(u=>u.dpd>30);
+ const late=VIS.filter(u=>u.dpd>30);
  const B=[['≤ 30 days',0,30],['31–60',31,60],['61–90',61,90],['90+',91,99998],['Never paid',99999,99999]];
- const data=B.map(([lab,a,b])=>{ const us=late.filter(u=>u.ds>=a&&u.ds<=b); return {lab,n:us.length,p:us.reduce((s,u)=>s+u.op,0),send:us.filter(u=>u.grp==='send').length}; });
+ const data=B.map(([lab,a,b])=>{ const us=late.filter(u=>u.ds>=a&&u.ds<=b); return {lab,n:us.length,p:us.reduce((s,u)=>s+u.tb,0),send:us.filter(u=>u.grp==='send').length}; });
  const W=420,H=280,ml=34,mr=8,mt=14,mb=34,iw=W-ml-mr,ih=H-mt-mb,max=niceMax(Math.max(1,...data.map(d=>d.n))),step=iw/data.length,bw=Math.min(48,step*0.6);
  const y=v=>mt+ih-v/max*ih;
  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Users 31+ days late by days since last payment">`;
@@ -510,42 +510,43 @@ function chartB(k){
  s+=`<line x1="${ml}" x2="${W-mr}" y1="${y(0)}" y2="${y(0)}" stroke="#A9C6DE"/></svg>`;
  $('svgB').innerHTML=s; const box=$('chartB');
  $('svgB').querySelectorAll('.col').forEach(c=>{ const d=data[+c.dataset.i];
-  c.addEventListener('mousemove',e=>{ const r=box.getBoundingClientRect(); tipAt(box,`<b>Last paid: ${d.lab}</b><div class="r">Users<b>${d.n}</b></div><div class="r">Principal at risk<b>${fl(d.p)}</b></div><div class="r">Of which sent to agency<b>${d.send}</b></div>`,e.clientX-r.left,e.clientY-r.top); });
+  c.addEventListener('mousemove',e=>{ const r=box.getBoundingClientRect(); tipAt(box,`<b>Last paid: ${d.lab}</b><div class="r">Users<b>${d.n}</b></div><div class="r">Balance owed<b>${fl(d.p)}</b></div><div class="r">Of which sent to agency<b>${d.send}</b></div>`,e.clientX-r.left,e.clientY-r.top); });
   c.addEventListener('mouseleave',()=>hideTip(box)); });
- $('tblB').innerHTML=`<table class="mini"><tr><th>Last paid</th><th>Users</th><th>Principal at risk</th><th>Sent to agency</th></tr>`+data.map(d=>`<tr><td>${d.lab}</td><td>${d.n}</td><td>${fl(d.p)}</td><td>${d.send}</td></tr>`).join('')+'</table>';
+ $('tblB').innerHTML=`<table class="mini"><tr><th>Last paid</th><th>Users</th><th>Balance owed</th><th>Sent to agency</th></tr>`+data.map(d=>`<tr><td>${d.lab}</td><td>${d.n}</td><td>${fl(d.p)}</td><td>${d.send}</td></tr>`).join('')+'</table>';
 }
 [['tglA','tblA'],['tglB','tblB']].forEach(([a,t])=>$(a).addEventListener('click',e=>{ e.preventDefault(); $(t).hidden=!$(t).hidden; $(a).textContent=$(t).hidden?'Show as table':'Hide table'; }));
 
 // ---------- render ----------
 function render(){
- const k=K(); USERS.forEach(u=>evaluate(u,k));
- const has=USERS.length>0; $('noData').hidden=has; $('overview').hidden=!has;
- const G={}; GROUPS.forEach(g=>G[g[0]]={n:0,p:0,pd:0}); USERS.forEach(u=>{G[u.grp].n++;G[u.grp].p+=u.op;G[u.grp].pd+=u.pd});
- const send=USERS.filter(u=>u.act===ACT.send).sort((a,b)=>b.op-a.op);
- $('sendCnt').textContent=send.length; $('allCnt').textContent=USERS.length;
- const kpiOrder=['send','final','internal','notworth'], kpiTab={send:'send',final:'all',internal:'all',notworth:'all'}, kpiSub={send:`70+ days late, all criteria met`,final:`31–${k.send-1} days, agency would win`,internal:'reminders, still paying, payment plans',notworth:'small balances & Curaçao/SX'};
- $('kpis').innerHTML=kpiOrder.map(g=>`<button class="kpi" style="--c:${GCOL[g]}" data-g="${g}"><div class="ic"><i></i></div><span class="l">${GNAME[g]}</span><div class="v">${G[g].n}</div><div class="s">${fl(G[g].p)} principal · ${kpiSub[g]}</div></button>`).join('');
+ const k=K(); USERS.forEach(u=>evaluate(u,k)); VIS=USERS.filter(u=>u.tb>=k.min); HIDDEN=USERS.filter(u=>u.tb<k.min);
+ const has=VIS.length>0; $('noData').hidden=has; $('overview').hidden=!has;
+ const G={}; GROUPS.forEach(g=>G[g[0]]={n:0,p:0,pd:0}); VIS.forEach(u=>{G[u.grp].n++;G[u.grp].p+=u.tb;G[u.grp].pd+=u.pd});
+ const send=VIS.filter(u=>u.act===ACT.send).sort((a,b)=>b.tb-a.tb);
+ $('sendCnt').textContent=send.length; $('allCnt').textContent=VIS.length;
+ const kpiOrder=['send','final','internal','notworth'], kpiTab={send:'send',final:'all',internal:'all',notworth:'all'}, kpiSub={send:`70+ days late, all criteria met`,final:`31–${k.send-1} days, agency would win`,internal:'reminders, still paying, payment plans',notworth:'Curaçao/SX, agency not effective'};
+ $('kpis').innerHTML=kpiOrder.map(g=>`<button class="kpi" style="--c:${GCOL[g]}" data-g="${g}"><div class="ic"><i></i></div><span class="l">${GNAME[g]}</span><div class="v">${G[g].n}</div><div class="s">${fl(G[g].p)} owed · ${kpiSub[g]}</div></button>`).join('');
  document.querySelectorAll('.kpi').forEach(b=>b.onclick=()=>{ const g=b.dataset.g; if(g==='send'){openTab('send');return;} $('fAct').value=''; window.__grp=g; openTab('all'); drawTable(); });
  if(has){ chartA(k); chartB(k); }
  // findings
- const late=USERS.filter(u=>u.dpd>30), late30=late.filter(u=>u.ds<=30).length;
- const col30=USERS.reduce((s,u)=>s+(u.a30||0),0), col90=USERS.reduce((s,u)=>s+(u.a90||0),0);
- const near=USERS.filter(u=>u.dpd>=k.send&&u.act!==ACT.send);
+ const late=VIS.filter(u=>u.dpd>30), late30=late.filter(u=>u.ds<=30).length;
+ const col30=VIS.reduce((s,u)=>s+(u.a30||0),0), col90=VIS.reduce((s,u)=>s+(u.a90||0),0);
+ const near=VIS.filter(u=>u.dpd>=k.send&&u.act!==ACT.send);
  const sendStale=send.filter(u=>u.ds>=k.stale);
- const cw=USERS.filter(u=>u.cty!=='AW'&&u.dpd>30&&u.op>=k.min);
- const fpd=USERS.filter(u=>u.ratio<k.fpd/100&&u.dpd>30&&u.op>=k.min);
+ const cw=VIS.filter(u=>u.cty!=='AW'&&u.dpd>30);
+ const fpd=VIS.filter(u=>u.ratio<k.fpd/100&&u.dpd>30);
  $('insights').innerHTML=[
-  `<b>${n(send.length,'user')} to send to the agency now</b> (${fl(G.send.p)} principal) – expected to recover about ${fl(send.reduce((s,u)=>s+u.adv,0))} more than continuing internally, after the Fl ${k.cost} fee each.`+(send.length?` Largest: ${send.slice(0,3).map(u=>`${esc(u.name)} (${fl(u.op)})`).join(', ')}.`:''),
+  `<b>${n(send.length,'user')} to send to the agency now</b> (${fl(G.send.p)} still owed, principal + interest) – expected to recover about ${fl(send.reduce((s,u)=>s+u.adv,0))} more than continuing internally, after the Fl ${k.cost} fee each.`+(send.length?` Largest: ${send.slice(0,3).map(u=>`${esc(u.name)} (${fl(u.tb)})`).join(', ')}.`:''),
+  `<b>${n(HIDDEN.length,'user')} with less than ${fl(k.min)} still owed are hidden</b> (${fl(HIDDEN.reduce((s,u)=>s+u.tb,0))} in total) – not worth the agency; keep reminding them and write off from day ${k.wo}.`,
   `<b>${sendStale.length} of them have not paid anything in ${k.stale}+ days</b> – the clearest agency cases.`,
   `<b>${n(near.length,'user')} 70+ days late are not sent</b> because they miss a criterion – see the Send to agency tab for the reason per user.`,
-  `<b>${n(USERS.filter(u=>u.dpd>30&&u.token).length,'user')} 31+ days late made only a token payment</b> recently (less than ${k.minpct}% of what they owe in past due) – these no longer count as “still paying”.`,
+  `<b>${n(VIS.filter(u=>u.dpd>30&&u.token).length,'user')} 31+ days late made only a token payment</b> recently (less than ${k.minpct}% of what they owe in past due) – these no longer count as “still paying”.`,
   `<b>Last collection:</b> ${late30} of ${late.length} users who are 31+ days late still paid something in the last 30 days. Across the list we collected ${fl(col30)} in the last 30 days and ${fl(col90)} in the last 90 days.`,
   `<b>${n(G.final.n,'user')} need${G.final.n===1?'s':''} a final notice</b> now – they go to the agency at day ${k.send} if still unpaid.`,
-  `<b>${n(cw.length,'user')} outside Aruba</b> are 31+ days late with ${fl(cw.reduce((s,u)=>s+u.op,0))} principal, but the agency recovers only ~${k.cw}% there – the biggest unprotected risk.`,
+  `<b>${n(cw.length,'user')} outside Aruba</b> are 31+ days late with ${fl(cw.reduce((s,u)=>s+u.tb,0))} still owed, but the agency recovers only ~${k.cw}% there – the biggest unprotected risk.`,
   `<b>${n(fpd.length,'user')} 31+ days late barely paid anything</b> (&lt;${k.fpd}% of installments) – possible first-payment fraud; review their onboarding/payslips.`
  ].map(t=>`<li>${t}</li>`).join('');
  // criteria cards
- $('crit').innerHTML=[[`${k.send}+ days late`,'on the past due list'],[`≥ ${fl(k.min)} principal at risk`,`worth the ${fl(k.cost)} agency fee`],[`Stopped paying`,`no payment of ≥ ${k.minpct}% of the past due in the last ${k.recent} days`],['Agency recovers more','than chasing internally (Aruba; ~2% in Curaçao/SX)']].map(([a,b])=>`<div><b>${a}</b>${b}</div>`).join('');
+ $('crit').innerHTML=[[`${k.send}+ days late`,'on the past due list'],[`≥ ${fl(k.min)} still owed`,`principal + interest, and the agency comes out ahead after its ${fl(k.cost)} fee`],[`Stopped paying`,`no payment of ≥ ${k.minpct}% of the past due in the last ${k.recent} days`],['Agency recovers more','than chasing internally (Aruba; ~2% in Curaçao/SX)']].map(([a,b])=>`<div><b>${a}</b>${b}</div>`).join('');
  $('sendTag').textContent=`${n(send.length,'user')} · ${fl(G.send.p)}`; $('nearTag').textContent=n(near.length,'user');
  drawCrit('tblSend',send); drawCrit('tblNear',near.sort((a,b)=>b.dpd-a.dpd));
  drawTable();
@@ -558,33 +559,33 @@ function lastCell(u){
  return `<b>${u.lastShow}</b> <span class="ago">${u.ds===0?'today':u.ds+' days ago'}</span>${amt}`;
 }
 function nameCell(u){ return `<b>${esc(u.name)}</b><div class="sub2">ID ${esc(u.id)} · ${esc(u.cty)}</div>`; }
-function moneyCell(u){ return `<b>${fl(u.op)}</b><div class="sub2">${fl(u.pd)} past due</div>`; }
+function moneyCell(u){ return `<b>${fl(u.tb)}</b><div class="sub2">${fl(u.op)} principal + ${fl(u.interest)} interest</div><div class="sub2">${fl(u.pd)} past due</div>`; }
 function detailRow(u,span){
  const f=(l,v)=>`<div><span>${l}</span><b>${v}</b></div>`;
  return `<tr class="det" hidden><td colspan="${span}"><div class="why">${esc(u.why)}</div><div class="facts">${
-  f('Paid installments',`${u.paid} of ${u.tot} (${Math.round(u.ratio*100)}%)`)+f('Collected last 30 / 90 days',`${fl(u.a30||0)} / ${fl(u.a90||0)}`)+
+  f('Principal balance',fl(u.op))+f('Interest balance',fl(u.interest))+f('Paid installments',`${u.paid} of ${u.tot} (${Math.round(u.ratio*100)}%)`)+f('Collected last 30 / 90 days',`${fl(u.a30||0)} / ${fl(u.a90||0)}`)+
   f('Expected via agency',fl(u.evA))+f('Expected internally',fl(u.evI))+f('Agency advantage',fl(u.adv))+f('Risk score',u.score+' / 100')+f('Collection notes',u.notes)}</div></td></tr>`;
 }
 function bindRows(tb){ tb.querySelectorAll('tr.main').forEach(tr=>tr.onclick=()=>{ const d=tr.nextElementSibling; if(d&&d.classList.contains('det')){ d.hidden=!d.hidden; tr.classList.toggle('open',!d.hidden); } }); }
 function drawCrit(id,list){
- $(id).tHead.innerHTML='<tr><th>Customer</th><th class="r">Days late</th><th class="r">Principal at risk</th><th>Last payment</th><th>Criteria</th><th>Action</th></tr>';
+ $(id).tHead.innerHTML='<tr><th>Customer</th><th class="r">Days late</th><th class="r">Balance owed</th><th>Last payment</th><th>Criteria</th><th>Action</th></tr>';
  const chip=(ok,l)=>`<span class="chip ${ok?'ok':'bad'}">${ok?'✓':'✗'} ${l}</span>`;
- $(id).tBodies[0].innerHTML=list.length?list.map(u=>`<tr class="main"><td data-l="Customer">${nameCell(u)}</td><td class="n" data-l="Days late"><b>${u.dpd}</b></td><td class="n" data-l="Principal at risk">${moneyCell(u)}</td><td data-l="Last payment">${lastCell(u)}</td><td data-l="Criteria"><div class="chips">${chip(u.cr.days,K().send+'+ days')}${chip(u.cr.bal,'≥ '+flk(K().min))}${chip(u.cr.nopay,'Stopped paying')}${chip(u.cr.wins,'Agency wins')}</div></td><td data-l="Action"><span class="pill ${u.grp}">${esc(u.act)}</span><div class="more">Details ▾</div></td></tr>${detailRow(u,6)}`).join(''):'<tr><td colspan="6" class="empty">Nobody here right now.</td></tr>';
+ $(id).tBodies[0].innerHTML=list.length?list.map(u=>`<tr class="main"><td data-l="Customer">${nameCell(u)}</td><td class="n" data-l="Days late"><b>${u.dpd}</b></td><td class="n" data-l="Balance owed">${moneyCell(u)}</td><td data-l="Last payment">${lastCell(u)}</td><td data-l="Criteria"><div class="chips">${chip(u.cr.days,K().send+'+ days')}${chip(u.cr.bal,'≥ '+flk(K().min)+' owed')}${chip(u.cr.nopay,'Stopped paying')}${chip(u.cr.wins,'Agency wins')}</div></td><td data-l="Action"><span class="pill ${u.grp}">${esc(u.act)}</span><div class="more">Details ▾</div></td></tr>${detailRow(u,6)}`).join(''):'<tr><td colspan="6" class="empty">Nobody here right now.</td></tr>';
  bindRows($(id).tBodies[0]);
 }
-const SORTS=[['adv','Agency advantage'],['dpd','Days late'],['op','Principal at risk'],['ds','Days since last payment'],['pd','Past due'],['score','Risk score'],['name','Name']];
+const SORTS=[['adv','Agency advantage'],['dpd','Days late'],['tb','Balance owed'],['op','Principal balance'],['ds','Days since last payment'],['pd','Past due'],['score','Risk score'],['name','Name']];
 function rows(){
  const q=$('q').value.toLowerCase(),fa=$('fAct').value,fc=$('fCty').value,g=window.__grp||'';
  const key=$('sortBy')?$('sortBy').value:sortKey, dir=key==='name'?1:-1;
- return USERS.filter(u=>(!fa||u.act===fa)&&(!g||fa||u.grp===g)&&(!fc||u.cty===fc)&&(!q||String(u.name).toLowerCase().includes(q)||String(u.id).includes(q)))
+ return VIS.filter(u=>(!fa||u.act===fa)&&(!g||fa||u.grp===g)&&(!fc||u.cty===fc)&&(!q||String(u.name).toLowerCase().includes(q)||String(u.id).includes(q)))
   .sort((a,b)=>{const x=a[key],y=b[key];return (typeof x==='string'?x.localeCompare(y):x-y)*dir});
 }
 function drawTable(){
  if(!$('sortBy')){ $('fCty').insertAdjacentHTML('afterend',`<select id="sortBy" title="Sort by">${SORTS.map(([k,l])=>`<option value="${k}">Sort: ${l}</option>`).join('')}</select>`); $('sortBy').addEventListener('input',drawTable); }
- $('tbl').tHead.innerHTML='<tr><th>Customer</th><th class="r">Days late</th><th class="r">Principal at risk</th><th>Last payment</th><th>Recommended action</th></tr>';
+ $('tbl').tHead.innerHTML='<tr><th>Customer</th><th class="r">Days late</th><th class="r">Balance owed</th><th>Last payment</th><th>Recommended action</th></tr>';
  const R=rows(); const g=window.__grp&&!$('fAct').value?` · showing: ${GNAME[window.__grp]} <a href="#" id="clrG">show all</a>`:'';
  $('count').innerHTML=`${R.length} users shown · click a row for details${g}`; if($('clrG')) $('clrG').onclick=e=>{e.preventDefault();window.__grp='';drawTable();};
- $('tbl').tBodies[0].innerHTML=R.map(u=>`<tr class="main"><td data-l="Customer">${nameCell(u)}</td><td class="n" data-l="Days late"><b>${u.dpd}</b></td><td class="n" data-l="Principal at risk">${moneyCell(u)}</td><td data-l="Last payment">${lastCell(u)}</td><td data-l="Action"><span class="pill ${u.grp}">${esc(u.act)}</span><div class="more">Details ▾</div></td></tr>${detailRow(u,5)}`).join('');
+ $('tbl').tBodies[0].innerHTML=R.map(u=>`<tr class="main"><td data-l="Customer">${nameCell(u)}</td><td class="n" data-l="Days late"><b>${u.dpd}</b></td><td class="n" data-l="Balance owed">${moneyCell(u)}</td><td data-l="Last payment">${lastCell(u)}</td><td data-l="Action"><span class="pill ${u.grp}">${esc(u.act)}</span><div class="more">Details ▾</div></td></tr>${detailRow(u,5)}`).join('');
  bindRows($('tbl').tBodies[0]);
 }
 ['q','fCty'].forEach(i=>$(i).addEventListener('input',drawTable));
@@ -594,13 +595,13 @@ function csvDownload(name,head,rows){
  const csv='﻿'+[head].concat(rows).map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(';')).join('\r\n');
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=name+'-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
 }
-$('csv').onclick=()=>csvDownload('collection-agency-check',['ID','Name','Country','Days late','Past due','Principal at risk','Paid %','Last payment','Days since last payment','Last paid amount','Last payment % of past due','Collected last 90 days','Notes','EV internal','EV agency','Agency advantage','Risk score','Recommended action','Why'],
- rows().map(u=>[u.id,u.name,u.cty,u.dpd,u.pd.toFixed(2),u.op.toFixed(2),Math.round(u.ratio*100),u.lastShow,u.ds===99999?'':u.ds,num(u.lastAmt).toFixed(2),u.pctLast<0?'':Math.round(u.pctLast*100),(u.a90||0).toFixed(2),u.notes,u.evI.toFixed(0),u.evA.toFixed(0),u.adv.toFixed(0),u.score,u.act,u.why]));
-$('csvSend').onclick=()=>csvDownload('send-to-collection-agency',['ID','Name','Country','Days late','Principal at risk','Past due','Last payment','Days since last payment','Last paid amount','Last payment % of past due','Agency expected','Internal expected','Why'],
- USERS.filter(u=>u.act===ACT.send).sort((a,b)=>b.op-a.op).map(u=>[u.id,u.name,u.cty,u.dpd,u.op.toFixed(2),u.pd.toFixed(2),u.lastShow,u.ds===99999?'':u.ds,num(u.lastAmt).toFixed(2),u.pctLast<0?'':Math.round(u.pctLast*100),u.evA.toFixed(0),u.evI.toFixed(0),u.why]));
+$('csv').onclick=()=>csvDownload('collection-agency-check',['ID','Name','Country','Days late','Past due','Balance owed','Principal balance','Interest balance','Paid %','Last payment','Days since last payment','Last paid amount','Last payment % of past due','Collected last 90 days','Notes','EV internal','EV agency','Agency advantage','Risk score','Recommended action','Why'],
+ rows().map(u=>[u.id,u.name,u.cty,u.dpd,u.pd.toFixed(2),u.tb.toFixed(2),num(u.op).toFixed(2),u.interest.toFixed(2),Math.round(u.ratio*100),u.lastShow,u.ds===99999?'':u.ds,num(u.lastAmt).toFixed(2),u.pctLast<0?'':Math.round(u.pctLast*100),(u.a90||0).toFixed(2),u.notes,u.evI.toFixed(0),u.evA.toFixed(0),u.adv.toFixed(0),u.score,u.act,u.why]));
+$('csvSend').onclick=()=>csvDownload('send-to-collection-agency',['ID','Name','Country','Days late','Balance owed','Principal balance','Interest balance','Past due','Last payment','Days since last payment','Last paid amount','Last payment % of past due','Agency expected','Internal expected','Why'],
+ VIS.filter(u=>u.act===ACT.send).sort((a,b)=>b.tb-a.tb).map(u=>[u.id,u.name,u.cty,u.dpd,u.tb.toFixed(2),num(u.op).toFixed(2),u.interest.toFixed(2),u.pd.toFixed(2),u.lastShow,u.ds===99999?'':u.ds,num(u.lastAmt).toFixed(2),u.pctLast<0?'':Math.round(u.pctLast*100),u.evA.toFixed(0),u.evI.toFixed(0),u.why]));
 
 // ---------- Cloudflare storage ----------
-const LSTORE='suave.agencyCheck.levers', CONN_KEY='suave.fraude.conn';
+const LSTORE='suave.agencyCheck.levers.v2', CONN_KEY='suave.fraude.conn';
 const WORKER='https://suave-fraude.perezabimael01.workers.dev';
 try{ localStorage.removeItem('suave.agencyCheck.v1'); }catch(e){}
 let META=null;
@@ -640,7 +641,7 @@ async function loadSaved(){
 async function save(){
  status('Saving…');
  try{
-  const j=await api('/agency/save',{meta:META,users:USERS.map(u=>({id:u.id,name:u.name,cty:u.cty,dpd:u.dpd,pd:u.pd,op:u.op,paid:u.paid,tot:u.tot,last:u.last,lastAmt:u.lastAmt,a30:u.a30,a90:u.a90,notes:u.notes,stripe:u.stripe,blocked:u.blocked}))});
+  const j=await api('/agency/save',{meta:META,users:USERS.map(u=>({id:u.id,name:u.name,cty:u.cty,dpd:u.dpd,pd:u.pd,op:u.op,rem:u.rem,paid:u.paid,tot:u.tot,last:u.last,lastAmt:u.lastAmt,a30:u.a30,a90:u.a90,notes:u.notes,stripe:u.stripe,blocked:u.blocked}))});
   META=j.meta; showUpdated(); status('List updated.');
   setTimeout(()=>status(''),8000);
  }catch(e){
@@ -662,7 +663,7 @@ $('paste').addEventListener('click',async()=>{
  try{
   const j=JSON.parse(await navigator.clipboard.readText());
   if(j.kind!=='suave-agency-check'||!Array.isArray(j.users))throw new Error('x');
-  USERS=j.users.map(u=>({id:u.id,name:u.name,cty:u.cty,dpd:+u.dpd||0,pd:num(u.pd),op:num(u.op),paid:+u.paid||0,tot:+u.tot||0,last:u.last||'',lastAmt:(u.lastAmt==null?null:num(u.lastAmt)),a30:num(u.a30),a90:num(u.a90),notes:+u.notes||0,stripe:+u.stripe||0,blocked:+u.blocked||0}));
+  USERS=j.users.map(u=>({id:u.id,name:u.name,cty:u.cty,dpd:+u.dpd||0,pd:num(u.pd),op:num(u.op),rem:num(u.rem),paid:+u.paid||0,tot:+u.tot||0,last:u.last||'',lastAmt:(u.lastAmt==null?null:num(u.lastAmt)),a30:num(u.a30),a90:num(u.a90),notes:+u.notes||0,stripe:+u.stripe||0,blocked:+u.blocked||0}));
   META={at:j.at,source:'read from Suave with Agency Check',n:USERS.length};render();showUpdated();openTab('overview');await save();
  }catch(e){status('No list found on the clipboard. In Suave, click Agency Check → Read list → Copy for analysis, then try again. (Chrome may ask to allow pasting – choose Allow.)',true)}
 });
@@ -673,7 +674,7 @@ $('file').addEventListener('change',async e=>{
  const ws=wb.Sheets['Past due scoring']||wb.Sheets[wb.SheetNames[0]];
  const data=XLSX.utils.sheet_to_json(ws,{defval:''});
  const g=(r,...ks)=>{for(const k of ks){const m=Object.keys(r).find(x=>x.toLowerCase().startsWith(k.toLowerCase()));if(m!==undefined&&r[m]!=='')return r[m]}return ''};
- USERS=data.map(r=>({id:g(r,'User ID','ID'),name:g(r,'Name'),cty:String(g(r,'Country','Ctry')).trim(),dpd:num(g(r,'Days past due','Days late')),pd:num(g(r,'Amount past due','Past due')),op:num(g(r,'Outstanding principal','Principal at risk')),paid:num(g(r,'Paid installments')),tot:num(g(r,'Total installments')),notes:num(g(r,'Collection notes','Notes')),stripe:num(g(r,'Stripe')),blocked:num(g(r,'Blocked')),last:(v=>typeof v==='number'?new Date(Math.round((v-25569)*864e5)).toISOString().slice(0,10):String(v||'').slice(0,10))(g(r,'Last payment')),a30:num(g(r,'Collected last 30')),a90:num(g(r,'Collected last 90'))})).filter(u=>u.name||u.id);
+ USERS=data.map(r=>({id:g(r,'User ID','ID'),name:g(r,'Name'),cty:String(g(r,'Country','Ctry')).trim(),dpd:num(g(r,'Days past due','Days late')),pd:num(g(r,'Amount past due','Past due')),op:num(g(r,'Outstanding principal','Principal at risk')),rem:num(g(r,'Remaining contract')),paid:num(g(r,'Paid installments')),tot:num(g(r,'Total installments')),notes:num(g(r,'Collection notes','Notes')),stripe:num(g(r,'Stripe')),blocked:num(g(r,'Blocked')),last:(v=>typeof v==='number'?new Date(Math.round((v-25569)*864e5)).toISOString().slice(0,10):String(v||'').slice(0,10))(g(r,'Last payment')),a30:num(g(r,'Collected last 30')),a90:num(g(r,'Collected last 90'))})).filter(u=>u.name||u.id);
  META={at:new Date(f.lastModified||Date.now()).toISOString(),source:'Excel file '+f.name,n:USERS.length};render();showUpdated();openTab('overview');await save();
  e.target.value='';
 });
