@@ -124,6 +124,33 @@
   .admin .empty{ background:#fff; border-radius:.5rem; box-shadow:var(--a-shadow); }
   .admin .charts{ margin:1.5rem 0; gap:1.5rem; } .admin .kpis{ gap:1.5rem; }
   @media (max-width:640px){ .admin .tab{ padding:9px 12px; font-size:13px; } .admin .tab .lbl{ display:none; } .admin .tab[aria-selected="true"] .lbl{ display:inline; } }
+
+  /* ---- compact, no side-scrolling tables ---- */
+  table.d td{ white-space:normal !important; vertical-align:middle; }
+  table.d th.r, table.d td.n{ text-align:right; }
+  table.d th{ cursor:default; position:static; }
+  .tw{ overflow:visible !important; max-height:none !important; }
+  table.d tr.main{ cursor:pointer; } table.d tr.main.open td{ background:#F3F7FF; }
+  table.d .sub2{ font-size:12.5px; color:var(--a-soft,#626262); margin-top:2px; }
+  table.d .ago{ font-size:12.5px; color:var(--a-soft,#626262); }
+  table.d .more{ font-size:12px; color:#347AF0; margin-top:6px; font-weight:600; }
+  tr.open .more{ visibility:hidden; }
+  tr.det td{ background:#F8FAFF; padding:12px 16px 16px !important; }
+  tr.det .why{ max-width:none; font-size:13.5px; color:var(--a-ink,#2C2C2C); margin-bottom:10px; }
+  .facts{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:8px 16px; }
+  .facts div{ display:flex; flex-direction:column; font-size:12.5px; } .facts span{ color:var(--a-soft,#626262); } .facts b{ font-size:14px; color:var(--a-ink,#2C2C2C); }
+  .tools{ flex-wrap:wrap; } .tools > input, .tools > select, .tools > .btn{ width:auto !important; flex:0 0 auto; margin:0 !important; } .tools > #q{ flex:1 1 220px !important; }
+  b.no{ color:#B42318; }
+  .chips{ display:flex; flex-wrap:wrap; gap:4px; max-width:300px; }
+  .chip{ font-size:11.5px; font-weight:600; padding:2px 8px; border-radius:99px; white-space:nowrap; }
+  .chip.ok{ background:#E3F4EC; color:#22704F; } .chip.bad{ background:#FDEDEB; color:#B42318; }
+  .pill{ white-space:normal; }
+  @media (max-width:760px){
+    table.d thead{ display:none; } table.d, table.d tbody, table.d tr, table.d td{ display:block; width:100%; box-sizing:border-box; }
+    table.d tr.main{ border-bottom:1px solid #EEE; padding:8px 0; } table.d tr.det[hidden]{ display:none; }
+    table.d td{ border:0 !important; padding:4px 12px !important; text-align:left !important; }
+    table.d td[data-l]::before{ content:attr(data-l); display:block; font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:#8a8a8a; }
+  }
 </style>
 </head>
 <body data-tool="collection-agency">
@@ -509,31 +536,41 @@ function render(){
  drawTable();
 }
 const yn=v=>v?'<span class="yes">✓</span>':'<span class="no">✗</span>';
-function drawCrit(id,list){
- $(id).tHead.innerHTML='<tr><th>ID</th><th>Name</th><th>Ctry</th><th>Days late</th><th>Principal at risk</th><th>Past due</th><th>Last payment</th><th>Paid / % of past due</th><th>70+ days</th><th>≥ min.</th><th>Stopped paying</th><th>Agency wins</th><th>Agency vs internal</th><th>Action / why</th></tr>';
- $(id).tBodies[0].innerHTML=list.length?list.map(u=>`<tr><td>${esc(u.id)}</td><td>${esc(u.name)}</td><td>${esc(u.cty)}</td><td class="n">${u.dpd}</td><td class="n">${fl(u.op)}</td><td class="n">${fl(u.pd)}</td><td>${u.lastShow}${u.ds<99999?` <span class="hint">(${u.ds}d)</span>`:''}</td><td class="n">${u.lastAmt>0?fl(u.lastAmt):'–'}${u.pctLast>=0?` <span class="hint">(${Math.round(u.pctLast*100)}%)</span>`:''}${u.token?' <span class="no" title="Token payment">●</span>':''}</td><td class="c">${yn(u.cr.days)}</td><td class="c">${yn(u.cr.bal)}</td><td class="c">${yn(u.cr.nopay)}</td><td class="c">${yn(u.cr.wins)}</td><td class="n">${fl(u.evA)} vs ${fl(u.evI)}</td><td><span class="pill ${u.grp}">${esc(u.act)}</span><div class="why">${esc(u.why)}</div></td></tr>`).join(''):'<tr><td colspan="14" class="empty">Nobody here right now.</td></tr>';
+// ---- compact rows: the main facts in 5 columns, everything else in a "Details" line that opens on click ----
+function lastCell(u){
+ if(u.ds===99999) return '<b class="no">Never paid</b>';
+ const amt=u.lastAmt>0?`<div class="sub2">${fl(u.lastAmt)}${u.pctLast>=0?` · ${Math.round(u.pctLast*100)}% of past due`:''}${u.token?' · <span class="no">token</span>':''}</div>`:'';
+ return `<b>${u.lastShow}</b> <span class="ago">${u.ds===0?'today':u.ds+' days ago'}</span>${amt}`;
 }
-const COLS=[['id','ID'],['name','Name'],['cty','Ctry'],['dpd','Days late',1],['pd','Past due',2],['op','Principal at risk',2],['ratio','Paid %',3],['lastShow','Last payment'],['ds','Days since',4],['lastAmt','Last paid amount',2],['pctLast','% of past due',5],['a90','Collected last 90d',2],['notes','Notes',1],['evI','EV internal',2],['evA','EV agency',2],['adv','Agency advantage',2],['score','Risk',1],['act','Recommended action'],['why','Why']];
+function nameCell(u){ return `<b>${esc(u.name)}</b><div class="sub2">ID ${esc(u.id)} · ${esc(u.cty)}</div>`; }
+function moneyCell(u){ return `<b>${fl(u.op)}</b><div class="sub2">${fl(u.pd)} past due</div>`; }
+function detailRow(u,span){
+ const f=(l,v)=>`<div><span>${l}</span><b>${v}</b></div>`;
+ return `<tr class="det" hidden><td colspan="${span}"><div class="why">${esc(u.why)}</div><div class="facts">${
+  f('Paid installments',`${u.paid} of ${u.tot} (${Math.round(u.ratio*100)}%)`)+f('Collected last 30 / 90 days',`${fl(u.a30||0)} / ${fl(u.a90||0)}`)+
+  f('Expected via agency',fl(u.evA))+f('Expected internally',fl(u.evI))+f('Agency advantage',fl(u.adv))+f('Risk score',u.score+' / 100')+f('Collection notes',u.notes)}</div></td></tr>`;
+}
+function bindRows(tb){ tb.querySelectorAll('tr.main').forEach(tr=>tr.onclick=()=>{ const d=tr.nextElementSibling; if(d&&d.classList.contains('det')){ d.hidden=!d.hidden; tr.classList.toggle('open',!d.hidden); } }); }
+function drawCrit(id,list){
+ $(id).tHead.innerHTML='<tr><th>Customer</th><th class="r">Days late</th><th class="r">Principal at risk</th><th>Last payment</th><th>Criteria</th><th>Action</th></tr>';
+ const chip=(ok,l)=>`<span class="chip ${ok?'ok':'bad'}">${ok?'✓':'✗'} ${l}</span>`;
+ $(id).tBodies[0].innerHTML=list.length?list.map(u=>`<tr class="main"><td data-l="Customer">${nameCell(u)}</td><td class="n" data-l="Days late"><b>${u.dpd}</b></td><td class="n" data-l="Principal at risk">${moneyCell(u)}</td><td data-l="Last payment">${lastCell(u)}</td><td data-l="Criteria"><div class="chips">${chip(u.cr.days,K().send+'+ days')}${chip(u.cr.bal,'≥ '+flk(K().min))}${chip(u.cr.nopay,'Stopped paying')}${chip(u.cr.wins,'Agency wins')}</div></td><td data-l="Action"><span class="pill ${u.grp}">${esc(u.act)}</span><div class="more">Details ▾</div></td></tr>${detailRow(u,6)}`).join(''):'<tr><td colspan="6" class="empty">Nobody here right now.</td></tr>';
+ bindRows($(id).tBodies[0]);
+}
+const SORTS=[['adv','Agency advantage'],['dpd','Days late'],['op','Principal at risk'],['ds','Days since last payment'],['pd','Past due'],['score','Risk score'],['name','Name']];
 function rows(){
  const q=$('q').value.toLowerCase(),fa=$('fAct').value,fc=$('fCty').value,g=window.__grp||'';
+ const key=$('sortBy')?$('sortBy').value:sortKey, dir=key==='name'?1:-1;
  return USERS.filter(u=>(!fa||u.act===fa)&&(!g||fa||u.grp===g)&&(!fc||u.cty===fc)&&(!q||String(u.name).toLowerCase().includes(q)||String(u.id).includes(q)))
-  .sort((a,b)=>{const x=a[sortKey],y=b[sortKey];return (typeof x==='string'?x.localeCompare(y):x-y)*sortDir});
+  .sort((a,b)=>{const x=a[key],y=b[key];return (typeof x==='string'?x.localeCompare(y):x-y)*dir});
 }
 function drawTable(){
- $('tbl').tHead.innerHTML='<tr>'+COLS.map(([k,l])=>`<th data-k="${k}">${l}${sortKey===k?(sortDir<0?' ▼':' ▲'):''}</th>`).join('')+'</tr>';
- document.querySelectorAll('#tbl th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;sortDir=sortKey===k?-sortDir:-1;sortKey=k;drawTable()});
+ if(!$('sortBy')){ $('fCty').insertAdjacentHTML('afterend',`<select id="sortBy" title="Sort by">${SORTS.map(([k,l])=>`<option value="${k}">Sort: ${l}</option>`).join('')}</select>`); $('sortBy').addEventListener('input',drawTable); }
+ $('tbl').tHead.innerHTML='<tr><th>Customer</th><th class="r">Days late</th><th class="r">Principal at risk</th><th>Last payment</th><th>Recommended action</th></tr>';
  const R=rows(); const g=window.__grp&&!$('fAct').value?` · showing: ${GNAME[window.__grp]} <a href="#" id="clrG">show all</a>`:'';
- $('count').innerHTML=`${R.length} users shown${g}`; if($('clrG')) $('clrG').onclick=e=>{e.preventDefault();window.__grp='';drawTable();};
- $('tbl').tBodies[0].innerHTML=R.map(u=>'<tr>'+COLS.map(([k,,t])=>{
-  const v=u[k];
-  if(k==='act')return `<td><span class="pill ${u.grp}">${esc(v)}</span></td>`;
-  if(k==='why')return `<td class="why">${esc(v)}</td>`;
-  if(t===2)return `<td class="n">${Math.round(v||0).toLocaleString('en-US')}</td>`;
-  if(t===3)return `<td class="n">${Math.round(v*100)}%</td>`;
-  if(t===1)return `<td class="n">${v}</td>`;
-  if(t===4)return `<td class="n">${v===99999?'–':v}</td>`;
-  if(t===5)return `<td class="n">${v<0?'–':Math.round(v*100)+'%'}</td>`;
-  return `<td>${esc(v)}</td>`}).join('')+'</tr>').join('');
+ $('count').innerHTML=`${R.length} users shown · click a row for details${g}`; if($('clrG')) $('clrG').onclick=e=>{e.preventDefault();window.__grp='';drawTable();};
+ $('tbl').tBodies[0].innerHTML=R.map(u=>`<tr class="main"><td data-l="Customer">${nameCell(u)}</td><td class="n" data-l="Days late"><b>${u.dpd}</b></td><td class="n" data-l="Principal at risk">${moneyCell(u)}</td><td data-l="Last payment">${lastCell(u)}</td><td data-l="Action"><span class="pill ${u.grp}">${esc(u.act)}</span><div class="more">Details ▾</div></td></tr>${detailRow(u,5)}`).join('');
+ bindRows($('tbl').tBodies[0]);
 }
 ['q','fCty'].forEach(i=>$(i).addEventListener('input',drawTable));
 $('fAct').addEventListener('input',()=>{window.__grp='';drawTable()});
