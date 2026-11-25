@@ -358,7 +358,7 @@ function intercomVersturen(){
   function recently(p){ const l = S.log[(p.user_id || p.email) + ":" + p.tpl]; return l && (Date.now() - new Date(l).getTime()) < 7 * 864e5; }
   function load(text){
     text = String(text || "").trim();
-    if (!text.startsWith("SUAVE-HERINNERINGEN:")) { info("Dit is geen lijst van <b>1 · Suave Lijst</b> of de <b>Fraude Contacten</b>-pagina. Klik daar eerst op <b>Kopieer voor Intercom</b>.", "err"); return; }
+    if (!text.startsWith("SUAVE-HERINNERINGEN:")) { info("Dit is geen lijst van <b>1 · Suave Lijst</b>, de <b>Collection Agency Check</b> of de <b>Fraude Contacten</b>-pagina. Klik daar eerst op <b>Kopieer voor Intercom</b>.", "err"); return; }
     let data; try { data = JSON.parse(text.slice(20)); } catch(e){ info("De lijst is niet compleet gekopieerd. Probeer opnieuw.", "err"); return; }
     const fraud = data.kind === "fraude";
     S.rows = (data.rows || []).map(r => {
@@ -370,7 +370,9 @@ function intercomVersturen(){
       if (fraud){ p.usd = (Number(p.amount) || 0).toFixed(2); p.amount = ((Number(p.amount) || 0) * 1.79).toFixed(2); }
       else p.amount = (Number(p.amount) || 0).toFixed(2);
       p.days = Number(p.days) || 0;
-      p.tpl = fraud ? TEMPLATES.findIndex(t => t.key === "fraude") : tplOf(p.days);
+      // A list from the Collection Agency Check page may ask for a specific template (e.g. the final notice).
+      const forced = r.tpl ? TEMPLATES.findIndex(t => t.key === r.tpl) : -1;
+      p.tpl = fraud ? TEMPLATES.findIndex(t => t.key === "fraude") : (forced >= 0 ? forced : tplOf(p.days));
       p.on = p.tpl >= 0 && !recently(p);
       return p;
     }).sort((a, b) => b.days - a.days);

@@ -165,6 +165,13 @@
   .island button{ border:0; background:none; font:600 13px Montserrat, var(--font); color:#626262; padding:7px 12px; border-radius:6px; cursor:pointer; white-space:nowrap; }
   .island button[aria-pressed="true"]{ background:#fff; color:#347AF0; box-shadow:0 1px 4px rgba(0,0,0,.12); }
   @media (max-width:900px){ .island{ margin-left:0; width:100%; overflow-x:auto; } .island button{ flex:1; } }
+
+  .icb{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; }
+  .icbtn{ text-align:left; border:1px solid #E3E8F0; background:#fff; border-radius:8px; padding:14px 16px; cursor:pointer; font:inherit; display:flex; flex-direction:column; gap:3px; transition:border-color .15s, box-shadow .15s; }
+  .icbtn:hover{ border-color:#347AF0; box-shadow:0 8px 25px -12px #347AF0; }
+  .icbtn b{ font:600 15px Montserrat, var(--font); color:#347AF0; } .icbtn span{ font-size:13.5px; color:#2C2C2C; font-weight:600; } .icbtn small{ font-size:12.5px; color:#626262; }
+  .icbtn:disabled{ opacity:.5; cursor:default; box-shadow:none; border-color:#E3E8F0; }
+  .ic .status{ margin-top:12px; }
 </style>
 </head>
 <body data-tool="collection-agency">
@@ -211,6 +218,12 @@
     <div class="empty" id="noData">No list loaded yet. In Suave click <b>Agency Check → Read list → Copy for analysis</b>, then click the <b>update icon</b> (↻) above and choose <b>Paste new list</b>. First time? See <a href="#" data-goto="setup">Setup &amp; logic</a>.</div>
     <div id="overview" hidden>
       <div class="kpis" id="kpis"></div>
+      <section class="section ic" style="margin-top:1.5rem">
+        <h2 class="section-title">Send messages via Intercom</h2>
+        <p>Pick a group: the list is copied for Intercom and Intercom opens in a new tab. There click <b>2 · Intercom Versturen</b> → <b>Plak lijst</b>, check the list and click <b>Versturen</b>. Same WhatsApp templates (or e-mail) as the Reminders tool; anyone who got the same message in the last 7 days is unticked automatically.</p>
+        <div class="icb" id="icButtons"></div>
+        <div class="status" id="icStatus" hidden></div>
+      </section>
       <div class="charts">
         <div class="chart" id="chartA">
           <h3>Balance owed by days late</h3><p class="sub">Fl principal + interest, stacked by what to do</p>
@@ -359,7 +372,7 @@ function agencyCheck(){
       const seen = new Set(), list = [];
       ((pj.data && pj.data.dataPastDue) || []).forEach(b => (b.datas || []).forEach(x => {
         const u = x.user || {}; if (!u.id || seen.has(u.id)) return; seen.add(u.id);
-        list.push({ id: u.id, name: u.name, cty: u.market_code, dpd: +x.diff || 0, pd: num(x.total_past_due), notes: +x.notes_count || 0, stripe: x.stripe_subscription_ended ? 1 : 0, blocked: u.blocked ? 1 : 0 });
+        list.push({ id: u.id, name: u.name, email: String(u.email || "").trim().toLowerCase(), cty: u.market_code, dpd: +x.diff || 0, pd: num(x.total_past_due), notes: +x.notes_count || 0, stripe: x.stripe_subscription_ended ? 1 : 0, blocked: u.blocked ? 1 : 0 });
       }));
       const today = new Date().toISOString().slice(0, 10), d30 = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10), d90 = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
       let i = 0, done = 0, fails = 0;
@@ -372,6 +385,7 @@ function agencyCheck(){
             const slips = [].concat(dd.payslip || [], dd.payslip_past || []);
             sig.emp = slips.some(x => x && x.company_name) ? 1 : 0;
             sig.phone = dd.phone_number ? 1 : 0;
+            u.phone = dd.phone_number ? String(dd.phone_code || "") + String(dd.phone_number) : "";
             sig.since = String(dd.created_at || "").slice(0, 10);
             const cd = dd.method_default && dd.method_default.card, nw = new Date();
             sig.cardExp = cd && cd.exp_year ? ((+cd.exp_year * 100 + +cd.exp_month) < (nw.getFullYear() * 100 + nw.getMonth() + 1) ? 1 : 0) : 0;
@@ -588,6 +602,7 @@ function render(){
  $('crit').innerHTML=[[`${k.send}+ days late`,'on the past due list'],[`≥ ${fl(k.min)} still owed`,'principal + interest balance'],[`Stopped paying`,`no payment of ≥ ${k.minpct}% of the past due in the last ${k.recent} days`],['Not better internally',`we expect to collect more via the agency (after its ${fl(k.cost)} fee) than by handling it ourselves`]].map(([a,b])=>`<div><b>${a}</b>${b}</div>`).join('');
  $('sendTag').textContent=`${n(send.length,'user')} · ${fl(G.send.p)}`; $('nearTag').textContent=n(near.length,'user');
  $('islTag').textContent={'':'All islands',AW:'Aruba',CW:'Curaçao',SX:'St. Maarten'}[island()]||'All islands';
+ drawIc();
  drawCrit('tblSend',send); drawCrit('tblNear',near.sort((a,b)=>b.dpd-a.dpd));
  drawTable();
 }
@@ -683,7 +698,7 @@ async function loadSaved(){
 async function save(){
  status('Saving…');
  try{
-  const j=await api('/agency/save',{meta:META,users:USERS.map(u=>({id:u.id,name:u.name,cty:u.cty,dpd:u.dpd,pd:u.pd,op:u.op,rem:u.rem,paid:u.paid,tot:u.tot,last:u.last,lastAmt:u.lastAmt,a30:u.a30,a90:u.a90,notes:u.notes,stripe:u.stripe,blocked:u.blocked,sig:u.sig||null}))});
+  const j=await api('/agency/save',{meta:META,users:USERS.map(u=>({id:u.id,name:u.name,cty:u.cty,email:u.email||'',phone:u.phone||'',dpd:u.dpd,pd:u.pd,op:u.op,rem:u.rem,paid:u.paid,tot:u.tot,last:u.last,lastAmt:u.lastAmt,a30:u.a30,a90:u.a90,notes:u.notes,stripe:u.stripe,blocked:u.blocked,sig:u.sig||null}))});
   META=j.meta; showUpdated(); status('List updated.');
   setTimeout(()=>status(''),8000);
  }catch(e){
@@ -705,7 +720,7 @@ $('paste').addEventListener('click',async()=>{
  try{
   const j=JSON.parse(await navigator.clipboard.readText());
   if(j.kind!=='suave-agency-check'||!Array.isArray(j.users))throw new Error('x');
-  USERS=j.users.map(u=>({id:u.id,name:u.name,cty:u.cty,dpd:+u.dpd||0,pd:num(u.pd),op:num(u.op),rem:num(u.rem),paid:+u.paid||0,tot:+u.tot||0,last:u.last||'',lastAmt:(u.lastAmt==null?null:num(u.lastAmt)),a30:num(u.a30),a90:num(u.a90),notes:+u.notes||0,stripe:+u.stripe||0,blocked:+u.blocked||0,sig:u.sig||null}));
+  USERS=j.users.map(u=>({id:u.id,name:u.name,email:u.email||'',phone:u.phone||'',cty:u.cty,dpd:+u.dpd||0,pd:num(u.pd),op:num(u.op),rem:num(u.rem),paid:+u.paid||0,tot:+u.tot||0,last:u.last||'',lastAmt:(u.lastAmt==null?null:num(u.lastAmt)),a30:num(u.a30),a90:num(u.a90),notes:+u.notes||0,stripe:+u.stripe||0,blocked:+u.blocked||0,sig:u.sig||null}));
   META={at:j.at,source:'read from Suave with Agency Check',n:USERS.length};render();showUpdated();openTab('overview');await save();
  }catch(e){status('No list found on the clipboard. In Suave, click Agency Check → Read list → Copy for analysis, then try again. (Chrome may ask to allow pasting – choose Allow.)',true)}
 });
@@ -721,6 +736,26 @@ $('file').addEventListener('change',async e=>{
  e.target.value='';
 });
 
+// ---------- Intercom: copy a group in the Reminders format ----------
+const IC_GROUPS=[
+ ['rem','Payment reminders','Keep chasing internally, 1+ days late – template by days late',u=>u.grp==='internal'&&u.dpd>=1,''],
+ ['final','Final notice','Final-notice group – final notice template',u=>u.grp==='final','60plus'],
+ ['agency','Last warning before agency','Send-to-agency list – final notice template, then hand over',u=>u.grp==='send','60plus']];
+function drawIc(){
+ $('icButtons').innerHTML=IC_GROUPS.map(([k,l,sub,f])=>{ const list=VIS.filter(f), ok=list.filter(u=>u.email).length;
+  return `<button type="button" class="icbtn" data-ic="${k}" ${ok?'':'disabled'}><b>${l}</b><span>${ok} user${ok===1?'':'s'}${list.length>ok?` · ${list.length-ok} without e-mail`:''}</span><small>${sub}</small></button>`; }).join('');
+ document.querySelectorAll('[data-ic]').forEach(b=>b.onclick=()=>copyIc(b.dataset.ic));
+}
+async function copyIc(k){
+ const g=IC_GROUPS.find(x=>x[0]===k); const list=VIS.filter(g[3]).filter(u=>u.email);
+ const rows=list.map(u=>({user_id:u.id,name:u.name,email:u.email,phone:u.phone||'',days:u.dpd,amount:(+u.pd||0).toFixed(2),due:'',...(g[4]?{tpl:g[4]}:{})}));
+ const text='SUAVE-HERINNERINGEN:'+JSON.stringify({kind:'agency-check',at:new Date().toISOString(),rows});
+ const st=$('icStatus'); st.hidden=false; st.className='status';
+ try{ await navigator.clipboard.writeText(text); }
+ catch(e){ st.className='status err'; st.textContent='Copying was blocked by the browser – click the button again.'; return; }
+ st.innerHTML=`Copied <b>${rows.length}</b> for “${esc(g[1])}”. In the Intercom tab: click <b>2 · Intercom Versturen</b> → <b>Plak lijst</b> → <b>Versturen</b>.`;
+ window.open('https://app.intercom.com/','suave-intercom');
+}
 // ---------- island filter ----------
 function island(){ const b=document.querySelector('.island [aria-pressed="true"]'); return b?b.dataset.isl:''; }
 document.querySelectorAll('.island button').forEach(b=>b.addEventListener('click',()=>{
