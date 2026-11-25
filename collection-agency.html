@@ -220,8 +220,8 @@
       <div class="kpis" id="kpis"></div>
       <section class="section ic" style="margin-top:1.5rem">
         <h2 class="section-title">Send messages via Intercom</h2>
-        <p>Press a group: after you confirm, Intercom opens and starts sending by itself – the same WhatsApp templates (or e-mail) as the Reminders tool. Anyone who got the same message in the last 7 days is skipped. You can follow (and stop) it in the panel in Intercom.</p>
-        <p class="hint">One-time setup on each computer: install the free <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener">Tampermonkey</a> extension for Chrome, then click <a href="suave-autosend.user.js" target="_blank" rel="noopener"><b>Install Suave Auto-Send</b></a> and press <b>Install</b>. Without it, the list is copied and you click <b>2 · Intercom Versturen</b> → <b>Plak lijst</b> → <b>Versturen</b> yourself.</p>
+        <p>Press a group and confirm: Intercom opens in a new tab. There click your <b>2 · Intercom Versturen</b> bookmark once – sending starts by itself, with the same WhatsApp templates (or e-mail) as the Reminders tool. Anyone who got the same message in the last 7 days is skipped. You can follow (and stop) it in the panel.</p>
+        <p class="hint">Uses the same bookmark as the <a href="herinneringen.html">Reminders</a> tool – drag it to your bookmarks bar again there once, so it has this new automatic start.</p>
         <div class="icb" id="icButtons"></div>
         <div class="status" id="icStatus" hidden></div>
       </section>
@@ -295,8 +295,8 @@
       </details>
     </section>
     <section class="section">
-      <h2 class="section-title">1b. Automatic sending in Intercom <span class="tag">Once</span></h2>
-      <p>Install the free <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener">Tampermonkey</a> extension for Chrome, then click <a href="suave-autosend.user.js" target="_blank" rel="noopener"><b>Install Suave Auto-Send</b></a> and press <b>Install</b>. After that, the buttons under <b>Send messages via Intercom</b> (Overview tab) open Intercom and start sending by themselves. Be logged in to Intercom in the same Chrome.</p>
+      <h2 class="section-title">1b. Sending in Intercom <span class="tag">Once</span></h2>
+      <p>On the <a href="herinneringen.html">Reminders</a> page, drag <b>2 · Intercom Versturen</b> to your bookmarks bar (again, if you already had it). The buttons under <b>Send messages via Intercom</b> (Overview tab) open Intercom; click that bookmark there and sending starts by itself. The first time, Chrome asks to allow pasting – choose <b>Allow</b>.</p>
     </section>
     <section class="section">
       <h2 class="section-title">2. Update the list <span class="tag">Every time</span></h2>
@@ -468,7 +468,8 @@ const GROUPS=[['internal','Keep chasing internally','var(--g-internal)','#257de0
 const GCOL=Object.fromEntries(GROUPS.map(g=>[g[0],g[3]])), GNAME=Object.fromEntries(GROUPS.map(g=>[g[0],g[1]]));
 Object.values(ACT).forEach(a=>$('fAct').insertAdjacentHTML('beforeend',`<option>${a}</option>`));
 
-let USERS=[],VIS=[],HIDDEN=[],sortKey='adv',sortDir=-1;
+let USERS=[],VIS=[],HIDDEN=[],sortKey='dpd',sortDir=-1;
+const byPastDue=(a,b)=>(b.dpd-a.dpd)||(b.pd-a.pd);
 const fl=v=>'Fl '+Math.round(v).toLocaleString('en-US');
 const flk=v=>v>=1000?'Fl '+(v/1000).toFixed(v>=100000?0:1).replace(/\.0$/,'')+'k':'Fl '+Math.round(v);
 const TODAY=new Date();TODAY.setHours(0,0,0,0);
@@ -578,7 +579,7 @@ function render(){
  const k=K(); USERS.forEach(u=>evaluate(u,k)); const ISL=island(); const inIsl=u=>!ISL||u.cty===ISL; VIS=USERS.filter(u=>u.tb>=k.min&&inIsl(u)); HIDDEN=USERS.filter(u=>u.tb<k.min&&inIsl(u));
  const has=USERS.length>0; $('noData').hidden=has; $('overview').hidden=!has;
  const G={}; GROUPS.forEach(g=>G[g[0]]={n:0,p:0,pd:0}); VIS.forEach(u=>{G[u.grp].n++;G[u.grp].p+=u.tb;G[u.grp].pd+=u.pd});
- const send=VIS.filter(u=>u.act===ACT.send).sort((a,b)=>b.tb-a.tb);
+ const send=VIS.filter(u=>u.act===ACT.send).sort(byPastDue);
  $('sendCnt').textContent=send.length; $('allCnt').textContent=VIS.length;
  const kpiOrder=['send','final','internal'], kpiTab={send:'send',final:'all',internal:'all'}, kpiSub={send:`70+ days late, all criteria met`,final:`31–${k.send-1} days, agency better than internal`,internal:'reminders, still paying, better internally'};
  $('kpis').innerHTML=kpiOrder.map(g=>`<button class="kpi" style="--c:${GCOL[g]}" data-g="${g}"><div class="ic"><i></i></div><span class="l">${GNAME[g]}</span><div class="v">${G[g].n}</div><div class="s">${fl(G[g].p)} owed · ${kpiSub[g]}</div></button>`).join('');
@@ -592,7 +593,7 @@ function render(){
  const cw=VIS.filter(u=>u.cty!=='AW'&&u.dpd>30);
  const fpd=VIS.filter(u=>u.ratio<k.fpd/100&&u.dpd>30);
  $('insights').innerHTML=[
-  `<b>${n(send.length,'user')} to send to the agency now</b> (${fl(G.send.p)} still owed, principal + interest) – expected to recover about ${fl(send.reduce((s,u)=>s+u.adv,0))} more than continuing internally, after the Fl ${k.cost} fee each.`+(send.length?` Largest: ${send.slice(0,3).map(u=>`${esc(u.name)} (${fl(u.tb)})`).join(', ')}.`:''),
+  `<b>${n(send.length,'user')} to send to the agency now</b> (${fl(G.send.p)} still owed, principal + interest) – expected to recover about ${fl(send.reduce((s,u)=>s+u.adv,0))} more than continuing internally, after the Fl ${k.cost} fee each.`+(send.length?` Largest: ${[...send].sort((a,b)=>b.tb-a.tb).slice(0,3).map(u=>`${esc(u.name)} (${fl(u.tb)})`).join(', ')}.`:''),
   `<b>${n(send.filter(u=>u.sig&&u.sig.emp).length,'agency case')} have a known employer</b> – a call or letter to the employer is a cheap last try before the agency.`,
   `<b>${n(HIDDEN.length,'user')} with less than ${fl(k.min)} still owed are hidden</b> (${fl(HIDDEN.reduce((s,u)=>s+u.tb,0))} in total) – not worth the agency; keep reminding them and write off from day ${k.wo}.`,
   `<b>${sendStale.length} of them have not paid anything in ${k.stale}+ days</b> – the clearest agency cases.`,
@@ -608,7 +609,7 @@ function render(){
  $('sendTag').textContent=`${n(send.length,'user')} · ${fl(G.send.p)}`; $('nearTag').textContent=n(near.length,'user');
  $('islTag').textContent={'':'All islands',AW:'Aruba',CW:'Curaçao',SX:'St. Maarten'}[island()]||'All islands';
  drawIc();
- drawCrit('tblSend',send); drawCrit('tblNear',near.sort((a,b)=>b.dpd-a.dpd));
+ drawCrit('tblSend',send); drawCrit('tblNear',near.sort(byPastDue));
  drawTable();
 }
 const yn=v=>v?'<span class="yes">✓</span>':'<span class="no">✗</span>';
@@ -635,12 +636,12 @@ function drawCrit(id,list){
  $(id).tBodies[0].innerHTML=list.length?list.map(u=>`<tr class="main"><td data-l="Customer">${nameCell(u)}</td><td class="n" data-l="Days late"><b>${u.dpd}</b></td><td class="n" data-l="Balance owed">${moneyCell(u)}</td><td data-l="Last payment">${lastCell(u)}</td><td data-l="Criteria"><div class="chips">${chip(u.cr.days,K().send+'+ days')}${chip(u.cr.bal,'≥ '+flk(K().min)+' owed')}${chip(u.cr.nopay,'Stopped paying')}${chip(u.cr.wins,'Not better internally')}</div></td><td data-l="Action"><span class="pill ${u.grp}">${esc(u.act)}</span>${sigMini(u)}<div class="more">Details ▾</div></td></tr>${detailRow(u,6)}`).join(''):'<tr><td colspan="6" class="empty">Nobody here right now.</td></tr>';
  bindRows($(id).tBodies[0]);
 }
-const SORTS=[['adv','Agency advantage'],['dpd','Days late'],['tb','Balance owed'],['op','Principal balance'],['ds','Days since last payment'],['pd','Past due'],['score','Risk score'],['name','Name']];
+const SORTS=[['dpd','Most past due first'],['adv','Agency advantage'],['tb','Balance owed'],['op','Principal balance'],['ds','Days since last payment'],['pd','Past due'],['score','Risk score'],['name','Name']];
 function rows(){
  const q=$('q').value.toLowerCase(),fa=$('fAct').value,fc=$('fCty').value,g=window.__grp||'';
  const key=$('sortBy')?$('sortBy').value:sortKey, dir=key==='name'?1:-1;
  return VIS.filter(u=>(!fa||u.act===fa)&&(!g||fa||u.grp===g)&&(!fc||u.cty===fc)&&(!q||String(u.name).toLowerCase().includes(q)||String(u.id).includes(q)))
-  .sort((a,b)=>{const x=a[key],y=b[key];return (typeof x==='string'?x.localeCompare(y):x-y)*dir});
+  .sort((a,b)=>key==='dpd'?byPastDue(a,b):(()=>{const x=a[key],y=b[key];return (typeof x==='string'?x.localeCompare(y):x-y)*dir})());
 }
 function drawTable(){
  if(!$('sortBy')){ $('fCty').insertAdjacentHTML('afterend',`<select id="sortBy" title="Sort by">${SORTS.map(([k,l])=>`<option value="${k}">Sort: ${l}</option>`).join('')}</select>`); $('sortBy').addEventListener('input',drawTable); }
@@ -660,7 +661,7 @@ function csvDownload(name,head,rows){
 $('csv').onclick=()=>csvDownload('collection-agency-check',['ID','Name','Country','Days late','Past due','Balance owed','Principal balance','Interest balance','Paid %','Last payment','Days since last payment','Last paid amount','Last payment % of past due','Collected last 90 days','Notes','EV internal','EV agency','Agency advantage','Risk score','Recommended action','Why','Signals (+ helps internal, – against)'],
  rows().map(u=>[u.id,u.name,u.cty,u.dpd,u.pd.toFixed(2),u.tb.toFixed(2),num(u.op).toFixed(2),u.interest.toFixed(2),Math.round(u.ratio*100),u.lastShow,u.ds===99999?'':u.ds,num(u.lastAmt).toFixed(2),u.pctLast<0?'':Math.round(u.pctLast*100),(u.a90||0).toFixed(2),u.notes,u.evI.toFixed(0),u.evA.toFixed(0),u.adv.toFixed(0),u.score,u.act,u.why,(u.sigs||[]).map(x=>x[0]+' '+x[1]).join(' | ')]));
 $('csvSend').onclick=()=>csvDownload('send-to-collection-agency',['ID','Name','Country','Days late','Balance owed','Principal balance','Interest balance','Past due','Last payment','Days since last payment','Last paid amount','Last payment % of past due','Agency expected','Internal expected','Why'],
- VIS.filter(u=>u.act===ACT.send).sort((a,b)=>b.tb-a.tb).map(u=>[u.id,u.name,u.cty,u.dpd,u.tb.toFixed(2),num(u.op).toFixed(2),u.interest.toFixed(2),u.pd.toFixed(2),u.lastShow,u.ds===99999?'':u.ds,num(u.lastAmt).toFixed(2),u.pctLast<0?'':Math.round(u.pctLast*100),u.evA.toFixed(0),u.evI.toFixed(0),u.why]));
+ VIS.filter(u=>u.act===ACT.send).sort(byPastDue).map(u=>[u.id,u.name,u.cty,u.dpd,u.tb.toFixed(2),num(u.op).toFixed(2),u.interest.toFixed(2),u.pd.toFixed(2),u.lastShow,u.ds===99999?'':u.ds,num(u.lastAmt).toFixed(2),u.pctLast<0?'':Math.round(u.pctLast*100),u.evA.toFixed(0),u.evI.toFixed(0),u.why]));
 
 // ---------- Cloudflare storage ----------
 const LSTORE='suave.agencyCheck.levers.v2', CONN_KEY='suave.fraude.conn';
@@ -753,17 +754,16 @@ function drawIc(){
 }
 function b64url(str){ const bytes=new TextEncoder().encode(str); let bin=''; for(let i=0;i<bytes.length;i+=8192) bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+8192)); return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 async function copyIc(k){
- const g=IC_GROUPS.find(x=>x[0]===k); const list=VIS.filter(g[3]).filter(u=>u.email);
+ const g=IC_GROUPS.find(x=>x[0]===k); const list=VIS.filter(g[3]).filter(u=>u.email).sort(byPastDue);
  if(!list.length) return;
- if(!confirm(`Send “${g[1]}” to ${list.length} customer${list.length===1?'':'s'} via Intercom now?\n\nIntercom opens and starts sending right away (WhatsApp, or e-mail when that is not possible). Anyone who got this message in the last 7 days is skipped.`)) return;
+ if(!confirm(`Send “${g[1]}” to ${list.length} customer${list.length===1?'':'s'} via Intercom now?\n\nIntercom opens; click your 2 · Intercom Versturen bookmark there and it starts sending right away (WhatsApp, or e-mail when that is not possible). Anyone who got this message in the last 7 days is skipped.`)) return;
  const rows=list.map(u=>({user_id:u.id,name:u.name,email:u.email,phone:u.phone||'',days:u.dpd,amount:(+u.pd||0).toFixed(2),due:'',...(g[4]?{tpl:g[4]}:{})}));
- const text='SUAVE-HERINNERINGEN:'+JSON.stringify({kind:'agency-check',at:new Date().toISOString(),rows});
+ const text='SUAVE-HERINNERINGEN:'+JSON.stringify({kind:'agency-check',autostart:true,id:Date.now().toString(36)+Math.random().toString(36).slice(2,8),at:new Date().toISOString(),rows});
  const st=$('icStatus'); st.hidden=false; st.className='status';
  try{ await navigator.clipboard.writeText(text); }
  catch(e){ st.className='status err'; st.textContent='Copying was blocked by the browser – click the button again.'; return; }
- st.innerHTML=`Sending <b>${rows.length}</b> “${esc(g[1])}” messages – Intercom opened in a new tab and starts by itself. Nothing happening? Install <a href="suave-autosend.user.js" target="_blank" rel="noopener">Suave Auto-Send</a> (one time), or there click <b>2 · Intercom Versturen</b> → <b>Plak lijst</b> → <b>Versturen</b> (the list is already copied).`;
- const payload={confirmed:true,list:{kind:'agency-check',at:new Date().toISOString(),rows}};
- window.open('https://app.intercom.com/#suave-send='+b64url(JSON.stringify(payload)),'suave-intercom');
+ st.innerHTML=`Ready: <b>${rows.length}</b> “${esc(g[1])}” messages. Intercom opened in a new tab – click your <b>2 · Intercom Versturen</b> bookmark there and sending starts by itself (within 15 minutes).`;
+ window.open('https://app.intercom.com/','suave-intercom');
 }
 // ---------- island filter ----------
 function island(){ const b=document.querySelector('.island [aria-pressed="true"]'); return b?b.dataset.isl:''; }

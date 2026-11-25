@@ -211,7 +211,7 @@ function suaveLijst(){
 // Uses your own Intercom login in this tab, the same way the Intercom inbox does.
 // =====================================================================================
 function intercomVersturen(){
-  if (window.__icVersturen){ window.__icVersturen.show(); return; }
+  if (window.__icVersturen){ window.__icVersturen.show(); window.__icVersturen.check(); return; }
   if (!/(^|\.)intercom\.com$/.test(location.hostname)){ alert("Open eerst app.intercom.com en klik dan op 2 · Intercom Versturen."); return; }
 
   // ---- Suave's Intercom settings (from your workspace) ----
@@ -375,7 +375,7 @@ function intercomVersturen(){
       p.tpl = fraud ? TEMPLATES.findIndex(t => t.key === "fraude") : (forced >= 0 ? forced : tplOf(p.days));
       p.on = p.tpl >= 0 && !recently(p);
       return p;
-    }).sort((a, b) => b.days - a.days);
+    }).sort((a, b) => (b.days - a.days) || (Number(b.amount) - Number(a.amount)));  // most past due first
     const age = data.at ? Math.round((Date.now() - new Date(data.at).getTime()) / 60000) : 0;
     S.rows = S.rows.filter(p => p.email);
     info(`${S.rows.length} ${fraud ? "fraude-contacten" : "klanten"} geladen${age > 60 ? ` (lijst is ${Math.round(age / 60)} uur oud — haal hem liever opnieuw op)` : ""}.`, age > 60 ? "" : "good");
@@ -479,9 +479,23 @@ function intercomVersturen(){
 
   $("x").addEventListener("click", () => { host.style.display = "none"; });
   window.__icVersturen = { show(){ host.style.display = ""; },
-    // Used by the "Suave Auto-Send" add-on: load a list and start sending right away.
+    // Load a list and start sending right away (the user already confirmed on the Collection Agency Check page).
     auto(text, confirmed){ host.style.display = ""; $("test").checked = false; load(text); S.autoConfirmed = !!confirmed;
-      if (selected().length) setTimeout(() => $("send").click(), 400); else info("Niemand om te versturen (iedereen kreeg deze week al hetzelfde bericht).", "good"); } };
+      if (selected().length) setTimeout(() => $("send").click(), 400); else info("Niemand om te versturen (iedereen kreeg deze week al hetzelfde bericht).", "good"); },
+    // When the bookmark is clicked: if the clipboard holds a list from the Collection Agency Check page
+    // that was marked "send now" in the last 15 minutes (and not sent yet), start sending it immediately.
+    async check(){
+      let text = ""; try { text = String(await navigator.clipboard.readText() || "").trim(); } catch(e){ return; }
+      if (!text.startsWith("SUAVE-HERINNERINGEN:")) return;
+      let d; try { d = JSON.parse(text.slice(20)); } catch(e){ return; }
+      if (!d.autostart || !d.id) return;
+      const used = get("autoUsed", []);
+      if (used.includes(d.id)) return;
+      if (Date.now() - new Date(d.at).getTime() > 15 * 60000){ info("De lijst van de Agency Check is ouder dan 15 minuten. Klik daar opnieuw op de knop, of klik hier op <b>Plak lijst</b>.", "err"); return; }
+      put("autoUsed", used.concat(d.id).slice(-50));
+      window.__icVersturen.auto(text, true);
+    } };
+  window.__icVersturen.check();
 }
 
 // ================= This page =================
