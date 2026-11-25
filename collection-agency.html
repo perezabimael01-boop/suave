@@ -141,6 +141,7 @@
   .facts div{ display:flex; flex-direction:column; font-size:12.5px; } .facts span{ color:var(--a-soft,#626262); } .facts b{ font-size:14px; color:var(--a-ink,#2C2C2C); }
   .tools{ flex-wrap:wrap; } .tools > input, .tools > select, .tools > .btn{ width:auto !important; flex:0 0 auto; margin:0 !important; } .tools > #q{ flex:1 1 220px !important; }
   b.no{ color:#B42318; }
+  .aiu{ margin:0 0 12px; } .aiu .insight{ margin-top:8px; }
   .sigs{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 0 12px; } .sigl{ font-size:12.5px; font-weight:600; color:#626262; margin-right:4px; }
   .chips{ display:flex; flex-wrap:wrap; gap:4px; max-width:300px; }
   .chip{ font-size:11.5px; font-weight:600; padding:2px 8px; border-radius:99px; white-space:nowrap; }
@@ -246,8 +247,8 @@
         <ul class="insight" id="insights"></ul>
       </section>
       <section class="section">
-        <h2 class="section-title">AI insights <span class="tag">Claude</span> <span class="qm" tabindex="0" aria-label="About AI insights">?<span class="qtip">Claude reads the totals of this list (per group, days late, last payment, signals, island and your logic settings) and writes extra findings and advice. Only totals are sent – no names, e-mails or phone numbers. The Claude API key is stored as a secret in your Cloudflare worker, never on this website.</span></span></h2>
-        <div class="row-btns"><button type="button" class="btn btn-primary" id="aiBtn">Ask Claude</button><span class="hint" id="aiState"></span></div>
+        <h2 class="section-title">AI recommendations <span class="tag">Claude</span> <span class="qm" tabindex="0" aria-label="About AI insights">?<span class="qtip">Claude reads the totals of this list (per group, days late, last payment, signals, island and your logic settings) and gives recommendations for the collections team. For one customer: open the customer row and click <b>Ask Claude about this customer</b> (only that customer's numbers are sent, no name). Only totals are sent – no names, e-mails or phone numbers. The Claude API key is stored as a secret in your Cloudflare worker, never on this website.</span></span></h2>
+        <div class="row-btns"><button type="button" class="btn btn-primary" id="aiBtn">Get recommendations</button><span class="hint" id="aiState"></span></div>
         <ul class="insight" id="aiOut" style="margin-top:12px"></ul>
       </section>
     </div>
@@ -654,11 +655,11 @@ function sigHtml(u){ return u.sigs&&u.sigs.length?`<div class="sigs"><span class
 function sigMini(u){ return (u.sigUp||u.sigDown)?`<div class="sub2"><span class="yes">▲ ${u.sigUp}</span> internal · <span class="no">▼ ${u.sigDown}</span> against</div>`:''; }
 function detailRow(u,span){
  const f=(l,v)=>`<div><span>${l}</span><b>${v}</b></div>`;
- return `<tr class="det" hidden><td colspan="${span}"><div class="why">${esc(u.why)}</div>${sigHtml(u)}<div class="facts">${
+ return `<tr class="det" hidden><td colspan="${span}"><div class="why">${esc(u.why)}</div>${sigHtml(u)}<div class="aiu"><button type="button" class="btn btn-secondary" data-aiu="${esc(u.id)}" style="min-height:32px;padding:4px 12px;font-size:13px">Ask Claude about this customer</button><ul class="insight" data-aiout="${esc(u.id)}"></ul></div><div class="facts">${
   f('Principal balance',fl(u.op))+f('Interest balance',u.interest!=null?fl(u.interest):'not loaded – run Agency Check again')+f('Paid installments',`${u.paid} of ${u.tot} (${Math.round(u.ratio*100)}%)`)+f('Collected last 30 / 90 days',`${fl(u.a30||0)} / ${fl(u.a90||0)}`)+
   f('Chance they pay if we keep chasing',Math.round(u.cure*100)+'%')+f('Expected if we handle it',fl(u.evI))+f('Expected via agency (after fee, ~'+K().wait+' months wait)',fl(u.evA))+f('Risk score',u.score+' / 100')+f('Collection notes',u.notes)}</div></td></tr>`;
 }
-function bindRows(tb){ tb.querySelectorAll('tr.main').forEach(tr=>tr.onclick=()=>{ const d=tr.nextElementSibling; if(d&&d.classList.contains('det')){ d.hidden=!d.hidden; tr.classList.toggle('open',!d.hidden); } }); }
+function bindRows(tb){ tb.querySelectorAll('[data-aiu]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); askCustomer(b.dataset.aiu,b); }); tb.querySelectorAll('tr.main').forEach(tr=>tr.onclick=()=>{ const d=tr.nextElementSibling; if(d&&d.classList.contains('det')){ d.hidden=!d.hidden; tr.classList.toggle('open',!d.hidden); } }); }
 function drawCrit(id,list){
  $(id).tHead.innerHTML='<tr><th>Customer</th><th class="r">Days late</th><th class="r">Balance owed</th><th>Last payment</th><th>Criteria</th><th>Action</th></tr>';
  const chip=(ok,l)=>`<span class="chip ${ok?'ok':'bad'}">${ok?'✓':'✗'} ${l}</span>`;
@@ -806,6 +807,23 @@ function aiSummary(){
   measured_caught_up_since_previous_lists: STATS.slice(0,6).map(st=>({days_between:st.days,by_days_late:st.b})) };
 }
 let AI_CACHE={};
+// One customer: only numbers and signals - no name, ID, e-mail or phone.
+function customerFacts(u){ const k=K(); return { question:'Recommend for THIS ONE customer: send to the collection agency now, send a final notice, or keep collecting internally (and how). Start with the recommendation in one line, then the 2-4 most important reasons, then the next concrete step.',
+ island:u.cty, days_late:u.dpd, past_due:Math.round(u.pd), balance_owed:Math.round(u.tb), principal:Math.round(u.op), interest:u.interest==null?null:Math.round(u.interest),
+ installments_paid:u.paid+' of '+u.tot, last_payment_days_ago:u.ds===99999?'never':u.ds, last_payment_pct_of_past_due:u.pctLast>=0?Math.round(u.pctLast*100):null,
+ collected_last_30_days:Math.round(u.a30||0), collected_last_90_days:Math.round(u.a90||0), collection_notes:u.notes, signals:(u.sigs||[]).map(x=>x[0]+' '+x[1]),
+ tool_recommendation:u.act, chance_pays_if_we_keep_chasing_pct:Math.round(u.cure*100), expected_internal:Math.round(u.evI), expected_via_agency_after_fee:Math.round(u.evA),
+ settings:{agency_fee:k.cost, agency_collects_pct:k.aw, agency_wait_months:k.wait} }; }
+const AIU={};
+async function askCustomer(id,btn){
+ const u=VIS.find(x=>String(x.id)===String(id)); if(!u) return;
+ const out=btn.parentElement.querySelector('[data-aiout]');
+ if(AIU[id]){ out.innerHTML=AIU[id]; return; }
+ btn.disabled=true; out.innerHTML='<li>Claude is thinking...</li>';
+ try{ const j=await api('/agency/ai',{summary:customerFacts(u)}); AIU[id]=(j.text||'').split(/\n+/).map(l=>l.replace(/^[-*\u2022]\s*/,'').trim()).filter(Boolean).map(l=>'<li>'+esc(l)+'</li>').join(''); out.innerHTML=AIU[id]; }
+ catch(e){ out.innerHTML='<li class="no">'+esc(e.message==='LOGIN'?'Log in first.':'Could not get an answer: '+e.message)+'</li>'; }
+ btn.disabled=false;
+}
 function showAi(){ const c=AI_CACHE[island()||'all']; $('aiOut').innerHTML=c?c.text.split(/\n+/).map(l=>l.replace(/^[-•*]\s*/,'').trim()).filter(Boolean).map(l=>`<li>${esc(l)}</li>`).join(''):''; $('aiState').textContent=c?`Answer from ${fmtDate(c.at)}${c.model?' · '+c.model:''}`:'Click to let Claude analyse this list (only totals are sent).'; }
 $('aiBtn').addEventListener('click',async()=>{
  if(!VIS.length){ $('aiState').textContent='Load a list first.'; return; }
