@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collection Agency Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="site.css">
+<style>
+  body{ --page-width:1180px; --tool:#B42318; --tool-soft:#FDEDEB; }
+  .section-title .tag{ font-size:12.5px; font-weight:600; color:var(--tool); background:var(--tool-soft); border-radius:999px; padding:1px 10px; }
+  .section p{ margin:0 0 12px; color:var(--ink-soft); line-height:1.6; max-width:72ch; }
+  .section b{ color:var(--ink); font-weight:600; }
+  kbd{ font-family:inherit; font-size:13px; font-weight:600; background:var(--surface-2); border:1px solid var(--line-strong); border-bottom-width:2px; border-radius:5px; padding:0 6px; }
+  .bm{ display:inline-flex; align-items:center; gap:10px; margin:6px 0 10px; padding:13px 22px; border-radius:var(--radius-sm);
+       background:var(--tool); color:#fff; font-weight:600; font-size:15.5px; text-decoration:none; cursor:grab; border:2px dashed transparent;
+       box-shadow:0 6px 16px -8px color-mix(in srgb, var(--tool) 70%, transparent); }
+  .bm:hover{ border-color:#fff; outline:2px dashed var(--tool); outline-offset:2px; }
+  details{ margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+  summary{ cursor:pointer; font-size:14.5px; font-weight:600; color:var(--tool); }
+  details ol{ margin-top:10px; padding-left:20px; color:var(--ink-soft); line-height:1.7; }
+  .ok{ color:var(--ok); font-weight:600; font-size:14px; margin-left:8px; }
+  .steps{ list-style:none; counter-reset:s; margin:0; padding:0; }
+  .steps > li{ counter-increment:s; position:relative; padding:0 0 14px 42px; color:var(--ink-soft); line-height:1.6; }
+  .steps > li::before{ content:counter(s); position:absolute; left:0; top:0; width:28px; height:28px; border-radius:50%;
+       display:flex; align-items:center; justify-content:center; font-size:13.5px; font-weight:700; color:var(--tool); background:var(--tool-soft); }
+  .steps > li:last-child{ padding-bottom:0; }
+  .row-btns{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .status{ margin-top:10px; font-size:14px; color:var(--ink-soft); }
+  .status.err{ color:var(--danger); }
+  .kpis{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); }
+  .kpi{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; cursor:pointer; }
+  .kpi.on{ outline:2px solid var(--brand); }
+  .kpi .v{ font-size:24px; font-weight:700; color:var(--ink); } .kpi .l{ color:var(--ink-soft); font-size:13px; } .kpi .s{ font-size:13px; color:var(--ink-soft); }
+  .pill{ display:inline-block; padding:2px 9px; border-radius:99px; font-size:12px; font-weight:600; }
+  .pill.r{ background:#FDEDEB; color:#B42318; } .pill.a{ background:#FFF4D6; color:#8A6418; } .pill.g{ background:#E3F4EC; color:#22704F; } .pill.b{ background:#E3F1FB; color:#2E6FA3; }
+  table.d{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  table.d th, table.d td{ text-align:left; padding:8px 9px; border-bottom:1px solid var(--line); vertical-align:top; }
+  table.d th{ color:var(--ink-soft); font-weight:600; font-size:12px; cursor:pointer; white-space:nowrap; user-select:none; }
+  table.d td.n{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  table.d td.n.pill-cell{ text-align:left; }
+  .tw{ overflow-x:auto; }
+  .why{ color:var(--ink-soft); font-size:12.5px; max-width:340px; }
+  .tools{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:12px; }
+  .tools input, .tools select, .lev input{ padding:8px 10px; border:1px solid var(--line-strong); border-radius:var(--radius-sm); background:var(--surface); color:var(--ink); font:inherit; }
+  .lev{ display:grid; gap:10px 16px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); margin-top:12px; }
+  .lev label{ font-size:12.5px; color:var(--ink-soft); display:block; margin-bottom:3px; } .lev input{ width:100%; box-sizing:border-box; }
+  .insight{ margin:0; padding-left:18px; color:var(--ink-soft); line-height:1.6; } .insight li{ margin:5px 0; }
+  .hide{ display:none; }
+</style>
+</head>
+<body data-tool="collection-agency">
+<header class="app-bar">
+  <div class="app-bar-inner">
+    <a class="app-back" href="index.html"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>All tools</a>
+    <a class="app-brand" href="index.html" aria-label="Home"><img class="app-logo" src="logo-white.svg" alt="Suave" width="129" height="40"></a>
+  </div>
+</header>
+<main class="page">
+  <div class="page-head">
+    <h1>Collection Agency Check</h1>
+    <p>Reads every user on the <b>past due list</b> in Suave, with their loans and the <b>last time we collected money</b>, and tells you who to send to the collection agency (Fl 250 per case) and who to keep chasing internally.</p>
+  </div>
+
+  <section class="section">
+    <h2 class="section-title">Put the button in your bookmarks bar <span class="tag">Once</span></h2>
+    <p>Drag this button with your mouse to the <b>bookmarks bar</b> at the top of Chrome. Don't see the bar? Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>.</p>
+    <a class="bm" id="bm1" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4.5H19V19.5H5V4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.5 9H15.5M8.5 12.5H15.5M8.5 16H12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Agency Check
+    </a>
+    <div class="hint" id="dragHint" role="status" hidden style="color:var(--tool);font-weight:600">Don't click – drag: hold the button and drop it on the bookmarks bar.</div>
+    <details>
+      <summary>Dragging doesn't work?</summary>
+      <ol>
+        <li>Click <button type="button" class="btn btn-secondary" id="copyBm" style="min-height:36px;padding:6px 14px;font-size:14px">Copy button code</button><span class="ok" id="copied" role="status" hidden>Copied</span></li>
+        <li>Right-click the bookmarks bar → <b>Add page…</b></li>
+        <li>Name: <b>Agency Check</b>. In URL paste the code (<kbd>Ctrl</kbd>+<kbd>V</kbd>) and click <b>Save</b>.</li>
+      </ol>
+    </details>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">Run the check <span class="tag">Every time</span></h2>
+    <ol class="steps">
+      <li>Open <b>admin.paywithsuave.com</b> (logged in) and click <b>Agency Check</b> in your bookmarks bar. A panel reads the past due list plus every user's loans and payments (about 5–8 minutes for ~470 users).</li>
+      <li>When it is done, click <b>Copy for analysis</b> in the panel.</li>
+      <li>Come back to this page and click <b>Paste list</b> below. You get the recommendation for every user.</li>
+    </ol>
+    <div class="row-btns" style="margin-top:14px">
+      <button type="button" class="btn btn-primary" id="paste">Paste list</button>
+      <label class="btn btn-secondary" style="cursor:pointer">Or upload the Excel <input type="file" id="file" accept=".xlsx,.xls" hidden></label>
+    </div>
+    <div class="status" id="status">No data loaded yet.</div>
+    <details>
+      <summary>Logic levers (change and everything recalculates)</summary>
+      <div class="lev" id="levers"></div>
+    </details>
+  </section>
+
+  <div id="results" class="hide">
+    <section class="section">
+      <h2 class="section-title">What to do</h2>
+      <div class="kpis" id="kpis"></div>
+    </section>
+    <section class="section">
+      <h2 class="section-title">Key findings</h2>
+      <ul class="insight" id="insights"></ul>
+    </section>
+    <section class="section">
+      <h2 class="section-title">Every user</h2>
+      <div class="tools">
+        <input id="q" placeholder="Search name or ID" style="flex:1;min-width:180px">
+        <select id="fAct"><option value="">All actions</option></select>
+        <select id="fCty"><option value="">All countries</option><option>AW</option><option>CW</option><option>SX</option></select>
+        <button type="button" class="btn btn-secondary" id="csv">Download CSV</button>
+      </div>
+      <div class="hint" id="count"></div>
+      <div class="tw"><table class="d" id="tbl"><thead></thead><tbody></tbody></table></div>
+    </section>
+  </div>
+
+  <section class="section">
+    <h2 class="section-title">How the logic works</h2>
+    <p><b>Expected recovery internally</b> = principal still at risk × chance the user pays on their own (by days late; ×0.5 if they paid &lt;10% of installments; ×0.75 with 2+ collection notes; ×1.5 if they paid in the last 30 days; ×0.5 if no payment in 90+ days).<br>
+    <b>Expected recovery via the agency</b> = principal at risk × agency recovery rate for the country (Aruba 45%, Curaçao/other 2%) − Fl 250 agency cost.</p>
+    <ol class="steps">
+      <li><span class="pill g">Keep internal – reminders</span> 0–30 days late.</li>
+      <li><span class="pill b">Small balance</span> less than Fl 1,000 principal at risk (break-even = 250 ÷ (45% − 20%)). Keep chasing; block &amp; write off from day 120.</li>
+      <li><span class="pill g">Keep internal – still paying</span> late, but paid something in the last 30 days.</li>
+      <li><span class="pill b">Keep internal</span> when the agency doesn't come out ahead – e.g. Curaçao, where the agency recovers ~2%.</li>
+      <li><span class="pill r">Send to agency NOW</span> agency comes out ahead and 61+ days late (or 31+ days, &gt; Fl 3,000 and barely paid).</li>
+      <li><span class="pill a">Final notice – agency at day 61</span> 31–60 days and the agency would come out ahead.</li>
+    </ol>
+    <p class="hint" style="margin-top:12px">Principal at risk = per open plan, original principal × unpaid installments ÷ total installments. Agency figures come from the Deurwaarder dashboard (only 45% of agency cases ever paid anything; first payment after ~13 months). Cure chances are estimates – adjust them under “Logic levers”. The list you paste stays in this browser; nothing is stored or sent anywhere.</p>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+<script>
+// =====================================================================================
+// BOOKMARK BUTTON — runs on admin.paywithsuave.com. Reads the past due list, then every
+// user's loans + payment history, and copies a compact list for this page.
+// Everything is inside this one function, because it is turned into the bookmark.
+// =====================================================================================
+function agencyCheck(){
+  if (window.__agencyCheck){ window.__agencyCheck.show(); return; }
+  if (!/paywithsuave\.com$/.test(location.hostname)){ alert("Open admin.paywithsuave.com first, then click Agency Check."); return; }
+  const host = document.createElement("div");
+  const root = host.attachShadow({ mode: "open" });
+  root.innerHTML = `<style>
+    .p{ position:fixed; top:0; right:0; z-index:2147483647; width:420px; max-width:100vw; height:100vh; background:#fff; color:#1d2a36;
+        font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; box-shadow:-8px 0 30px rgba(0,0,0,.18); display:flex; flex-direction:column; }
+    .h{ display:flex; align-items:center; padding:12px 14px; background:#B42318; color:#fff; } .h b{ flex:1; font-size:15px; }
+    .h button{ background:none; border:0; color:#fff; font-size:20px; cursor:pointer; }
+    .b{ flex:1; overflow:auto; padding:14px; }
+    .btn{ background:#B42318; color:#fff; border:0; border-radius:6px; padding:9px 14px; font:inherit; font-weight:600; cursor:pointer; }
+    .btn:disabled{ opacity:.5; cursor:default; }
+    .msg{ margin:10px 0; padding:8px 10px; border-radius:6px; background:#eef3f6; font-size:13px; }
+    .msg.err{ background:#fdecea; color:#922; } .msg.good{ background:#e3f4f0; color:#1f6e60; }
+    .bar{ height:8px; background:#edf1f4; border-radius:9px; overflow:hidden; margin-top:10px; } .bar div{ height:100%; width:0; background:#B42318; transition:width .3s; }
+    .f{ border-top:1px solid #e3e8ec; padding:10px 14px; display:flex; gap:8px; }
+  </style>
+  <div class="p">
+    <div class="h"><b>Agency Check</b><button id="x" title="Close">×</button></div>
+    <div class="b"><div id="info"><div class="msg">Click <b>Read list</b> to read the past due list, every user's loans and their last payment. Takes about 5–8 minutes.</div></div><div class="bar"><div id="prog"></div></div></div>
+    <div class="f"><button class="btn" id="load">Read list</button><button class="btn" id="copy" disabled>Copy for analysis</button></div>
+  </div>`;
+  document.body.appendChild(host);
+  const $ = id => root.getElementById(id);
+  const info = (h, c) => { $("info").innerHTML = `<div class="msg ${c || ""}">${h}</div>`; };
+  function token(){ let t = localStorage.getItem("accessToken") || ""; try { const p = JSON.parse(t); if (typeof p === "string") t = p; } catch(e){} return t; }
+  const H = () => ({ "Content-Type": "application/json", "Accept": "application/json", "Authorization": "Bearer " + token() });
+  const num = s => +String(s == null ? 0 : s).replace(/,/g, "") || 0;
+  let out = null;
+
+  $("load").addEventListener("click", async () => {
+    $("load").disabled = true; $("copy").disabled = true;
+    try {
+      info("Reading the past due list…");
+      const r = await fetch("/api/v1/admin/past-due-by-country", { method: "POST", headers: H(), body: "{}" });
+      if (r.status === 401) throw new Error("You are not logged in to Suave (anymore). Log in again.");
+      if (!r.ok) throw new Error("Suave returned error " + r.status + ".");
+      const pj = await r.json();
+      const seen = new Set(), list = [];
+      ((pj.data && pj.data.dataPastDue) || []).forEach(b => (b.datas || []).forEach(x => {
+        const u = x.user || {}; if (!u.id || seen.has(u.id)) return; seen.add(u.id);
+        list.push({ id: u.id, name: u.name, cty: u.market_code, dpd: +x.diff || 0, pd: num(x.total_past_due), notes: +x.notes_count || 0, stripe: x.stripe_subscription_ended ? 1 : 0, blocked: u.blocked ? 1 : 0 });
+      }));
+      const today = new Date().toISOString().slice(0, 10), d30 = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10), d90 = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
+      let i = 0, done = 0, fails = 0;
+      async function worker(){
+        while (i < list.length){
+          const u = list[i++]; let op = 0, paid = 0, tot = 0, last = "", a30 = 0, a90 = 0;
+          try {
+            const j = await (await fetch("/api/v1/admin/manage-user/detail/" + u.id, { method: "POST", headers: H(), body: "{}" })).json();
+            ((j.data && j.data.payment_history) || []).forEach(pl => {
+              const ms = (pl.payment_monthly || []).filter(m => !m.is_canceled), N = ms.length || 1, pd = ms.filter(m => m.status === 1).length;
+              paid += pd; tot += ms.length;
+              if (!pl.is_completed && !pl.is_paid_off && !pl.is_canceled) op += num(pl.amount) * Math.max(0, N - pd) / N;
+              ms.forEach(m => { if (m.status === 1 && m.payment_date && m.payment_date <= today){ if (m.payment_date > last) last = m.payment_date; if (m.payment_date >= d30) a30 += num(m.amount); if (m.payment_date >= d90) a90 += num(m.amount); } });
+            });
+          } catch(e){ fails++; }
+          Object.assign(u, { op: Math.round(op * 100) / 100, paid, tot, last, a30: Math.round(a30 * 100) / 100, a90: Math.round(a90 * 100) / 100 });
+          done++; info(`Reading loans & payments: ${done} of ${list.length} users…`); $("prog").style.width = (100 * done / list.length) + "%";
+        }
+      }
+      await Promise.all(Array.from({ length: 6 }, worker));
+      out = JSON.stringify({ kind: "suave-agency-check", at: new Date().toISOString(), users: list });
+      info(`Done: ${list.length} users read${fails ? ` (${fails} could not be read)` : ""}. Click <b>Copy for analysis</b>, then click <b>Paste list</b> on the Collection Agency Check page.`, "good");
+      $("copy").disabled = false;
+    } catch(e){ info(e.message, "err"); }
+    $("load").disabled = false;
+  });
+  $("copy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(out); info("Copied. Now click <b>Paste list</b> on the Collection Agency Check page.", "good"); }
+    catch(e){ info("Copying failed – click Copy for analysis again.", "err"); }
+  });
+  $("x").addEventListener("click", () => { host.style.display = "none"; });
+  window.__agencyCheck = { show(){ host.style.display = ""; } };
+}
+
+// ================= This page =================
+const toBm = fn => "javascript:" + encodeURIComponent("(" + fn.toString() + ")();void 0");
+const bm1 = document.getElementById("bm1");
+bm1.href = toBm(agencyCheck);
+bm1.addEventListener("click", e => { e.preventDefault(); document.getElementById("dragHint").hidden = false; });
+document.getElementById("copyBm").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(bm1.getAttribute("href")); const ok = document.getElementById("copied"); ok.hidden = false; setTimeout(() => { ok.hidden = true; }, 4000); }
+  catch(e){ alert("Copying failed. Try dragging the button."); }
+});
+
+const L=[
+ ['min','Minimum principal to ever send (Fl)',1000],['cost','Agency cost per case (Fl)',250],
+ ['aw','Agency recovery Aruba (%)',45],['cw','Agency recovery Curaçao / other (%)',2],
+ ['c1','Cure chance 1–15 days (%)',85],['c2','Cure chance 16–30 days (%)',65],['c3','Cure chance 31–60 days (%)',40],
+ ['c4','Cure chance 61–90 days (%)',20],['c5','Cure chance 91+ days (%)',10],
+ ['fpd','“Barely paid” threshold (%)',10],['send','Send to agency from day',61],['early','Early escalation from day',31],
+ ['big','Early escalation min. principal (Fl)',3000],['wo','Write-off day (small balances)',120],
+ ['recent','“Still paying” = last payment within (days)',30],['stale','“Stopped paying” = no payment for (days)',90]];
+const $=id=>document.getElementById(id);
+$('levers').innerHTML=L.map(([k,l,v])=>`<div><label for="k_${k}">${l}</label><input type="number" id="k_${k}" value="${v}"></div>`).join('');
+const K=()=>Object.fromEntries(L.map(([k])=>[k,+$('k_'+k).value||0]));
+const ACTS=[['Send to agency NOW','r'],['Final notice – agency at day 61','a'],['Keep internal – still paying','g'],['Keep internal – reminders','g'],['Keep internal – payment plan','g'],['Keep internal – agency not effective here','b'],['Small balance – keep internal','b'],['Small balance – block & write off','b']];
+const CLS=Object.fromEntries(ACTS);
+ACTS.forEach(([a])=>$('fAct').insertAdjacentHTML('beforeend',`<option>${a}</option>`));
+let USERS=[],sortKey='adv',sortDir=-1,kpiFilter='';
+const fl=v=>'Fl '+Math.round(v).toLocaleString('en-US');
+const TODAY=new Date();TODAY.setHours(0,0,0,0);
+const daysSince=d=>{if(!d)return null;const x=new Date(String(d).slice(0,10)+'T00:00:00');return isNaN(x)?null:Math.round((TODAY-x)/864e5)};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=s=>+String(s??0).replace(/,/g,'')||0;
+
+function evaluate(u,k){
+ const d=u.dpd,p=u.op,ratio=u.tot?u.paid/u.tot:0,ds=daysSince(u.last);
+ const recent=ds!==null&&ds<=k.recent, stopped=ds===null||ds>=k.stale;
+ let cure=(d<=15?k.c1:d<=30?k.c2:d<=60?k.c3:d<=90?k.c4:k.c5)/100;
+ if(ratio<k.fpd/100)cure*=.5; if(u.notes>=2)cure*=.75;
+ if(recent)cure=Math.min(.95,cure*1.5); else if(stopped)cure*=.5;
+ const lastTxt=ds===null?'never paid':`last paid ${ds} day${ds===1?'':'s'} ago`;
+ const rec=(u.cty==='AW'?k.aw:k.cw)/100, evI=p*cure, evA=p*rec-k.cost, adv=evA-evI;
+ let act,why;
+ if(d<=30){act='Keep internal – reminders';why=`Only ${d} days late – most users pay on their own at this stage.`}
+ else if(p<k.min){act=d>=k.wo?'Small balance – block & write off':'Small balance – keep internal';why=`Only ${fl(p)} principal left – below the ${fl(k.min)} minimum, the agency would cost more than it recovers.`}
+ else if(recent&&d<k.wo){act='Keep internal – still paying';why=`${d} days late but ${lastTxt} (${fl(u.a90||0)} collected in last 90 days) – still engaged, push a catch-up plan instead of the agency.`}
+ else if(adv<=0){act=u.cty==='AW'?'Keep internal – payment plan':'Keep internal – agency not effective here';why=u.cty==='AW'?`Internal (${fl(evI)}) still beats agency (${fl(evA)}). Offer a payment plan.`:`Agency recovers only ${Math.round(rec*100)}% in ${u.cty}. Final notice / payment plan instead.`}
+ else if(d>=k.send||(d>=k.early&&p>=k.big&&ratio<k.fpd/100)){act='Send to agency NOW';why=d>=k.send?`${d} days late, ${lastTxt}, ${fl(p)} at risk. Agency expected ${fl(evA)} vs internal ${fl(evI)}.`:`High risk: ${fl(p)} owed, paid only ${Math.round(ratio*100)}% of installments.`}
+ else{act='Final notice – agency at day 61';why=`${lastTxt[0].toUpperCase()+lastTxt.slice(1)}. Agency would win (${fl(evA)} vs ${fl(evI)}). Send final notice; if unpaid by day ${k.send} → agency.`}
+ let score=(d<=15?0:d<=30?10:d<=60?25:d<=90?35:45)+(p>=5000?20:p>=3000?15:p>=1500?10:p>=500?5:0)+(ratio<k.fpd/100?15:ratio<.25?10:ratio<.5?5:0)+(u.notes>=2?10:0)+(u.stripe?5:0)+(u.blocked?5:0)+(stopped?10:0);
+ return Object.assign(u,{ratio,cure,rec,evI,evA,adv,act,why,score:Math.min(100,score),ds:ds===null?99999:ds,lastShow:u.last?String(u.last).slice(0,10):'never'});
+}
+
+function render(){
+ const k=K(); USERS.forEach(u=>evaluate(u,k));
+ const by={};ACTS.forEach(([a])=>by[a]={n:0,p:0,pd:0});
+ USERS.forEach(u=>{by[u.act].n++;by[u.act].p+=u.op;by[u.act].pd+=u.pd});
+ const totP=USERS.reduce((s,u)=>s+u.op,0),totPD=USERS.reduce((s,u)=>s+u.pd,0);
+ $('kpis').innerHTML=`<div class="kpi ${kpiFilter===''?'on':''}" data-a=""><div class="l">All past due users</div><div class="v">${USERS.length}</div><div class="s">${fl(totP)} principal · ${fl(totPD)} past due</div></div>`+
+  ACTS.filter(([a])=>by[a].n).map(([a,c])=>`<div class="kpi ${kpiFilter===a?'on':''}" data-a="${esc(a)}"><div><span class="pill ${c}">${esc(a)}</span></div><div class="v">${by[a].n}</div><div class="s">${fl(by[a].p)} principal · ${fl(by[a].pd)} past due</div></div>`).join('');
+ document.querySelectorAll('.kpi').forEach(e=>e.onclick=()=>{kpiFilter=e.dataset.a;$('fAct').value=kpiFilter;render()});
+ const send=USERS.filter(u=>u.act==='Send to agency NOW').sort((a,b)=>b.op-a.op);
+ const fin=USERS.filter(u=>u.act.startsWith('Final'));
+ const cw=USERS.filter(u=>u.cty!=='AW'&&u.dpd>30&&u.op>=k.min);
+ const small=USERS.filter(u=>u.act.startsWith('Small'));
+ const fpd=USERS.filter(u=>u.ratio<k.fpd/100&&u.dpd>30&&u.op>=k.min);
+ const gain=send.reduce((s,u)=>s+u.adv,0);
+ const sendStale=send.filter(u=>u.ds>=k.stale), still=USERS.filter(u=>u.act==='Keep internal – still paying');
+ const never=USERS.filter(u=>u.dpd>30&&u.ds===99999), col30=USERS.reduce((s,u)=>s+(u.a30||0),0), col90=USERS.reduce((s,u)=>s+(u.a90||0),0);
+ const late=USERS.filter(u=>u.dpd>30), late30=late.filter(u=>u.ds<=30).length;
+ const n=(x,w)=>`${x} ${x===1?w:w+'s'}`;
+ $('insights').innerHTML=[
+  `<b>${n(send.length,'user')} should go to the agency now</b>, holding ${fl(by['Send to agency NOW'].p)} of principal. Sending them is expected to recover about ${fl(gain)} more than continuing internally.`+(send.length?` Largest: ${send.slice(0,3).map(u=>`${esc(u.name)} (${fl(u.op)})`).join(', ')}.`:''),
+  `<b>Last collection:</b> ${late30} of ${late.length} users who are 31+ days late still paid something in the last 30 days. Across the whole list we collected ${fl(col30)} in the last 30 days and ${fl(col90)} in the last 90 days.`,
+  `<b>${sendStale.length} of the ${send.length} agency cases have not paid anything in ${k.stale}+ days</b> – these are the clearest agency cases.`+(never.length?` ${n(never.length,'user')} 31+ days late never made a payment at all.`:''),
+  `<b>${n(still.length,'user')} late but still paying</b> (${fl(still.reduce((s,u)=>s+u.op,0))} principal, last payment within ${k.recent} days) – keep them internal and push a catch-up plan.`,
+  `<b>${n(fin.length,'user')} need${fin.length===1?'s':''} a final notice today</b> – they become agency cases at day ${k.send} if they don't pay (${fl(by['Final notice – agency at day 61'].p)} principal).`,
+  `<b>${n(cw.length,'user')} outside Aruba</b> 31+ days late with ${fl(cw.reduce((s,u)=>s+u.op,0))} principal, but the agency recovers only ~${k.cw}% there – the biggest unprotected risk. Push payment plans, employer/payslip contact or look for a better agency in Curaçao.`,
+  `<b>${n(small.length,'small balance')}</b> (${fl(by['Small balance – keep internal'].p+by['Small balance – block & write off'].p)} principal) not worth the Fl ${k.cost} agency fee – keep reminding, then block and write off at day ${k.wo}.`,
+  `<b>${n(fpd.length,'user')} 31+ days late barely paid anything</b> (&lt;${k.fpd}% of installments) – possible first-payment fraud; review their onboarding/payslips.`,
+  `${n(by['Keep internal – reminders'].n,'user')} 0–30 days late (${fl(by['Keep internal – reminders'].p)} principal) – keep the reminder flow tight, this is where most money is saved.`
+ ].map(t=>`<li>${t}</li>`).join('');
+ drawTable();
+}
+const COLS=[['id','ID'],['name','Name'],['cty','Ctry'],['dpd','Days late',1],['pd','Past due',2],['op','Principal at risk',2],['ratio','Paid %',3],['lastShow','Last payment'],['ds','Days since',4],['a90','Collected last 90d',2],['notes','Notes',1],['evI','EV internal',2],['evA','EV agency',2],['adv','Agency advantage',2],['score','Risk',1],['act','Recommended action'],['why','Why']];
+function rows(){
+ const q=$('q').value.toLowerCase(),fa=$('fAct').value,fc=$('fCty').value;
+ return USERS.filter(u=>(!fa||u.act===fa)&&(!fc||u.cty===fc)&&(!q||String(u.name).toLowerCase().includes(q)||String(u.id).includes(q)))
+  .sort((a,b)=>{const x=a[sortKey],y=b[sortKey];return (typeof x==='string'?x.localeCompare(y):x-y)*sortDir});
+}
+function drawTable(){
+ $('tbl').tHead.innerHTML='<tr>'+COLS.map(([k,l])=>`<th data-k="${k}">${l}${sortKey===k?(sortDir<0?' ▼':' ▲'):''}</th>`).join('')+'</tr>';
+ document.querySelectorAll('#tbl th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;sortDir=sortKey===k?-sortDir:-1;sortKey=k;drawTable()});
+ const R=rows();$('count').textContent=`${R.length} users shown`;
+ $('tbl').tBodies[0].innerHTML=R.map(u=>'<tr>'+COLS.map(([k,,t])=>{
+  const v=u[k];
+  if(k==='act')return `<td><span class="pill ${CLS[v]}">${esc(v)}</span></td>`;
+  if(k==='why')return `<td class="why">${esc(v)}</td>`;
+  if(t===2)return `<td class="n">${Math.round(v||0).toLocaleString('en-US')}</td>`;
+  if(t===3)return `<td class="n">${Math.round(v*100)}%</td>`;
+  if(t===1)return `<td class="n">${v}</td>`;
+  if(t===4)return `<td class="n">${v===99999?'–':v}</td>`;
+  return `<td>${esc(v)}</td>`}).join('')+'</tr>').join('');
+}
+['q','fCty'].forEach(i=>$(i).addEventListener('input',drawTable));
+$('fAct').addEventListener('input',()=>{kpiFilter=$('fAct').value;render()});
+$('levers').addEventListener('input',()=>USERS.length&&render());
+$('csv').onclick=()=>{
+ const h=['ID','Name','Country','Days late','Past due','Principal at risk','Paid %','Last payment','Days since last payment','Collected last 90 days','Notes','EV internal','EV agency','Agency advantage','Risk score','Recommended action','Why'];
+ const lines=[h].concat(rows().map(u=>[u.id,u.name,u.cty,u.dpd,u.pd.toFixed(2),u.op.toFixed(2),Math.round(u.ratio*100),u.lastShow,u.ds===99999?'':u.ds,(u.a90||0).toFixed(2),u.notes,u.evI.toFixed(0),u.evA.toFixed(0),u.adv.toFixed(0),u.score,u.act,u.why]));
+ const csv='﻿'+lines.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(';')).join('\r\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='collection-agency-check-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+};
+function status(t,err){ $('status').textContent=t; $('status').className='status'+(err?' err':''); }
+function show(){ $('results').classList.remove('hide'); render(); }
+
+$('paste').addEventListener('click',async()=>{
+ try{
+  const j=JSON.parse(await navigator.clipboard.readText());
+  if(j.kind!=='suave-agency-check'||!Array.isArray(j.users))throw new Error('x');
+  USERS=j.users.map(u=>({id:u.id,name:u.name,cty:u.cty,dpd:+u.dpd||0,pd:num(u.pd),op:num(u.op),paid:+u.paid||0,tot:+u.tot||0,last:u.last||'',a30:num(u.a30),a90:num(u.a90),notes:+u.notes||0,stripe:+u.stripe||0,blocked:+u.blocked||0}));
+  status(`Loaded ${USERS.length} users read from Suave on ${new Date(j.at).toLocaleString()}.`);show();
+ }catch(e){status('No list found on the clipboard. In Suave, click Agency Check → Read list → Copy for analysis, then try again. (Chrome may ask to allow pasting – choose Allow.)',true)}
+});
+$('file').addEventListener('change',async e=>{
+ const f=e.target.files[0];if(!f)return;
+ if(typeof XLSX==='undefined'){status('The Excel reader could not load. Check your internet connection.',true);return}
+ const wb=XLSX.read(await f.arrayBuffer());
+ const ws=wb.Sheets['Past due scoring']||wb.Sheets[wb.SheetNames[0]];
+ const data=XLSX.utils.sheet_to_json(ws,{defval:''});
+ const g=(r,...ks)=>{for(const k of ks){const m=Object.keys(r).find(x=>x.toLowerCase().startsWith(k.toLowerCase()));if(m!==undefined&&r[m]!=='')return r[m]}return ''};
+ USERS=data.map(r=>({id:g(r,'User ID','ID'),name:g(r,'Name'),cty:String(g(r,'Country','Ctry')).trim(),dpd:num(g(r,'Days past due','Days late')),pd:num(g(r,'Amount past due','Past due')),op:num(g(r,'Outstanding principal','Principal at risk')),paid:num(g(r,'Paid installments')),tot:num(g(r,'Total installments')),notes:num(g(r,'Collection notes','Notes')),stripe:num(g(r,'Stripe')),blocked:num(g(r,'Blocked')),last:(v=>typeof v==='number'?new Date(Math.round((v-25569)*864e5)).toISOString().slice(0,10):String(v||'').slice(0,10))(g(r,'Last payment')),a30:num(g(r,'Collected last 30')),a90:num(g(r,'Collected last 90'))})).filter(u=>u.name||u.id);
+ status(`Loaded ${USERS.length} users from ${f.name}.`);show();
+});
+</script>
+<script src="help-chat.js"></script>
+</body>
+</html>
