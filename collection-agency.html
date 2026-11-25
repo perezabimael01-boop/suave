@@ -172,6 +172,11 @@
   .icbtn b{ font:600 15px Montserrat, var(--font); color:#347AF0; } .icbtn span{ font-size:13.5px; color:#2C2C2C; font-weight:600; } .icbtn small{ font-size:12.5px; color:#626262; }
   .icbtn:disabled{ opacity:.5; cursor:default; box-shadow:none; border-color:#E3E8F0; }
   .ic .status{ margin-top:12px; }
+
+  .qm{ position:relative; display:inline-grid; place-items:center; width:20px; height:20px; border-radius:50%; background:#EEF4FE; color:#347AF0; font:700 12px Montserrat, var(--font); cursor:help; vertical-align:middle; margin-left:6px; }
+  .qm .qtip{ display:none; position:absolute; left:50%; top:calc(100% + 8px); transform:translateX(-30%); width:min(420px,80vw); background:#1C2A36; color:#fff; font:400 13px/1.5 var(--font); padding:12px 14px; border-radius:8px; box-shadow:0 12px 30px -10px rgba(0,0,0,.5); z-index:30; text-align:left; }
+  .qm .qtip b{ color:#fff; }
+  .qm:hover .qtip, .qm:focus .qtip, .qm:focus-within .qtip{ display:block; }
 </style>
 </head>
 <body data-tool="collection-agency">
@@ -219,9 +224,7 @@
     <div id="overview" hidden>
       <div class="kpis" id="kpis"></div>
       <section class="section ic" style="margin-top:1.5rem">
-        <h2 class="section-title">Send messages via Intercom</h2>
-        <p>Press a group and confirm: Intercom opens in a new tab. There click your <b>2 · Intercom Versturen</b> bookmark once – sending starts by itself, with the same WhatsApp templates (or e-mail) as the Reminders tool. Anyone who got the same message in the last 7 days is skipped. You can follow (and stop) it in the panel.</p>
-        <p class="hint">Uses the same bookmark as the <a href="herinneringen.html">Reminders</a> tool – drag it to your bookmarks bar again there once, so it has this new automatic start.</p>
+        <h2 class="section-title">Send messages via Intercom <span class="qm" tabindex="0" aria-label="How does this work?">?<span class="qtip">Press a group and confirm: Intercom opens in a new tab. There click your <b>2 · Intercom Versturen</b> bookmark once – sending starts by itself, with the same WhatsApp templates (or e-mail) as the Reminders tool. Anyone who got the same message in the last 7 days is skipped, and the list goes from most past due to least. You can follow (and stop) it in the panel.<br><br>Uses the same bookmark as the Reminders tool – drag it to your bookmarks bar again there once, so it has the automatic start.</span></span></h2>
         <div class="icb" id="icButtons"></div>
         <div class="status" id="icStatus" hidden></div>
       </section>
@@ -241,6 +244,11 @@
       <section class="section" style="margin-top:16px">
         <h2 class="section-title">Key findings <span class="tag" id="islTag">All islands</span></h2>
         <ul class="insight" id="insights"></ul>
+      </section>
+      <section class="section">
+        <h2 class="section-title">AI insights <span class="tag">Claude</span> <span class="qm" tabindex="0" aria-label="About AI insights">?<span class="qtip">Claude reads the totals of this list (per group, days late, last payment, signals, island and your logic settings) and writes extra findings and advice. Only totals are sent – no names, e-mails or phone numbers. The Claude API key is stored as a secret in your Cloudflare worker, never on this website.</span></span></h2>
+        <div class="row-btns"><button type="button" class="btn btn-primary" id="aiBtn">Ask Claude</button><span class="hint" id="aiState"></span></div>
+        <ul class="insight" id="aiOut" style="margin-top:12px"></ul>
       </section>
     </div>
   </div>
@@ -309,8 +317,8 @@
     <section class="section">
       <h2 class="section-title">How the logic works</h2>
       <p><b>Expected recovery internally</b> = balance still owed (principal + interest) × chance the user pays on their own (by days late; ×0.5 if they paid &lt;10% of installments; ×0.75 with 2+ collection notes; ×1.5 if they paid in the last 30 days; ×0.5 if no payment in 90+ days).<br>
-      <b>Extra signals</b> change the chance they pay if we keep chasing: ▲ paid off loans before, pays on time, employer known, customer for 2+ years, paying more lately, paid recently · ▼ no phone, no or expired card, card declined, new customer (&lt;6 months), pays late most of the time, paid &lt;10% of installments, contacted 2+ times without payment, token payment, no payment in a long time.<br>
-      <b>Expected recovery via the agency</b> = balance still owed × 45% (what the agency is expected to collect) − Fl 250 agency fee. If the internal number is higher, we keep it internally.</p>
+      <b>Extra signals</b> change the chance they pay if we keep chasing: ▲ paid off loans before, pays on time, employer known, customer for 2+ years, paying more lately, paid recently · ▲ installments a small part of salary · ▼ installments 50%+ of salary, payslip older than 4 months, no phone, no or expired card, card declined, new customer (&lt;6 months), pays late most of the time, paid &lt;10% of installments, contacted 2+ times without payment, token payment, no payment in a long time.<br>
+      <b>Expected recovery via the agency</b> = balance still owed × 45% (what the agency is expected to collect), worth a bit less because it arrives ~13 months later, − Fl 250 agency fee. If the internal number is higher, we keep it internally.</p>
       <ol class="steps">
         <li><span class="pill internal">Keep internal – reminders</span> 0–30 days late.</li>
         <li><span class="pill internal">Small balance</span> less than Fl 300 still owed (principal + interest): hidden from the lists – not worth the agency. Keep reminding; write off from day 120.</li>
@@ -319,6 +327,8 @@
         <li><span class="pill send">Send to agency NOW</span> 70+ days late and all criteria met.</li>
         <li><span class="pill final">Final notice – agency at day 70</span> 31–69 days late and the agency would come out ahead.</li>
       </ol>
+      <h3 style="margin:18px 0 6px;font-size:15px">How accurate is it? <span class="hint" style="font-weight:400">– measured from your own updates</span></h3>
+      <div id="accuracy" class="hint"></div>
       <details>
         <summary>Logic levers (change and everything recalculates)</summary>
         <div class="lev" id="levers"></div>
@@ -395,11 +405,14 @@ function agencyCheck(){
             const cd = dd.method_default && dd.method_default.card, nw = new Date();
             sig.cardExp = cd && cd.exp_year ? ((+cd.exp_year * 100 + +cd.exp_month) < (nw.getFullYear() * 100 + nw.getMonth() + 1) ? 1 : 0) : 0;
             sig.noCard = cd ? 0 : 1;
+            const appr = slips.filter(x => x && /approv/i.test(x.status_name || "")).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0];
+            if (appr){ sig.slip = String(appr.created_at || "").slice(0, 10); const sal = num(appr.textractPayslip && (appr.textractPayslip.salary || appr.textractPayslip.salary_declared)); if (sal > 0) sig.sal = Math.round(sal); }
+            sig.inst = 0;
             ((j.data && j.data.payment_history) || []).forEach(pl => {
               if (pl.is_completed || pl.is_paid_off) sig.done++;
               const ms = (pl.payment_monthly || []).filter(m => !m.is_canceled), N = ms.length || 1, pd = ms.filter(m => m.status === 1).length;
               paid += pd; tot += ms.length;
-              if (!pl.is_completed && !pl.is_paid_off && !pl.is_canceled){ op += num(pl.amount) * Math.max(0, N - pd) / N; ms.forEach(m => { if (m.status !== 1) rem += num(m.amount); }); }
+              if (!pl.is_completed && !pl.is_paid_off && !pl.is_canceled){ op += num(pl.amount) * Math.max(0, N - pd) / N; ms.forEach(m => { if (m.status !== 1) rem += num(m.amount); }); const nx = ms.find(m => m.status !== 1); if (nx) sig.inst += num(nx.amount); }
               ms.forEach(m => {
                 if (m.status === 1 && m.payment_date && m.payable_date){ sig.paidN++; if ((new Date(m.payment_date) - new Date(m.payable_date)) / 864e5 <= 7) sig.onTime++; }
                 if (m.status === -1 && m.decline_code && String(m.updated_at || "") >= sig.declAt){ sig.decl = String(m.decline_code).slice(0, 40); sig.declAt = String(m.updated_at || ""); }
@@ -420,7 +433,7 @@ function agencyCheck(){
               if (r2 > rem){ rem = r2; if (!op) op = p2; }
             } catch(e){}
           }
-          Object.assign(u, { op: Math.round(op * 100) / 100, rem: Math.round(Math.max(rem, op) * 100) / 100, paid, tot, last, lastAmt: Math.round(lastAmt * 100) / 100, a30: Math.round(a30 * 100) / 100, a90: Math.round(a90 * 100) / 100, sig: { done: sig.done, ontime: sig.paidN ? Math.round(100 * sig.onTime / sig.paidN) / 100 : null, emp: sig.emp, phone: sig.phone, since: sig.since, cardExp: sig.cardExp, noCard: sig.noCard, decl: sig.decl } });
+          Object.assign(u, { op: Math.round(op * 100) / 100, rem: Math.round(Math.max(rem, op) * 100) / 100, paid, tot, last, lastAmt: Math.round(lastAmt * 100) / 100, a30: Math.round(a30 * 100) / 100, a90: Math.round(a90 * 100) / 100, sig: { done: sig.done, ontime: sig.paidN ? Math.round(100 * sig.onTime / sig.paidN) / 100 : null, emp: sig.emp, phone: sig.phone, since: sig.since, cardExp: sig.cardExp, noCard: sig.noCard, decl: sig.decl, sal: sig.sal || null, slip: sig.slip || "", inst: Math.round(sig.inst || 0) } });
           done++; info(`Reading loans & payments: ${done} of ${list.length} users…`); $("prog").style.width = (100 * done / list.length) + "%";
         }
       }
@@ -463,7 +476,7 @@ document.addEventListener('click',e=>{ const g=e.target.closest('[data-goto]'); 
 // ---------- levers ----------
 const L=[
  ['min','Hide balances under (Fl) – principal + interest',300],['cost','Agency cost per case (Fl)',250],
- ['aw','Agency expected to collect (% of balance owed)',45],
+ ['aw','Agency expected to collect (% of balance owed)',45],['wait','Months until the agency pays us (avg.)',13],['disc','Cost of waiting (% per year)',10],
  ['c1','Cure chance 1–15 days (%)',85],['c2','Cure chance 16–30 days (%)',65],['c3','Cure chance 31–60 days (%)',40],
  ['c4','Cure chance 61–90 days (%)',20],['c5','Cure chance 91+ days (%)',10],
  ['fpd','“Barely paid” threshold (%)',10],['send','Send to agency from day',70],
@@ -507,6 +520,8 @@ function evaluate(u,k){
  if(g.noCard) add('–','No card on file',.85); else if(g.cardExp) add('–','Card on file expired',.9);
  if(g.decl) add('–',/insufficient/i.test(g.decl)?'Last card charge: insufficient funds':`Last card charge declined (${g.decl.replace(/_/g,' ')})`,.95);
  if(g.since){ const mo=(TODAY-new Date(g.since))/(30.4*864e5); if(mo>=24) add('+',`Customer for ${Math.floor(mo/12)} years`,1.1); else if(mo<6) add('–','New customer (less than 6 months)',.85); }
+ if(g.sal>0&&g.inst>0){ const r=g.inst/g.sal; if(r>=.5) add('–',`Installments are ${Math.round(r*100)}% of salary (${fl(g.inst)} of ${fl(g.sal)}) – hard to afford`,.85); else if(r<=.2) add('+',`Installments only ${Math.round(r*100)}% of salary (${fl(g.inst)} of ${fl(g.sal)})`,1.1); }
+ if(g.slip){ const mo=(TODAY-new Date(g.slip))/(30.4*864e5); if(mo>=4) add('–',`Last approved payslip is ${Math.floor(mo)} months old – job may have changed`,.9); }
  const prev=(num(u.a90)-num(u.a30))/2; if(num(u.a30)>0&&prev>0&&num(u.a30)>=prev) add('+','Paying more lately than before',1.15);
  if(ratio<k.fpd/100) S.push(['–',`Paid only ${Math.round(ratio*100)}% of installments`]);
  if(u.notes>=2) S.push(['–',`Contacted ${u.notes} times without payment`]);
@@ -515,7 +530,7 @@ function evaluate(u,k){
  cure=Math.min(.95,cure*m);
  const amtTxt=u.lastAmt>0?` (${fl(u.lastAmt)}${pctLast!==null?`, ${Math.round(pctLast*100)}% of the past due`:''})`:'';
  const lastTxt=ds===null?'never paid':`last paid ${ds} day${ds===1?'':'s'} ago${amtTxt}`;
- const rec=k.aw/100, evI=p*cure, evA=p*rec-k.cost, adv=evA-evI;
+ const rec=k.aw/100, tdisc=Math.pow(1+k.disc/100,k.wait/12), evI=p*cure, evA=p*rec/tdisc-k.cost, adv=evA-evI;
  // the four agency criteria
  const cr={days:d>=k.send, bal:p>=k.min, nopay:!recent, wins:adv>0}; // wins = NOT better to keep internally
  let act,why;
@@ -608,6 +623,7 @@ function render(){
   `<b>${n(send.length,'user')} to send to the agency now</b> (${fl(G.send.p)} still owed, principal + interest) – expected to recover about ${fl(send.reduce((s,u)=>s+u.adv,0))} more than continuing internally, after the Fl ${k.cost} fee each.`+(send.length?` Largest: ${[...send].sort((a,b)=>b.tb-a.tb).slice(0,3).map(u=>`${esc(u.name)} (${fl(u.tb)})`).join(', ')}.`:''),
   `<b>${n(send.filter(u=>u.sig&&u.sig.emp).length,'agency case')} have a known employer</b> – a call or letter to the employer is a cheap last try before the agency.`,
   ...(VIS.some(u=>!u.hasRem)?[`<b class="no">Interest balance missing for ${n(VIS.filter(u=>!u.hasRem).length,'user')}</b> – this list was read with the old button. Drag the <b>Agency Check</b> button again (Setup &amp; logic) and run it once; until then only the principal is counted.`]:[]),
+  ...(()=>{ const st=STATS[0]; if(!st||!st.b) return []; const v=st.b['31–60']||[0,0], w=st.b['61–90']||[0,0]; const N=v[0]+w[0], C=v[1]+w[1]; return N?[`<b>Since the previous list (${st.days} days earlier), ${C} of ${N} users who were 31–90 days late caught up (${Math.round(100*C/N)}%).</b> See “How accurate is it?” on the Setup &amp; logic tab.`]:[]; })(),
   `<b>${n(HIDDEN.length,'user')} with less than ${fl(k.min)} still owed are hidden</b> (${fl(HIDDEN.reduce((s,u)=>s+u.tb,0))} in total) – not worth the agency; keep reminding them and write off from day ${k.wo}.`,
   `<b>${sendStale.length} of them have not paid anything in ${k.stale}+ days</b> – the clearest agency cases.`,
   `<b>${n(near.length,'user')} 70+ days late are not sent</b> because they miss a criterion – see the Send to agency tab for the reason per user.`,
@@ -621,7 +637,7 @@ function render(){
  $('crit').innerHTML=[[`${k.send}+ days late`,'on the past due list'],[`≥ ${fl(k.min)} still owed`,'principal + interest balance'],[`Stopped paying`,`no payment of ≥ ${k.minpct}% of the past due in the last ${k.recent} days`],['Not better internally',`we expect to collect more via the agency (after its ${fl(k.cost)} fee) than by handling it ourselves`]].map(([a,b])=>`<div><b>${a}</b>${b}</div>`).join('');
  $('sendTag').textContent=`${n(send.length,'user')} · ${fl(G.send.p)}`; $('nearTag').textContent=n(near.length,'user');
  $('islTag').textContent={'':'All islands',AW:'Aruba',CW:'Curaçao',SX:'St. Maarten'}[island()]||'All islands';
- drawIc();
+ drawIc(); drawAccuracy(k); showAi();
  drawCrit('tblSend',send); drawCrit('tblNear',near.sort(byPastDue));
  drawTable();
 }
@@ -640,7 +656,7 @@ function detailRow(u,span){
  const f=(l,v)=>`<div><span>${l}</span><b>${v}</b></div>`;
  return `<tr class="det" hidden><td colspan="${span}"><div class="why">${esc(u.why)}</div>${sigHtml(u)}<div class="facts">${
   f('Principal balance',fl(u.op))+f('Interest balance',u.interest!=null?fl(u.interest):'not loaded – run Agency Check again')+f('Paid installments',`${u.paid} of ${u.tot} (${Math.round(u.ratio*100)}%)`)+f('Collected last 30 / 90 days',`${fl(u.a30||0)} / ${fl(u.a90||0)}`)+
-  f('Chance they pay if we keep chasing',Math.round(u.cure*100)+'%')+f('Expected if we handle it',fl(u.evI))+f('Expected via agency (after fee)',fl(u.evA))+f('Risk score',u.score+' / 100')+f('Collection notes',u.notes)}</div></td></tr>`;
+  f('Chance they pay if we keep chasing',Math.round(u.cure*100)+'%')+f('Expected if we handle it',fl(u.evI))+f('Expected via agency (after fee, ~'+K().wait+' months wait)',fl(u.evA))+f('Risk score',u.score+' / 100')+f('Collection notes',u.notes)}</div></td></tr>`;
 }
 function bindRows(tb){ tb.querySelectorAll('tr.main').forEach(tr=>tr.onclick=()=>{ const d=tr.nextElementSibling; if(d&&d.classList.contains('det')){ d.hidden=!d.hidden; tr.classList.toggle('open',!d.hidden); } }); }
 function drawCrit(id,list){
@@ -680,7 +696,7 @@ $('csvSend').onclick=()=>csvDownload('send-to-collection-agency',['ID','Name','C
 const LSTORE='suave.agencyCheck.levers.v2', CONN_KEY='suave.fraude.conn';
 const WORKER='https://suave-fraude.perezabimael01.workers.dev';
 try{ localStorage.removeItem('suave.agencyCheck.v1'); }catch(e){}
-let META=null;
+let META=null, STATS=[];
 const getConn=()=>{ try{ return JSON.parse(localStorage.getItem(CONN_KEY)||'{}'); }catch(e){ return {}; } };
 const setConn=c=>{ try{ localStorage.setItem(CONN_KEY, JSON.stringify(c)); }catch(e){} };
 let conn=getConn(); conn.url=WORKER;
@@ -706,6 +722,7 @@ function showUpdated(note){
 }
 function needLogin(note){ conn.key=''; setConn(conn); $('login').hidden=false; $('loginMsg').textContent=note||''; META=null; showUpdated('log in to see the saved list.'); }
 function applyServer(j){
+ STATS=Array.isArray(j.stats)?j.stats:[];
  if(j.empty||!j.users||!j.users.length){ META=null; USERS=[]; render(); showUpdated(); return; }
  META=j.meta; USERS=j.users.map(u=>Object.assign({},u)); render(); showUpdated();
 }
@@ -714,11 +731,23 @@ async function loadSaved(){
  try{ const j=await api('/agency'); $('login').hidden=true; applyServer(j); }
  catch(e){ if(e.message==='LOGIN') needLogin(conn.key?'Wrong password.':''); else showUpdated(e.message); render(); }
 }
+// Compare the previous list with the new one: who caught up (is no longer on the past due list)?
+function outcomeStats(oldU,oldAt,newU,newAt){
+ if(!oldU||!oldU.length||!oldAt) return null;
+ const days=Math.round((new Date(newAt)-new Date(oldAt))/864e5); if(!(days>=3&&days<=90)) return null;
+ const now=new Set(newU.map(u=>String(u.id))), B={};
+ BUCKETS.forEach(([l])=>B[l]=[0,0]);
+ oldU.forEach(u=>{ const b=BUCKETS.find(([,a,z])=>u.dpd>=a&&u.dpd<=z); if(!b) return; B[b[0]][0]++; if(!now.has(String(u.id))) B[b[0]][1]++; });
+ return {from:oldAt,to:newAt,days,b:B};
+}
+const BUCKETS=[['1–15',1,15,'c1'],['16–30',16,30,'c2'],['31–60',31,60,'c3'],['61–90',61,90,'c4'],['91+',91,1e9,'c5']];
+let PENDING_STATS=null;
 async function save(){
  status('Saving…');
  try{
-  const j=await api('/agency/save',{meta:META,users:USERS.map(u=>({id:u.id,name:u.name,cty:u.cty,email:u.email||'',phone:u.phone||'',dpd:u.dpd,pd:u.pd,op:u.op,rem:u.rem,paid:u.paid,tot:u.tot,last:u.last,lastAmt:u.lastAmt,a30:u.a30,a90:u.a90,notes:u.notes,stripe:u.stripe,blocked:u.blocked,sig:u.sig||null}))});
-  META=j.meta; showUpdated(); status('List updated.');
+  const st=PENDING_STATS; PENDING_STATS=null;
+  const j=await api('/agency/save',{stats:st,meta:META,users:USERS.map(u=>({id:u.id,name:u.name,cty:u.cty,email:u.email||'',phone:u.phone||'',dpd:u.dpd,pd:u.pd,op:u.op,rem:u.rem,paid:u.paid,tot:u.tot,last:u.last,lastAmt:u.lastAmt,a30:u.a30,a90:u.a90,notes:u.notes,stripe:u.stripe,blocked:u.blocked,sig:u.sig||null}))});
+  META=j.meta; if(Array.isArray(j.stats)) STATS=j.stats; showUpdated(); render(); status('List updated.');
   setTimeout(()=>status(''),8000);
  }catch(e){
   if(e.message==='LOGIN'){ needLogin('Log in, then load the list again to save it.'); status('Not saved – log in first.',true); }
@@ -739,22 +768,63 @@ $('paste').addEventListener('click',async()=>{
  try{
   const j=JSON.parse(await navigator.clipboard.readText());
   if(j.kind!=='suave-agency-check'||!Array.isArray(j.users))throw new Error('x');
+  const OLD=USERS, OLDAT=META&&META.at;
   USERS=j.users.map(u=>({id:u.id,name:u.name,email:u.email||'',phone:u.phone||'',cty:u.cty,dpd:+u.dpd||0,pd:num(u.pd),op:num(u.op),rem:num(u.rem),paid:+u.paid||0,tot:+u.tot||0,last:u.last||'',lastAmt:(u.lastAmt==null?null:num(u.lastAmt)),a30:num(u.a30),a90:num(u.a90),notes:+u.notes||0,stripe:+u.stripe||0,blocked:+u.blocked||0,sig:u.sig||null}));
+  PENDING_STATS=outcomeStats(OLD,OLDAT,USERS,j.at);
   META={at:j.at,source:'read from Suave with Agency Check',n:USERS.length};render();showUpdated();openTab('overview');await save();
  }catch(e){status('No list found on the clipboard. In Suave, click Agency Check → Read list → Copy for analysis, then try again. (Chrome may ask to allow pasting – choose Allow.)',true)}
 });
 $('file').addEventListener('change',async e=>{
  const f=e.target.files[0];if(!f)return;
  if(typeof XLSX==='undefined'){status('The Excel reader could not load. Check your internet connection.',true);return}
+ const OLD=USERS, OLDAT=META&&META.at;
  const wb=XLSX.read(await f.arrayBuffer());
  const ws=wb.Sheets['Past due scoring']||wb.Sheets[wb.SheetNames[0]];
  const data=XLSX.utils.sheet_to_json(ws,{defval:''});
  const g=(r,...ks)=>{for(const k of ks){const m=Object.keys(r).find(x=>x.toLowerCase().startsWith(k.toLowerCase()));if(m!==undefined&&r[m]!=='')return r[m]}return ''};
  USERS=data.map(r=>({id:g(r,'User ID','ID'),name:g(r,'Name'),cty:String(g(r,'Country','Ctry')).trim(),dpd:num(g(r,'Days past due','Days late')),pd:num(g(r,'Amount past due','Past due')),op:num(g(r,'Outstanding principal','Principal at risk')),rem:num(g(r,'Remaining contract')),paid:num(g(r,'Paid installments')),tot:num(g(r,'Total installments')),notes:num(g(r,'Collection notes','Notes')),stripe:num(g(r,'Stripe')),blocked:num(g(r,'Blocked')),last:(v=>typeof v==='number'?new Date(Math.round((v-25569)*864e5)).toISOString().slice(0,10):String(v||'').slice(0,10))(g(r,'Last payment')),a30:num(g(r,'Collected last 30')),a90:num(g(r,'Collected last 90'))})).filter(u=>u.name||u.id);
+ PENDING_STATS=outcomeStats(OLD,OLDAT,USERS,new Date(f.lastModified||Date.now()).toISOString());
  META={at:new Date(f.lastModified||Date.now()).toISOString(),source:'Excel file '+f.name,n:USERS.length};render();showUpdated();openTab('overview');await save();
  e.target.value='';
 });
 
+// ---------- AI insights (anonymous totals only) ----------
+function aiSummary(){
+ const k=K(), isl=island()||'all islands', r=x=>Math.round(x);
+ const grp=g=>{ const L=VIS.filter(u=>u.grp===g); return {users:L.length, balance_owed:r(L.reduce((s,u)=>s+u.tb,0)), past_due:r(L.reduce((s,u)=>s+u.pd,0))}; };
+ const B=[['0-30',0,30],['31-60',31,60],['61-69',61,69],['70-90',70,90],['91+',91,1e9]].map(([l,a,z])=>{ const L=VIS.filter(u=>u.dpd>=a&&u.dpd<=z); return {days_late:l,users:L.length,balance_owed:r(L.reduce((s,u)=>s+u.tb,0)),to_agency:L.filter(u=>u.grp==='send').length,final_notice:L.filter(u=>u.grp==='final').length}; });
+ const late=VIS.filter(u=>u.dpd>30);
+ const P=[['paid in last 30 days',0,30],['31-60',31,60],['61-90',61,90],['90+',91,99998],['never paid',99999,99999]].map(([l,a,z])=>({last_payment:l,users:late.filter(u=>u.ds>=a&&u.ds<=z).length}));
+ const sigCount=L=>{ const c={}; L.forEach(u=>(u.sigs||[]).forEach(([t,txt])=>{ const key=t+' '+txt.replace(/Fl [\d,.]+/g,'Fl X').replace(/\d+/g,'N'); c[key]=(c[key]||0)+1; })); return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,15).map(([s,n])=>({signal:s,users:n})); };
+ const cty={}; VIS.forEach(u=>{ cty[u.cty]=(cty[u.cty]||0)+1; });
+ return { list_read: META&&META.at, island: isl, users_shown: VIS.length, hidden_small_balances: HIDDEN.length,
+  groups:{ send_to_agency:grp('send'), final_notice:grp('final'), keep_internal:grp('internal') },
+  by_days_late:B, late_31plus_last_payment:P, token_payments_31plus: late.filter(u=>u.token).length,
+  users_by_country:cty, top_signals_send_to_agency:sigCount(VIS.filter(u=>u.grp==='send')), top_signals_internal_31plus:sigCount(late.filter(u=>u.grp==='internal')),
+  collected_last_30_days:r(VIS.reduce((s,u)=>s+(u.a30||0),0)), collected_last_90_days:r(VIS.reduce((s,u)=>s+(u.a90||0),0)),
+  settings:{ agency_fee:k.cost, agency_collects_pct:k.aw, agency_wait_months:k.wait, send_from_day:k.send, hide_under:k.min, cure_pct_by_days:{'1-15':k.c1,'16-30':k.c2,'31-60':k.c3,'61-90':k.c4,'91+':k.c5} },
+  measured_caught_up_since_previous_lists: STATS.slice(0,6).map(st=>({days_between:st.days,by_days_late:st.b})) };
+}
+let AI_CACHE={};
+function showAi(){ const c=AI_CACHE[island()||'all']; $('aiOut').innerHTML=c?c.text.split(/\n+/).map(l=>l.replace(/^[-•*]\s*/,'').trim()).filter(Boolean).map(l=>`<li>${esc(l)}</li>`).join(''):''; $('aiState').textContent=c?`Answer from ${fmtDate(c.at)}${c.model?' · '+c.model:''}`:'Click to let Claude analyse this list (only totals are sent).'; }
+$('aiBtn').addEventListener('click',async()=>{
+ if(!VIS.length){ $('aiState').textContent='Load a list first.'; return; }
+ $('aiBtn').disabled=true; $('aiState').textContent='Claude is thinking… (10–30 seconds)';
+ try{ const j=await api('/agency/ai',{summary:aiSummary()}); AI_CACHE[island()||'all']={text:j.text||'',at:j.at,model:j.model}; showAi(); }
+ catch(e){ $('aiState').textContent=e.message==='LOGIN'?'Log in first.':('Could not get an answer: '+e.message); }
+ $('aiBtn').disabled=false;
+});
+// ---------- accuracy: assumed vs. measured "pays on their own" ----------
+function measured(){
+ const M={}; BUCKETS.forEach(([l])=>M[l]={n:0,c:0,days:0,k:0});
+ STATS.forEach(st=>{ if(!st.b) return; BUCKETS.forEach(([l])=>{ const v=st.b[l]; if(v&&v[0]){ M[l].n+=v[0]; M[l].c+=v[1]; M[l].days+=st.days; M[l].k++; } }); });
+ return M;
+}
+function drawAccuracy(k){
+ const M=measured(), any=BUCKETS.some(([l])=>M[l].n>0);
+ if(!any){ $('accuracy').innerHTML='Not measured yet. Each time you load a new list (3–90 days after the previous one), the page checks who from the old list is no longer on the past due list – they caught up. After a few updates you see here how often late users really pay on their own, so you can set the cure chances to your own numbers.'; return; }
+ $('accuracy').innerHTML=`<table class="mini"><tr><th>Days late (old list)</th><th>Users</th><th>Caught up by the next list</th><th>Page assumes</th></tr>`+BUCKETS.map(([l,,,key])=>{ const m=M[l]; const pct=m.n?Math.round(100*m.c/m.n):null; return `<tr><td>${l}</td><td>${m.n}</td><td>${pct===null?'–':pct+'%'}${m.k?` <span class="hint">(avg. ${Math.round(m.days/m.k)} days later)</span>`:''}</td><td>${k[key]}%</td></tr>`; }).join('')+`</table><div style="margin-top:6px">From ${n(STATS.length,'update')}. If “caught up” is clearly different from “page assumes” (with 30+ users), change the cure chance under Logic levers.</div>`;
+}
 // ---------- Intercom: copy a group in the Reminders format ----------
 const IC_GROUPS=[
  ['rem','Payment reminders','Keep chasing internally, 1+ days late – template by days late',u=>u.grp==='internal'&&u.dpd>=1,''],

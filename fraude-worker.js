@@ -9,6 +9,8 @@
 // 4. Worker → Settings → Variables and Secrets:
 //      FRAUDE_KEY       (Secret) a long password you make up; you type it once on the page
 //      ALLOWED_ORIGINS  (Text)   https://perezabimael01-boop.github.io
+//      ANTHROPIC_API_KEY (Secret, optional) Claude API key for "AI insights" on the Agency Check page
+//      ANTHROPIC_MODEL  (Text, optional) e.g. a Claude Sonnet model id; if empty the newest Sonnet is picked
 // The table is created automatically on the first request.
 //
 // Also stores the latest "Collection Agency Check" list (collection-agency.html) in
@@ -78,11 +80,19 @@ const AGENCY_SCHEMA = `CREATE TABLE IF NOT EXISTS agency_check (
   data       TEXT NOT NULL
 )`;
 
+// Anonymous outcome stats per update (how many late users caught up since the previous list) – no names.
+const AGENCY_STATS_SCHEMA = `CREATE TABLE IF NOT EXISTS agency_stats (
+  id    INTEGER PRIMARY KEY AUTOINCREMENT,
+  at    TEXT NOT NULL,
+  data  TEXT NOT NULL
+)`;
+
 let schemaReady = false;
 async function ensureSchema(env){
   if (schemaReady) return;
   await env.DB.prepare(SCHEMA).run();
   await env.DB.prepare(AGENCY_SCHEMA).run();
+  await env.DB.prepare(AGENCY_STATS_SCHEMA).run();
   schemaReady = true;
 }
 
@@ -108,11 +118,45 @@ function cleanAgencyUser(u){
     sig: cleanSig(u.sig)
   };
 }
+// ---------- Claude (AI insights) ----------
+// Only anonymous totals are sent to Claude (no names, e-mails or phone numbers).
+let cachedModel = "";
+async function pickModel(env){
+  if (env.ANTHROPIC_MODEL) return env.ANTHROPIC_MODEL;
+  if (cachedModel) return cachedModel;
+  const r = await fetch("https://api.anthropic.com/v1/models?limit=50", { headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" } });
+  const j = await r.json().catch(() => ({}));
+  const ids = (j.data || []).map(m => m.id);
+  cachedModel = ids.find(id => /sonnet/i.test(id)) || ids[0] || "";
+  if (!cachedModel) throw new Error("No Claude model available for this API key");
+  return cachedModel;
+}
+async function aiInsights(env, summary){
+  const model = await pickModel(env);
+  const system = "You are a senior credit-collections analyst for Suave, a buy-now-pay-later lender in Aruba, Curaçao and Sint Maarten (amounts in Fl). " +
+    "You get anonymous totals from the Collection Agency Check tool, which decides per late customer whether to keep collecting internally or hand over to a collection agency (Fl 250 per case). " +
+    "Write 4 to 7 short, concrete findings and recommendations for the collections team, most important first. Use only the numbers provided, never invent numbers. " +
+    "Point out risks, patterns, where the assumptions may be off, and what to do this week. Plain English, one finding per line starting with '- ', at most 40 words each, no headings.";
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({ model, max_tokens: 900, system, messages: [{ role: "user", content: "Data (JSON):\n" + JSON.stringify(summary).slice(0, 60000) }] })
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error((j.error && j.error.message) || ("Claude error " + r.status));
+  const text = (j.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim();
+  return { text, model };
+}
+
+async function agencyStats(env){
+  const { results } = await env.DB.prepare("SELECT at, data FROM agency_stats ORDER BY id DESC LIMIT 24").all();
+  return (results || []).map(r => { try { return { at: r.at, ...JSON.parse(r.data) }; } catch(e){ return null; } }).filter(Boolean);
+}
 async function agencyGet(env){
   const r = await env.DB.prepare("SELECT read_at, saved_at, source, users, data FROM agency_check WHERE id = 1").first();
   if (!r) return { empty: true };
   let users = []; try { users = JSON.parse(r.data); } catch(e){}
-  return { meta: { at: r.read_at, savedAt: r.saved_at, source: r.source, n: r.users }, users };
+  return { meta: { at: r.read_at, savedAt: r.saved_at, source: r.source, n: r.users }, users, stats: await agencyStats(env) };
 }
 
 async function list(env){
@@ -185,15 +229,27 @@ export default {
         if (!users.length) return json({ error: "Lege lijst" }, 400, h);
         const m = body.meta || {};
         const readAt = (d => isNaN(d) ? now : d.toISOString())(new Date(m.at || now));
+        const st = body.stats && typeof body.stats === "object" ? JSON.stringify(body.stats) : "";
+        const extra = st && st.length < 20000 ? [
+          env.DB.prepare("INSERT INTO agency_stats (at, data) VALUES (?1, ?2)").bind(now, st),
+          env.DB.prepare("DELETE FROM agency_stats WHERE id NOT IN (SELECT id FROM agency_stats ORDER BY id DESC LIMIT 24)")
+        ] : [];
         await env.DB.batch([
+          ...extra,
           env.DB.prepare("DELETE FROM agency_check"),
           env.DB.prepare("INSERT INTO agency_check (id, read_at, saved_at, source, users, data) VALUES (1, ?1, ?2, ?3, ?4, ?5)")
             .bind(readAt, now, String(m.source || "").slice(0, 200), users.length, JSON.stringify(users))
         ]);
         return json({ ok: true, ...(await agencyGet(env)) }, 200, h);
       }
+      if (url.pathname === "/agency/ai"){
+        if (!env.ANTHROPIC_API_KEY) return json({ error: "No Claude API key yet: add the secret ANTHROPIC_API_KEY to this worker in Cloudflare." }, 400, h);
+        try { return json({ ok: true, ...(await aiInsights(env, body.summary || {})), at: now }, 200, h); }
+        catch (e){ return json({ error: String(e && e.message || e) }, 502, h); }
+      }
       if (url.pathname === "/agency/delete"){
         await env.DB.prepare("DELETE FROM agency_check").run();
+        await env.DB.prepare("DELETE FROM agency_stats").run();
         return json({ ok: true, empty: true }, 200, h);
       }
       if (url.pathname === "/contacts/delete"){
