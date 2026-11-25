@@ -53,7 +53,7 @@
   .updated{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; margin:0 0 18px; padding:12px 16px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--line); font-size:14.5px; color:var(--ink-soft); }
   .updated b{ color:var(--ink); } .updated .dot{ width:10px; height:10px; border-radius:50%; background:#22704F; flex:none; }
   .updated.old .dot{ background:#D9772B; } .updated.none .dot{ background:#A9C6DE; }
-  .updated .sp{ flex:1; } #clearSaved[hidden]{ display:none; }
+  .updated .sp{ flex:1; } #clearSaved[hidden], #login[hidden]{ display:none; }
 </style>
 </head>
 <body data-tool="collection-agency">
@@ -69,7 +69,10 @@
     <p>Reads every user on the <b>past due list</b> in Suave, with their loans and the <b>last time we collected money</b>, and tells you who to send to the collection agency (Fl 250 per case) and who to keep chasing internally.</p>
   </div>
 
-  <div class="updated none" id="updated"><span class="dot"></span><span id="updatedTxt"><b>Last update:</b> never – no list saved yet.</span><span class="sp"></span><button type="button" class="btn btn-quiet" id="clearSaved" hidden style="min-height:32px;padding:4px 10px;font-size:13.5px">Clear saved list</button></div>
+  <div class="updated none" id="updated"><span class="dot"></span><span id="updatedTxt"><b>Last update:</b> loading…</span><span class="sp"></span><button type="button" class="btn btn-quiet" id="clearSaved" hidden style="min-height:32px;padding:4px 10px;font-size:13.5px">Delete saved list</button></div>
+  <div class="updated none" id="login" hidden><span class="dot" style="background:#D9772B"></span><span style="flex:1;min-width:220px"><b>Log in to Cloudflare</b> to see and save the shared list (same password as Fraud Contacts).</span>
+    <input type="text" name="username" value="suave-fraude" autocomplete="username" hidden><input type="password" id="sKey" name="password" autocomplete="current-password" placeholder="Password" style="padding:8px 10px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);font:inherit">
+    <button type="button" class="btn btn-primary" id="loginBtn" style="min-height:36px">Log in</button><span id="loginMsg" style="width:100%;font-size:13.5px"></span></div>
 
   <section class="section">
     <h2 class="section-title">Put the button in your bookmarks bar <span class="tag">Once</span></h2>
@@ -141,7 +144,7 @@
       <li><span class="pill r">Send to agency NOW</span> agency comes out ahead and 61+ days late (or 31+ days, &gt; Fl 3,000 and barely paid).</li>
       <li><span class="pill a">Final notice – agency at day 61</span> 31–60 days and the agency would come out ahead.</li>
     </ol>
-    <p class="hint" style="margin-top:12px">Principal at risk = per open plan, original principal × unpaid installments ÷ total installments. Agency figures come from the Deurwaarder dashboard (only 45% of agency cases ever paid anything; first payment after ~13 months). Cure chances are estimates – adjust them under “Logic levers”. The last list you load is saved in this browser (with its date) so it is still here next time you open the page; nothing is sent anywhere. Use “Clear saved list” to remove it.</p>
+    <p class="hint" style="margin-top:12px">Principal at risk = per open plan, original principal × unpaid installments ÷ total installments. Agency figures come from the Deurwaarder dashboard (only 45% of agency cases ever paid anything; first payment after ~13 months). Cure chances are estimates – adjust them under “Logic levers”. The latest list is saved in Suave's Cloudflare database (password protected, the same login as Fraud Contacts), so it is the same on every computer. Loading a new list deletes the old one and replaces it; the date at the top shows when it was read from Suave.</p>
   </section>
 </main>
 
@@ -339,22 +342,61 @@ $('csv').onclick=()=>{
  const csv='﻿'+lines.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(';')).join('\r\n');
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='collection-agency-check-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
 };
-const STORE='suave.agencyCheck.v1', LSTORE='suave.agencyCheck.levers';
+const OLD_STORE='suave.agencyCheck.v1', LSTORE='suave.agencyCheck.levers', CONN_KEY='suave.fraude.conn';
+const WORKER='https://suave-fraude.perezabimael01.workers.dev';
+try{ localStorage.removeItem(OLD_STORE); }catch(e){}  // old browser-only copy – the list now lives in Cloudflare
 let META=null;
-function save(){ try{ localStorage.setItem(STORE, JSON.stringify({meta:META, users:USERS.map(u=>({id:u.id,name:u.name,cty:u.cty,dpd:u.dpd,pd:u.pd,op:u.op,paid:u.paid,tot:u.tot,last:u.last,a30:u.a30,a90:u.a90,notes:u.notes,stripe:u.stripe,blocked:u.blocked}))})); }catch(e){} }
+const getConn=()=>{ try{ return JSON.parse(localStorage.getItem(CONN_KEY)||'{}'); }catch(e){ return {}; } };
+const setConn=c=>{ try{ localStorage.setItem(CONN_KEY, JSON.stringify(c)); }catch(e){} };
+let conn=getConn(); conn.url=WORKER;
+async function api(path, body){
+ if(!conn.key) throw new Error('LOGIN');
+ let r; try{ r=await fetch(WORKER+path,{method:body?'POST':'GET',headers:Object.assign({'X-Fraude-Key':conn.key},body?{'Content-Type':'application/json'}:{}),body:body?JSON.stringify(body):undefined,cache:'no-store'}); }
+ catch(e){ throw new Error('Cloudflare is not reachable right now.'); }
+ let j={}; try{ j=await r.json(); }catch(e){}
+ if(r.status===401) throw new Error('LOGIN');
+ if(!r.ok) throw new Error(j.error||('Cloudflare error '+r.status));
+ return j;
+}
+function needLogin(note){ conn.key=''; setConn(conn); $('login').hidden=false; $('loginMsg').textContent=note||''; META=null; showUpdated('Log in to see the saved list.'); }
+function applyServer(j){
+ if(j.empty||!j.users||!j.users.length){ META=null; USERS=[]; $('results').classList.add('hide'); showUpdated(); return; }
+ META=j.meta; USERS=j.users.map(u=>Object.assign({},u)); show(); showUpdated();
+}
+async function loadSaved(){
+ if(!conn.key){ needLogin(); return; }
+ try{ const j=await api('/agency'); $('login').hidden=true; applyServer(j); if(META) status(`Showing the saved list from ${fmtDate(META.at)}. Run Agency Check again to replace it.`); }
+ catch(e){ if(e.message==='LOGIN') needLogin(conn.key?'Wrong password.':''); else showUpdated(e.message); }
+}
+async function save(){
+ status('Saving to Cloudflare – the old list is deleted and replaced…');
+ try{
+  const j=await api('/agency/save',{meta:META,users:USERS.map(u=>({id:u.id,name:u.name,cty:u.cty,dpd:u.dpd,pd:u.pd,op:u.op,paid:u.paid,tot:u.tot,last:u.last,a30:u.a30,a90:u.a90,notes:u.notes,stripe:u.stripe,blocked:u.blocked}))});
+  META=j.meta; showUpdated(); status(`Saved in Cloudflare: ${META.n} users. The previous list was deleted.`);
+ }catch(e){
+  if(e.message==='LOGIN'){ needLogin('Log in, then load the list again to save it.'); status('Not saved – log in to Cloudflare first.',true); }
+  else status('Not saved in Cloudflare: '+e.message+' The results below are only shown, not saved.',true);
+ }
+}
 function fmtDate(d){ return new Date(d).toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
 function ago(d){ const m=Math.round((Date.now()-new Date(d))/6e4); if(m<1)return 'just now'; if(m<60)return m+' min ago'; const h=Math.round(m/60); if(h<24)return h+' hour'+(h===1?'':'s')+' ago'; const dd=Math.round(h/24); return dd+' day'+(dd===1?'':'s')+' ago'; }
-function showUpdated(){
+function showUpdated(note){
  const box=$('updated');
- if(!META){ box.className='updated none'; $('updatedTxt').innerHTML='<b>Last update:</b> never – no list saved yet.'; $('clearSaved').hidden=true; return; }
+ if(!META){ box.className='updated none'; $('updatedTxt').innerHTML='<b>Last update:</b> '+esc(note||'never – no list saved yet.'); $('clearSaved').hidden=true; return; }
  const old=(Date.now()-new Date(META.at))>7*864e5;
  box.className='updated'+(old?' old':'');
- $('updatedTxt').innerHTML=`<b>Last update: ${esc(fmtDate(META.at))}</b> (${ago(META.at)}) · ${esc(META.source)} · ${META.n} user${META.n===1?"":"s"}`+(old?' · <b style="color:#D9772B">older than a week – run Agency Check again</b>':'');
+ $('updatedTxt').innerHTML=`<b>Last update: ${esc(fmtDate(META.at))}</b> (${ago(META.at)}) · ${esc(META.source)} · ${META.n} user${META.n===1?"":"s"} · saved in Cloudflare`+(old?' · <b style="color:#D9772B">older than a week – run Agency Check again</b>':'');
  $('clearSaved').hidden=false;
 }
-$('clearSaved').addEventListener('click',()=>{ if(!confirm('Remove the saved list from this browser?'))return; try{localStorage.removeItem(STORE)}catch(e){} META=null;USERS=[];$('results').classList.add('hide');status('Saved list removed.');showUpdated(); });
+$('clearSaved').addEventListener('click',async()=>{
+ if(!confirm('Delete the saved list from Cloudflare for everyone?'))return;
+ try{ await api('/agency/delete',{}); META=null; USERS=[]; $('results').classList.add('hide'); status('Saved list deleted.'); showUpdated(); }
+ catch(e){ status(e.message==='LOGIN'?'Log in first.':e.message,true); }
+});
+$('loginBtn').addEventListener('click',async()=>{ conn={url:WORKER,key:$('sKey').value.trim()}; setConn(conn); $('loginMsg').textContent='Logging in…'; await loadSaved(); });
+$('sKey').addEventListener('keydown',e=>{ if(e.key==='Enter') $('loginBtn').click(); });
 $('levers').addEventListener('change',()=>{ try{ localStorage.setItem(LSTORE, JSON.stringify(K())); }catch(e){} });
-setInterval(showUpdated,60000);
+setInterval(()=>META&&showUpdated(),60000);
 function status(t,err){ $('status').textContent=t; $('status').className='status'+(err?' err':''); }
 function show(){ $('results').classList.remove('hide'); render(); }
 
@@ -363,8 +405,7 @@ $('paste').addEventListener('click',async()=>{
   const j=JSON.parse(await navigator.clipboard.readText());
   if(j.kind!=='suave-agency-check'||!Array.isArray(j.users))throw new Error('x');
   USERS=j.users.map(u=>({id:u.id,name:u.name,cty:u.cty,dpd:+u.dpd||0,pd:num(u.pd),op:num(u.op),paid:+u.paid||0,tot:+u.tot||0,last:u.last||'',a30:num(u.a30),a90:num(u.a90),notes:+u.notes||0,stripe:+u.stripe||0,blocked:+u.blocked||0}));
-  META={at:j.at,source:'read from Suave with Agency Check',n:USERS.length};save();showUpdated();
-  status(`Loaded and saved ${USERS.length} users read from Suave on ${fmtDate(j.at)}.`);show();
+  META={at:j.at,source:'read from Suave with Agency Check',n:USERS.length};show();showUpdated();await save();
  }catch(e){status('No list found on the clipboard. In Suave, click Agency Check → Read list → Copy for analysis, then try again. (Chrome may ask to allow pasting – choose Allow.)',true)}
 });
 $('file').addEventListener('change',async e=>{
@@ -375,15 +416,13 @@ $('file').addEventListener('change',async e=>{
  const data=XLSX.utils.sheet_to_json(ws,{defval:''});
  const g=(r,...ks)=>{for(const k of ks){const m=Object.keys(r).find(x=>x.toLowerCase().startsWith(k.toLowerCase()));if(m!==undefined&&r[m]!=='')return r[m]}return ''};
  USERS=data.map(r=>({id:g(r,'User ID','ID'),name:g(r,'Name'),cty:String(g(r,'Country','Ctry')).trim(),dpd:num(g(r,'Days past due','Days late')),pd:num(g(r,'Amount past due','Past due')),op:num(g(r,'Outstanding principal','Principal at risk')),paid:num(g(r,'Paid installments')),tot:num(g(r,'Total installments')),notes:num(g(r,'Collection notes','Notes')),stripe:num(g(r,'Stripe')),blocked:num(g(r,'Blocked')),last:(v=>typeof v==='number'?new Date(Math.round((v-25569)*864e5)).toISOString().slice(0,10):String(v||'').slice(0,10))(g(r,'Last payment')),a30:num(g(r,'Collected last 30')),a90:num(g(r,'Collected last 90'))})).filter(u=>u.name||u.id);
- META={at:new Date(f.lastModified||Date.now()).toISOString(),source:'Excel file '+f.name,n:USERS.length};save();showUpdated();
- status(`Loaded and saved ${USERS.length} users from ${f.name}.`);show();
+ META={at:new Date(f.lastModified||Date.now()).toISOString(),source:'Excel file '+f.name,n:USERS.length};show();showUpdated();await save();
 });
 </script>
 <script>
 (function(){
  try{ const lv=JSON.parse(localStorage.getItem(LSTORE)||'null'); if(lv) Object.entries(lv).forEach(([k,v])=>{ const el=document.getElementById('k_'+k); if(el) el.value=v; }); }catch(e){}
- try{ const d=JSON.parse(localStorage.getItem(STORE)||'null'); if(d&&d.meta&&Array.isArray(d.users)&&d.users.length){ META=d.meta; USERS=d.users; status(`Showing the saved list from ${fmtDate(META.at)}. Run Agency Check again to refresh it.`); show(); } }catch(e){}
- showUpdated();
+ loadSaved();
 })();
 </script>
 <script src="help-chat.js"></script>

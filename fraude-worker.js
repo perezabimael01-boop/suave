@@ -10,6 +10,10 @@
 //      FRAUDE_KEY       (Secret) a long password you make up; you type it once on the page
 //      ALLOWED_ORIGINS  (Text)   https://perezabimael01-boop.github.io
 // The table is created automatically on the first request.
+//
+// Also stores the latest "Collection Agency Check" list (collection-agency.html) in
+// the same database: table agency_check holds exactly ONE row. Every new upload
+// deletes the old list first, so only the latest list (with its date) is kept.
 
 const SCHEMA = `CREATE TABLE IF NOT EXISTS fraud (
   email      TEXT PRIMARY KEY,
@@ -65,11 +69,37 @@ function clean(r){
   };
 }
 
+const AGENCY_SCHEMA = `CREATE TABLE IF NOT EXISTS agency_check (
+  id         INTEGER PRIMARY KEY CHECK (id = 1),
+  read_at    TEXT NOT NULL,
+  saved_at   TEXT NOT NULL,
+  source     TEXT NOT NULL DEFAULT '',
+  users      INTEGER NOT NULL DEFAULT 0,
+  data       TEXT NOT NULL
+)`;
+
 let schemaReady = false;
 async function ensureSchema(env){
   if (schemaReady) return;
   await env.DB.prepare(SCHEMA).run();
+  await env.DB.prepare(AGENCY_SCHEMA).run();
   schemaReady = true;
+}
+
+// Keep only the fields the Agency Check page needs, with sane types and lengths.
+function cleanAgencyUser(u){
+  const n = v => { const x = Number(v); return isFinite(x) ? Math.round(x * 100) / 100 : 0; };
+  return {
+    id: String(u.id == null ? "" : u.id).slice(0, 30), name: String(u.name || "").slice(0, 120), cty: String(u.cty || "").slice(0, 4),
+    dpd: n(u.dpd), pd: n(u.pd), op: n(u.op), paid: n(u.paid), tot: n(u.tot), last: String(u.last || "").slice(0, 10),
+    a30: n(u.a30), a90: n(u.a90), notes: n(u.notes), stripe: u.stripe ? 1 : 0, blocked: u.blocked ? 1 : 0
+  };
+}
+async function agencyGet(env){
+  const r = await env.DB.prepare("SELECT read_at, saved_at, source, users, data FROM agency_check WHERE id = 1").first();
+  if (!r) return { empty: true };
+  let users = []; try { users = JSON.parse(r.data); } catch(e){}
+  return { meta: { at: r.read_at, savedAt: r.saved_at, source: r.source, n: r.users }, users };
 }
 
 async function list(env){
@@ -123,8 +153,12 @@ export default {
       if (request.method === "GET" && url.pathname === "/contacts"){
         return json({ rows: await list(env) }, 200, h);
       }
+      if (request.method === "GET" && url.pathname === "/agency"){
+        return json(await agencyGet(env), 200, h);
+      }
       if (request.method !== "POST") return json({ error: "Not found" }, 404, h);
-      if (Number(request.headers.get("Content-Length") || 0) > 500000) return json({ error: "Te groot" }, 413, h);
+      const maxLen = url.pathname === "/agency/save" ? 3000000 : 500000;
+      if (Number(request.headers.get("Content-Length") || 0) > maxLen) return json({ error: "Te groot" }, 413, h);
       const body = await request.json().catch(() => null);
       if (!body || typeof body !== "object") return json({ error: "Bad request" }, 400, h);
 
@@ -141,6 +175,23 @@ export default {
           await upsertStmt(env, r, now).run();
         }
         return json({ ok: true, rows: await list(env) }, 200, h);
+      }
+      if (url.pathname === "/agency/save"){
+        // Replace the saved Agency Check list: the old one is deleted, the new one stored.
+        const users = (Array.isArray(body.users) ? body.users : []).slice(0, 5000).map(cleanAgencyUser);
+        if (!users.length) return json({ error: "Lege lijst" }, 400, h);
+        const m = body.meta || {};
+        const readAt = (d => isNaN(d) ? now : d.toISOString())(new Date(m.at || now));
+        await env.DB.batch([
+          env.DB.prepare("DELETE FROM agency_check"),
+          env.DB.prepare("INSERT INTO agency_check (id, read_at, saved_at, source, users, data) VALUES (1, ?1, ?2, ?3, ?4, ?5)")
+            .bind(readAt, now, String(m.source || "").slice(0, 200), users.length, JSON.stringify(users))
+        ]);
+        return json({ ok: true, ...(await agencyGet(env)) }, 200, h);
+      }
+      if (url.pathname === "/agency/delete"){
+        await env.DB.prepare("DELETE FROM agency_check").run();
+        return json({ ok: true, empty: true }, 200, h);
       }
       if (url.pathname === "/contacts/delete"){
         const email = String(body.email || "").trim().toLowerCase();
