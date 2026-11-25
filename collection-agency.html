@@ -7,12 +7,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="site.css">
+<script src="login-gate.js"></script>
 <style>
-  body{ --page-width:1180px; --tool:#B42318; --tool-soft:#FDEDEB; }
+  body{ --page-width:1180px; --tool:#B42318; --tool-soft:#FDEDEB;
+        --g-internal:#257de0; --g-send:#f47230; --g-notworth:#00b894; --g-final:#f2a600; }
   .section-title .tag{ font-size:12.5px; font-weight:600; color:var(--tool); background:var(--tool-soft); border-radius:999px; padding:1px 10px; }
-  .section p{ margin:0 0 12px; color:var(--ink-soft); line-height:1.6; max-width:72ch; }
+  .section p{ margin:0 0 12px; color:var(--ink-soft); line-height:1.6; max-width:76ch; }
   .section b{ color:var(--ink); font-weight:600; }
   kbd{ font-family:inherit; font-size:13px; font-weight:600; background:var(--surface-2); border:1px solid var(--line-strong); border-bottom-width:2px; border-radius:5px; padding:0 6px; }
   .bm{ display:inline-flex; align-items:center; gap:10px; margin:6px 0 10px; padding:13px 22px; border-radius:var(--radius-sm);
@@ -20,7 +23,7 @@
        box-shadow:0 6px 16px -8px color-mix(in srgb, var(--tool) 70%, transparent); }
   .bm:hover{ border-color:#fff; outline:2px dashed var(--tool); outline-offset:2px; }
   details{ margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
-  summary{ cursor:pointer; font-size:14.5px; font-weight:600; color:var(--tool); }
+  summary{ cursor:pointer; font-size:14.5px; font-weight:600; color:var(--brand-ink); }
   details ol{ margin-top:10px; padding-left:20px; color:var(--ink-soft); line-height:1.7; }
   .ok{ color:var(--ok); font-weight:600; font-size:14px; margin-left:8px; }
   .steps{ list-style:none; counter-reset:s; margin:0; padding:0; }
@@ -28,32 +31,99 @@
   .steps > li::before{ content:counter(s); position:absolute; left:0; top:0; width:28px; height:28px; border-radius:50%;
        display:flex; align-items:center; justify-content:center; font-size:13.5px; font-weight:700; color:var(--tool); background:var(--tool-soft); }
   .steps > li:last-child{ padding-bottom:0; }
-  .row-btns{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-  .status{ margin-top:10px; font-size:14px; color:var(--ink-soft); }
+
+  /* status + load bar */
+  .bar-row{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; margin:0 0 14px; padding:12px 16px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--line); font-size:14.5px; color:var(--ink-soft); }
+  .bar-row b{ color:var(--ink); } .dot{ width:10px; height:10px; border-radius:50%; background:#22704F; flex:none; }
+  .bar-row.old .dot{ background:#D9772B; } .bar-row.none .dot{ background:#A9C6DE; }
+  .sp{ flex:1; }
+  #clearSaved[hidden], #login[hidden], [hidden]{ display:none !important; }
+  .status{ font-size:13.5px; color:var(--ink-soft); width:100%; }
   .status.err{ color:var(--danger); }
-  .kpis{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); }
-  .kpi{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; cursor:pointer; }
-  .kpi.on{ outline:2px solid var(--brand); }
-  .kpi .v{ font-size:24px; font-weight:700; color:var(--ink); } .kpi .l{ color:var(--ink-soft); font-size:13px; } .kpi .s{ font-size:13px; color:var(--ink-soft); }
-  .pill{ display:inline-block; padding:2px 9px; border-radius:99px; font-size:12px; font-weight:600; }
-  .pill.r{ background:#FDEDEB; color:#B42318; } .pill.a{ background:#FFF4D6; color:#8A6418; } .pill.g{ background:#E3F4EC; color:#22704F; } .pill.b{ background:#E3F1FB; color:#2E6FA3; }
+
+  /* tabs */
+  .tabs{ display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 14px; border-bottom:1px solid var(--line); }
+  .tab{ border:0; background:none; font:inherit; font-weight:600; font-size:15px; color:var(--ink-soft); padding:10px 14px; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-1px; }
+  .tab[aria-selected="true"]{ color:var(--ink); border-bottom-color:var(--brand); }
+  .tab .cnt{ display:inline-block; min-width:22px; padding:0 7px; margin-left:6px; border-radius:99px; font-size:12px; background:var(--surface-2); color:var(--ink); border:1px solid var(--line); }
+  .tab .cnt.hot{ background:#FDEDEB; color:#B42318; border-color:#F3C4BE; }
+
+  /* KPI tiles */
+  .kpis{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); }
+  .kpi{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; text-align:left; font:inherit; color:inherit; cursor:pointer; position:relative; overflow:hidden; }
+  .kpi::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--c); }
+  .kpi:hover{ border-color:var(--line-strong); }
+  .kpi .l{ display:flex; align-items:center; gap:8px; color:var(--ink); font-size:13.5px; font-weight:600; }
+  .kpi .v{ font-size:28px; font-weight:700; color:var(--ink); margin:4px 0 0; } .kpi .s{ font-size:13px; color:var(--ink-soft); }
+  .sw{ width:10px; height:10px; border-radius:3px; background:var(--c); flex:none; }
+
+  /* charts */
+  .charts{ display:grid; gap:16px; grid-template-columns:3fr 2fr; margin-top:16px; }
+  @media (max-width:860px){ .charts{ grid-template-columns:1fr; } }
+  .chart{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:16px; position:relative; }
+  .chart h3{ margin:0 0 2px; font-size:15.5px; color:var(--ink); } .chart .sub{ margin:0 0 10px; font-size:13px; color:var(--ink-soft); }
+  .legend{ display:flex; flex-wrap:wrap; gap:6px 14px; font-size:13px; color:var(--ink-soft); margin:0 0 8px; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .chart svg{ display:block; width:100%; height:auto; overflow:visible; }
+  .chart svg text{ font-family:var(--font); }
+  .tip{ position:absolute; pointer-events:none; background:#1C2A36; color:#fff; font-size:12.5px; line-height:1.45; padding:8px 10px; border-radius:8px; box-shadow:0 8px 20px -8px rgba(0,0,0,.4); min-width:170px; z-index:5; }
+  .tip .r{ display:flex; gap:8px; align-items:center; } .tip .r b{ margin-left:auto; padding-left:12px; }
+  .hit{ fill:transparent; cursor:default; } .hit:hover + g rect, .col:hover rect.seg{ opacity:.85; }
+  .viewtoggle{ font-size:12.5px; margin-top:8px; }
+  table.mini{ border-collapse:collapse; font-size:12.5px; width:100%; margin-top:8px; } table.mini td, table.mini th{ border-bottom:1px solid var(--line); padding:4px 6px; text-align:right; } table.mini th:first-child, table.mini td:first-child{ text-align:left; }
+
+  .insight{ margin:0; padding-left:18px; color:var(--ink-soft); line-height:1.6; } .insight li{ margin:6px 0; }
+
+  /* tables */
+  .pill{ display:inline-block; padding:2px 9px; border-radius:99px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .pill.send{ background:#FDEAE0; color:#9A3B0B; } .pill.final{ background:#FFF1CC; color:#7A5200; } .pill.internal{ background:#E3EEFB; color:#1F5FA8; } .pill.notworth{ background:#DDF5EE; color:#0B6B57; }
   table.d{ width:100%; border-collapse:collapse; font-size:13.5px; }
   table.d th, table.d td{ text-align:left; padding:8px 9px; border-bottom:1px solid var(--line); vertical-align:top; }
-  table.d th{ color:var(--ink-soft); font-weight:600; font-size:12px; cursor:pointer; white-space:nowrap; user-select:none; }
+  table.d th{ color:var(--ink-soft); font-weight:600; font-size:12px; cursor:pointer; white-space:nowrap; user-select:none; background:var(--surface-2); position:sticky; top:0; }
   table.d td.n{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
-  table.d td.n.pill-cell{ text-align:left; }
-  .tw{ overflow-x:auto; }
+  table.d td.c{ text-align:center; font-weight:700; }
+  .yes{ color:#22704F; } .no{ color:#B42318; }
+  .tw{ overflow:auto; max-height:70vh; border:1px solid var(--line); border-radius:var(--radius-sm); }
   .why{ color:var(--ink-soft); font-size:12.5px; max-width:340px; }
+  table.d td{ white-space:nowrap; } table.d td .why, table.d td.why{ white-space:normal; min-width:280px; }
   .tools{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:12px; }
   .tools input, .tools select, .lev input{ padding:8px 10px; border:1px solid var(--line-strong); border-radius:var(--radius-sm); background:var(--surface); color:var(--ink); font:inherit; }
   .lev{ display:grid; gap:10px 16px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); margin-top:12px; }
   .lev label{ font-size:12.5px; color:var(--ink-soft); display:block; margin-bottom:3px; } .lev input{ width:100%; box-sizing:border-box; }
-  .insight{ margin:0; padding-left:18px; color:var(--ink-soft); line-height:1.6; } .insight li{ margin:5px 0; }
-  .hide{ display:none; }
-  .updated{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; margin:0 0 18px; padding:12px 16px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--line); font-size:14.5px; color:var(--ink-soft); }
-  .updated b{ color:var(--ink); } .updated .dot{ width:10px; height:10px; border-radius:50%; background:#22704F; flex:none; }
-  .updated.old .dot{ background:#D9772B; } .updated.none .dot{ background:#A9C6DE; }
-  .updated .sp{ flex:1; } #clearSaved[hidden], #login[hidden]{ display:none; }
+  .crit{ display:grid; gap:8px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); margin:4px 0 14px; }
+  .crit div{ background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-sm); padding:10px 12px; font-size:13.5px; color:var(--ink-soft); }
+  .crit div b{ display:block; color:var(--ink); font-size:14px; }
+  .empty{ padding:28px; text-align:center; color:var(--ink-soft); }
+
+  /* ---- Suave admin look (Vuesax-style cards, Montserrat) ---- */
+  .page.admin{ font-family:"Montserrat", var(--font); --a-primary:#347AF0; --a-bg:#F8F8F8; --a-ink:#2C2C2C; --a-soft:#626262; --a-shadow:0 4px 25px 0 rgba(0,0,0,.1); }
+  .admin .card, .admin .section, .admin .chart, .admin .kpi, .admin .bar-row{ background:#fff; border:0; border-radius:.5rem; box-shadow:var(--a-shadow); }
+  .admin .section{ padding:1.5rem; margin:0 0 1.5rem; }
+  .admin .section-title, .admin .chart h3{ font-family:"Montserrat",sans-serif; font-weight:500; font-size:1.2rem; color:var(--a-ink); }
+  .admin .chart{ padding:1.5rem; } .admin .chart h3{ font-size:1.1rem; }
+  .admin .bar-row{ padding:14px 1.5rem; }
+  .admin .btn{ border-radius:6px; font-family:"Montserrat",sans-serif; font-weight:600; }
+  .admin .btn-primary{ background:var(--a-primary); border-color:var(--a-primary); box-shadow:0 8px 25px -8px var(--a-primary); }
+  .admin .tabs{ background:#fff; border:0; border-radius:.5rem; box-shadow:var(--a-shadow); padding:6px; gap:4px; margin:0 0 1.5rem; }
+  .admin .tab{ border:0; border-radius:6px; margin:0; padding:10px 18px; font-family:"Montserrat",sans-serif; font-size:14px; font-weight:600; color:var(--a-soft); display:inline-flex; align-items:center; gap:8px; transition:background .15s, color .15s; }
+  .admin .tab:hover{ color:var(--a-primary); }
+  .admin .tab[aria-selected="true"]{ background:var(--a-primary); color:#fff; box-shadow:0 8px 25px -8px var(--a-primary); }
+  .admin .tab svg{ width:17px; height:17px; }
+  .admin .tab .cnt{ margin-left:0; border:0; background:rgba(52,122,240,.12); color:var(--a-primary); }
+  .admin .tab[aria-selected="true"] .cnt{ background:rgba(255,255,255,.25); color:#fff; }
+  .admin .tab .cnt.hot{ background:#EA5455; color:#fff; }
+  .admin .kpi{ padding:1.25rem 1.5rem; } .admin .kpi::before{ display:none; }
+  .admin .kpi .ic{ width:42px; height:42px; border-radius:50%; display:grid; place-items:center; background:color-mix(in srgb, var(--c) 15%, #fff); margin-bottom:10px; }
+  .admin .kpi .ic i{ width:14px; height:14px; border-radius:4px; background:var(--c); }
+  .admin .kpi .v{ font-size:1.75rem; font-weight:700; color:var(--a-ink); margin:0; } .admin .kpi .l{ font-weight:500; color:var(--a-soft); }
+  .admin table.d th{ background:#F8F8F8; text-transform:uppercase; font-size:11.5px; letter-spacing:.03em; color:var(--a-soft); padding:12px 10px; }
+  .admin table.d td{ padding:12px 10px; color:var(--a-ink); } .admin table.d tbody tr:hover td{ background:#F8FAFF; }
+  .admin .tw{ border:0; border-radius:.5rem; box-shadow:inset 0 0 0 1px #EEE; }
+  .admin .crit div{ background:#F8F8F8; border:0; border-radius:6px; }
+  .admin .page-head h1{ font-family:"Montserrat",sans-serif; }
+  .admin .empty{ background:#fff; border-radius:.5rem; box-shadow:var(--a-shadow); }
+  .admin .charts{ margin:1.5rem 0; gap:1.5rem; } .admin .kpis{ gap:1.5rem; }
+  @media (max-width:640px){ .admin .tab{ padding:9px 12px; font-size:13px; } .admin .tab .lbl{ display:none; } .admin .tab[aria-selected="true"] .lbl{ display:inline; } }
 </style>
 </head>
 <body data-tool="collection-agency">
@@ -63,89 +133,129 @@
     <a class="app-brand" href="index.html" aria-label="Home"><img class="app-logo" src="logo-white.svg" alt="Suave" width="129" height="40"></a>
   </div>
 </header>
-<main class="page">
+<main class="page admin">
   <div class="page-head">
     <h1>Collection Agency Check</h1>
-    <p>Reads every user on the <b>past due list</b> in Suave, with their loans and the <b>last time we collected money</b>, and tells you who to send to the collection agency (Fl 250 per case) and who to keep chasing internally.</p>
+    <p>Who to send to the collection agency (Fl 250 per case) and who to keep chasing – based on the <b>past due list</b>, every user's loans and the <b>last time we collected money</b>.</p>
   </div>
 
-  <div class="updated none" id="updated"><span class="dot"></span><span id="updatedTxt"><b>Last update:</b> loading…</span><span class="sp"></span><button type="button" class="btn btn-quiet" id="clearSaved" hidden style="min-height:32px;padding:4px 10px;font-size:13.5px">Delete saved list</button></div>
-  <div class="updated none" id="login" hidden><span class="dot" style="background:#D9772B"></span><span style="flex:1;min-width:220px"><b>Log in to Cloudflare</b> to see and save the shared list (same password as Fraud Contacts).</span>
+  <div class="bar-row none" id="updated"><span class="dot"></span><span id="updatedTxt"><b>Last update:</b> loading…</span><span class="sp"></span>
+    <button type="button" class="btn btn-primary" id="paste" style="min-height:36px">Paste new list</button>
+    <label class="btn btn-secondary" style="cursor:pointer;min-height:36px">Upload Excel <input type="file" id="file" accept=".xlsx,.xls" hidden></label>
+    <button type="button" class="btn btn-quiet" id="clearSaved" hidden style="min-height:32px;padding:4px 10px;font-size:13.5px">Delete saved list</button>
+    <span class="status" id="status" hidden></span></div>
+  <div class="bar-row none" id="login" hidden><span class="dot" style="background:#D9772B"></span><span style="flex:1;min-width:220px"><b>Log in to Cloudflare</b> to see and save the shared list (same password as Fraud Contacts).</span>
     <input type="text" name="username" value="suave-fraude" autocomplete="username" hidden><input type="password" id="sKey" name="password" autocomplete="current-password" placeholder="Password" style="padding:8px 10px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);font:inherit">
     <button type="button" class="btn btn-primary" id="loginBtn" style="min-height:36px">Log in</button><span id="loginMsg" style="width:100%;font-size:13.5px"></span></div>
 
-  <section class="section">
-    <h2 class="section-title">Put the button in your bookmarks bar <span class="tag">Once</span></h2>
-    <p>Drag this button with your mouse to the <b>bookmarks bar</b> at the top of Chrome. Don't see the bar? Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>.</p>
-    <a class="bm" id="bm1" href="#">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4.5H19V19.5H5V4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.5 9H15.5M8.5 12.5H15.5M8.5 16H12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      Agency Check
-    </a>
-    <div class="hint" id="dragHint" role="status" hidden style="color:var(--tool);font-weight:600">Don't click – drag: hold the button and drop it on the bookmarks bar.</div>
-    <details>
-      <summary>Dragging doesn't work?</summary>
-      <ol>
-        <li>Click <button type="button" class="btn btn-secondary" id="copyBm" style="min-height:36px;padding:6px 14px;font-size:14px">Copy button code</button><span class="ok" id="copied" role="status" hidden>Copied</span></li>
-        <li>Right-click the bookmarks bar → <b>Add page…</b></li>
-        <li>Name: <b>Agency Check</b>. In URL paste the code (<kbd>Ctrl</kbd>+<kbd>V</kbd>) and click <b>Save</b>.</li>
-      </ol>
-    </details>
-  </section>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="overview" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="lbl">Overview</span></button>
+    <button class="tab" role="tab" data-tab="send" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg><span class="lbl">Send to agency</span> <span class="cnt hot" id="sendCnt">0</span></button>
+    <button class="tab" role="tab" data-tab="all" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 010 8M22 21c0-3-2-5-4-5.5"/></svg><span class="lbl">All users</span> <span class="cnt" id="allCnt">0</span></button>
+    <button class="tab" role="tab" data-tab="setup" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><span class="lbl">Setup &amp; logic</span></button>
+  </nav>
 
-  <section class="section">
-    <h2 class="section-title">Run the check <span class="tag">Every time</span></h2>
-    <ol class="steps">
-      <li>Open <b>admin.paywithsuave.com</b> (logged in) and click <b>Agency Check</b> in your bookmarks bar. A panel reads the past due list plus every user's loans and payments (about 5–8 minutes for ~470 users).</li>
-      <li>When it is done, click <b>Copy for analysis</b> in the panel.</li>
-      <li>Come back to this page and click <b>Paste list</b> below. You get the recommendation for every user.</li>
-    </ol>
-    <div class="row-btns" style="margin-top:14px">
-      <button type="button" class="btn btn-primary" id="paste">Paste list</button>
-      <label class="btn btn-secondary" style="cursor:pointer">Or upload the Excel <input type="file" id="file" accept=".xlsx,.xls" hidden></label>
-    </div>
-    <div class="status" id="status">No data loaded yet.</div>
-    <details>
-      <summary>Logic levers (change and everything recalculates)</summary>
-      <div class="lev" id="levers"></div>
-    </details>
-  </section>
-
-  <div id="results" class="hide">
-    <section class="section">
-      <h2 class="section-title">What to do</h2>
+  <!-- ================= OVERVIEW ================= -->
+  <div data-panel="overview">
+    <div class="empty" id="noData">No list loaded yet. In Suave click <b>Agency Check → Read list → Copy for analysis</b>, then click <b>Paste new list</b> above. First time? See <a href="#" data-goto="setup">Setup &amp; logic</a>.</div>
+    <div id="overview" hidden>
       <div class="kpis" id="kpis"></div>
+      <div class="charts">
+        <div class="chart" id="chartA">
+          <h3>Principal at risk by days late</h3><p class="sub">Fl, stacked by what to do</p>
+          <div class="legend" id="legendA"></div>
+          <div id="svgA"></div>
+          <div class="viewtoggle"><a href="#" id="tglA">Show as table</a></div><div id="tblA" hidden></div>
+        </div>
+        <div class="chart" id="chartB">
+          <h3>When did late users last pay?</h3><p class="sub">Users 31+ days late, by days since their last payment</p>
+          <div id="svgB"></div>
+          <div class="viewtoggle"><a href="#" id="tglB">Show as table</a></div><div id="tblB" hidden></div>
+        </div>
+      </div>
+      <section class="section" style="margin-top:16px">
+        <h2 class="section-title">Key findings</h2>
+        <ul class="insight" id="insights"></ul>
+      </section>
+    </div>
+  </div>
+
+  <!-- ================= SEND TO AGENCY ================= -->
+  <div data-panel="send" hidden>
+    <section class="section">
+      <h2 class="section-title">Send to the collection agency <span class="tag" id="sendTag">0 users</span></h2>
+      <p>Everyone who is <b>70+ days late</b> and meets <b>all</b> criteria below is added to this list automatically. Users who are 70+ days late but miss a criterion are shown underneath, with the reason.</p>
+      <div class="crit" id="crit"></div>
+      <div class="tools"><span class="sp"></span><button type="button" class="btn btn-secondary" id="csvSend">Download list (CSV)</button></div>
+      <div class="tw"><table class="d" id="tblSend"><thead></thead><tbody></tbody></table></div>
     </section>
     <section class="section">
-      <h2 class="section-title">Key findings</h2>
-      <ul class="insight" id="insights"></ul>
+      <h2 class="section-title">70+ days late, but not sent <span class="tag" id="nearTag">0 users</span></h2>
+      <p>These fail at least one criterion (red ✗). Keep chasing them internally; they move to the list above as soon as they meet every criterion.</p>
+      <div class="tw"><table class="d" id="tblNear"><thead></thead><tbody></tbody></table></div>
     </section>
+  </div>
+
+  <!-- ================= ALL USERS ================= -->
+  <div data-panel="all" hidden>
     <section class="section">
-      <h2 class="section-title">Every user</h2>
       <div class="tools">
         <input id="q" placeholder="Search name or ID" style="flex:1;min-width:180px">
         <select id="fAct"><option value="">All actions</option></select>
         <select id="fCty"><option value="">All countries</option><option>AW</option><option>CW</option><option>SX</option></select>
         <button type="button" class="btn btn-secondary" id="csv">Download CSV</button>
       </div>
-      <div class="hint" id="count"></div>
+      <div class="hint" id="count" style="margin-bottom:8px"></div>
       <div class="tw"><table class="d" id="tbl"><thead></thead><tbody></tbody></table></div>
     </section>
   </div>
 
-  <section class="section">
-    <h2 class="section-title">How the logic works</h2>
-    <p><b>Expected recovery internally</b> = principal still at risk × chance the user pays on their own (by days late; ×0.5 if they paid &lt;10% of installments; ×0.75 with 2+ collection notes; ×1.5 if they paid in the last 30 days; ×0.5 if no payment in 90+ days).<br>
-    <b>Expected recovery via the agency</b> = principal at risk × agency recovery rate for the country (Aruba 45%, Curaçao/other 2%) − Fl 250 agency cost.</p>
-    <ol class="steps">
-      <li><span class="pill g">Keep internal – reminders</span> 0–30 days late.</li>
-      <li><span class="pill b">Small balance</span> less than Fl 1,000 principal at risk (break-even = 250 ÷ (45% − 20%)). Keep chasing; block &amp; write off from day 120.</li>
-      <li><span class="pill g">Keep internal – still paying</span> late, but paid something in the last 30 days.</li>
-      <li><span class="pill b">Keep internal</span> when the agency doesn't come out ahead – e.g. Curaçao, where the agency recovers ~2%.</li>
-      <li><span class="pill r">Send to agency NOW</span> agency comes out ahead and 61+ days late (or 31+ days, &gt; Fl 3,000 and barely paid).</li>
-      <li><span class="pill a">Final notice – agency at day 61</span> 31–60 days and the agency would come out ahead.</li>
-    </ol>
-    <p class="hint" style="margin-top:12px">Principal at risk = per open plan, original principal × unpaid installments ÷ total installments. Agency figures come from the Deurwaarder dashboard (only 45% of agency cases ever paid anything; first payment after ~13 months). Cure chances are estimates – adjust them under “Logic levers”. The latest list is saved in Suave's Cloudflare database (password protected, the same login as Fraud Contacts), so it is the same on every computer. Loading a new list deletes the old one and replaces it; the date at the top shows when it was read from Suave.</p>
-  </section>
+  <!-- ================= SETUP ================= -->
+  <div data-panel="setup" hidden>
+    <section class="section">
+      <h2 class="section-title">1. Put the button in your bookmarks bar <span class="tag">Once</span></h2>
+      <p>Drag this button with your mouse to the <b>bookmarks bar</b> at the top of Chrome. Don't see the bar? Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>.</p>
+      <a class="bm" id="bm1" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4.5H19V19.5H5V4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.5 9H15.5M8.5 12.5H15.5M8.5 16H12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Agency Check
+      </a>
+      <div class="hint" id="dragHint" role="status" hidden style="color:var(--tool);font-weight:600">Don't click – drag: hold the button and drop it on the bookmarks bar.</div>
+      <details>
+        <summary>Dragging doesn't work?</summary>
+        <ol>
+          <li>Click <button type="button" class="btn btn-secondary" id="copyBm" style="min-height:36px;padding:6px 14px;font-size:14px">Copy button code</button><span class="ok" id="copied" role="status" hidden>Copied</span></li>
+          <li>Right-click the bookmarks bar → <b>Add page…</b></li>
+          <li>Name: <b>Agency Check</b>. In URL paste the code (<kbd>Ctrl</kbd>+<kbd>V</kbd>) and click <b>Save</b>.</li>
+        </ol>
+      </details>
+    </section>
+    <section class="section">
+      <h2 class="section-title">2. Update the list <span class="tag">Every time</span></h2>
+      <ol class="steps">
+        <li>Open <b>admin.paywithsuave.com</b> (logged in) and click <b>Agency Check</b> in your bookmarks bar, then <b>Read list</b> (about 5–8 minutes for ~470 users).</li>
+        <li>Click <b>Copy for analysis</b> in the panel.</li>
+        <li>Come back here and click <b>Paste new list</b>. The new list is saved in Cloudflare and the old one is deleted.</li>
+      </ol>
+    </section>
+    <section class="section">
+      <h2 class="section-title">How the logic works</h2>
+      <p><b>Expected recovery internally</b> = principal still at risk × chance the user pays on their own (by days late; ×0.5 if they paid &lt;10% of installments; ×0.75 with 2+ collection notes; ×1.5 if they paid in the last 30 days; ×0.5 if no payment in 90+ days).<br>
+      <b>Expected recovery via the agency</b> = principal at risk × agency recovery rate for the country (Aruba 45%, Curaçao/other 2%) − Fl 250 agency cost.</p>
+      <ol class="steps">
+        <li><span class="pill internal">Keep internal – reminders</span> 0–30 days late.</li>
+        <li><span class="pill notworth">Small balance</span> less than Fl 1,000 principal at risk (break-even = 250 ÷ (45% − 20%)). Keep chasing; block &amp; write off from day 120.</li>
+        <li><span class="pill internal">Keep internal – still paying</span> late, but paid at least 20% of their past due amount in the last 30 days (a smaller token payment doesn't count).</li>
+        <li><span class="pill notworth">Agency not effective</span> / <span class="pill internal">payment plan</span> when the agency doesn't come out ahead – e.g. Curaçao, where it recovers ~2%.</li>
+        <li><span class="pill send">Send to agency NOW</span> 70+ days late and all criteria met.</li>
+        <li><span class="pill final">Final notice – agency at day 70</span> 31–69 days late and the agency would come out ahead.</li>
+      </ol>
+      <details>
+        <summary>Logic levers (change and everything recalculates)</summary>
+        <div class="lev" id="levers"></div>
+      </details>
+      <p class="hint" style="margin-top:12px">Principal at risk = per open plan, original principal × unpaid installments ÷ total installments. Agency figures come from the Deurwaarder dashboard (only 45% of agency cases ever paid anything; first payment after ~13 months). Cure chances are estimates. The latest list is saved in Suave's Cloudflare database (password protected, the same login as Fraud Contacts); loading a new list deletes the old one.</p>
+    </section>
+  </div>
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
@@ -203,17 +313,18 @@ function agencyCheck(){
       let i = 0, done = 0, fails = 0;
       async function worker(){
         while (i < list.length){
-          const u = list[i++]; let op = 0, paid = 0, tot = 0, last = "", a30 = 0, a90 = 0;
+          const u = list[i++]; let op = 0, paid = 0, tot = 0, last = "", a30 = 0, a90 = 0, lastAmt = 0; const pays = [];
           try {
             const j = await (await fetch("/api/v1/admin/manage-user/detail/" + u.id, { method: "POST", headers: H(), body: "{}" })).json();
             ((j.data && j.data.payment_history) || []).forEach(pl => {
               const ms = (pl.payment_monthly || []).filter(m => !m.is_canceled), N = ms.length || 1, pd = ms.filter(m => m.status === 1).length;
               paid += pd; tot += ms.length;
               if (!pl.is_completed && !pl.is_paid_off && !pl.is_canceled) op += num(pl.amount) * Math.max(0, N - pd) / N;
-              ms.forEach(m => { if (m.status === 1 && m.payment_date && m.payment_date <= today){ if (m.payment_date > last) last = m.payment_date; if (m.payment_date >= d30) a30 += num(m.amount); if (m.payment_date >= d90) a90 += num(m.amount); } });
+              ms.forEach(m => { if (m.status === 1 && m.payment_date && m.payment_date <= today){ pays.push([m.payment_date, num(m.amount)]); if (m.payment_date > last) last = m.payment_date; if (m.payment_date >= d30) a30 += num(m.amount); if (m.payment_date >= d90) a90 += num(m.amount); } });
             });
           } catch(e){ fails++; }
-          Object.assign(u, { op: Math.round(op * 100) / 100, paid, tot, last, a30: Math.round(a30 * 100) / 100, a90: Math.round(a90 * 100) / 100 });
+          pays.forEach(x => { if (x[0] === last) lastAmt += x[1]; });
+          Object.assign(u, { op: Math.round(op * 100) / 100, paid, tot, last, lastAmt: Math.round(lastAmt * 100) / 100, a30: Math.round(a30 * 100) / 100, a90: Math.round(a90 * 100) / 100 });
           done++; info(`Reading loans & payments: ${done} of ${list.length} users…`); $("prog").style.width = (100 * done / list.length) + "%";
         }
       }
@@ -232,123 +343,219 @@ function agencyCheck(){
   window.__agencyCheck = { show(){ host.style.display = ""; } };
 }
 
+
 // ================= This page =================
+const $=id=>document.getElementById(id);
 const toBm = fn => "javascript:" + encodeURIComponent("(" + fn.toString() + ")();void 0");
-const bm1 = document.getElementById("bm1");
+const bm1 = $("bm1");
 bm1.href = toBm(agencyCheck);
-bm1.addEventListener("click", e => { e.preventDefault(); document.getElementById("dragHint").hidden = false; });
-document.getElementById("copyBm").addEventListener("click", async () => {
-  try { await navigator.clipboard.writeText(bm1.getAttribute("href")); const ok = document.getElementById("copied"); ok.hidden = false; setTimeout(() => { ok.hidden = true; }, 4000); }
+bm1.addEventListener("click", e => { e.preventDefault(); $("dragHint").hidden = false; });
+$("copyBm").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(bm1.getAttribute("href")); $("copied").hidden = false; setTimeout(() => { $("copied").hidden = true; }, 4000); }
   catch(e){ alert("Copying failed. Try dragging the button."); }
 });
 
+// ---------- tabs ----------
+function openTab(t){
+ document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t?'true':'false'));
+ document.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==t);
+ try{ localStorage.setItem('suave.agencyCheck.tab',t); }catch(e){}
+}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>openTab(b.dataset.tab)));
+document.addEventListener('click',e=>{ const g=e.target.closest('[data-goto]'); if(g){ e.preventDefault(); openTab(g.dataset.goto); } });
+
+// ---------- levers ----------
 const L=[
- ['min','Minimum principal to ever send (Fl)',1000],['cost','Agency cost per case (Fl)',250],
+ ['min','Minimum principal to send (Fl)',1000],['cost','Agency cost per case (Fl)',250],
  ['aw','Agency recovery Aruba (%)',45],['cw','Agency recovery Curaçao / other (%)',2],
  ['c1','Cure chance 1–15 days (%)',85],['c2','Cure chance 16–30 days (%)',65],['c3','Cure chance 31–60 days (%)',40],
  ['c4','Cure chance 61–90 days (%)',20],['c5','Cure chance 91+ days (%)',10],
- ['fpd','“Barely paid” threshold (%)',10],['send','Send to agency from day',61],['early','Early escalation from day',31],
- ['big','Early escalation min. principal (Fl)',3000],['wo','Write-off day (small balances)',120],
- ['recent','“Still paying” = last payment within (days)',30],['stale','“Stopped paying” = no payment for (days)',90]];
-const $=id=>document.getElementById(id);
+ ['fpd','“Barely paid” threshold (%)',10],['send','Send to agency from day',70],
+ ['wo','Write-off day (small balances)',120],
+ ['recent','“Still paying” = last payment within (days)',30],['minpct','…and that payment ≥ (% of the past due amount)',20],['stale','“Stopped paying” = no payment for (days)',90]];
 $('levers').innerHTML=L.map(([k,l,v])=>`<div><label for="k_${k}">${l}</label><input type="number" id="k_${k}" value="${v}"></div>`).join('');
 const K=()=>Object.fromEntries(L.map(([k])=>[k,+$('k_'+k).value||0]));
-const ACTS=[['Send to agency NOW','r'],['Final notice – agency at day 61','a'],['Keep internal – still paying','g'],['Keep internal – reminders','g'],['Keep internal – payment plan','g'],['Keep internal – agency not effective here','b'],['Small balance – keep internal','b'],['Small balance – block & write off','b']];
-const CLS=Object.fromEntries(ACTS);
-ACTS.forEach(([a])=>$('fAct').insertAdjacentHTML('beforeend',`<option>${a}</option>`));
-let USERS=[],sortKey='adv',sortDir=-1,kpiFilter='';
+
+// ---------- actions & groups ----------
+const ACT={send:'Send to agency NOW',final:'Final notice – agency at day 70',still:'Keep internal – still paying',rem:'Keep internal – reminders',plan:'Keep internal – payment plan',noteff:'Agency not effective here',small:'Small balance – keep internal',wo:'Small balance – block & write off'};
+const GROUP_OF={[ACT.send]:'send',[ACT.final]:'final',[ACT.still]:'internal',[ACT.rem]:'internal',[ACT.plan]:'internal',[ACT.noteff]:'notworth',[ACT.small]:'notworth',[ACT.wo]:'notworth'};
+// fixed order (stack bottom → top) = validated adjacency
+const GROUPS=[['internal','Keep chasing internally','var(--g-internal)','#257de0'],['send','Send to agency','var(--g-send)','#f47230'],['notworth','Not worth the agency','var(--g-notworth)','#00b894'],['final','Final notice','var(--g-final)','#f2a600']];
+const GCOL=Object.fromEntries(GROUPS.map(g=>[g[0],g[3]])), GNAME=Object.fromEntries(GROUPS.map(g=>[g[0],g[1]]));
+Object.values(ACT).forEach(a=>$('fAct').insertAdjacentHTML('beforeend',`<option>${a}</option>`));
+
+let USERS=[],sortKey='adv',sortDir=-1;
 const fl=v=>'Fl '+Math.round(v).toLocaleString('en-US');
+const flk=v=>v>=1000?'Fl '+(v/1000).toFixed(v>=100000?0:1).replace(/\.0$/,'')+'k':'Fl '+Math.round(v);
 const TODAY=new Date();TODAY.setHours(0,0,0,0);
 const daysSince=d=>{if(!d)return null;const x=new Date(String(d).slice(0,10)+'T00:00:00');return isNaN(x)?null:Math.round((TODAY-x)/864e5)};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const num=s=>+String(s??0).replace(/,/g,'')||0;
+const n=(x,w)=>`${x} ${x===1?w:w+'s'}`;
 
 function evaluate(u,k){
  const d=u.dpd,p=u.op,ratio=u.tot?u.paid/u.tot:0,ds=daysSince(u.last);
- const recent=ds!==null&&ds<=k.recent, stopped=ds===null||ds>=k.stale;
+ const pctLast=(u.lastAmt!=null&&u.lastAmt!==''&&u.pd>0)?num(u.lastAmt)/u.pd:null;
+ const recentAny=ds!==null&&ds<=k.recent, token=recentAny&&pctLast!==null&&pctLast<k.minpct/100;
+ const recent=recentAny&&!token, stopped=ds===null||ds>=k.stale;
  let cure=(d<=15?k.c1:d<=30?k.c2:d<=60?k.c3:d<=90?k.c4:k.c5)/100;
  if(ratio<k.fpd/100)cure*=.5; if(u.notes>=2)cure*=.75;
  if(recent)cure=Math.min(.95,cure*1.5); else if(stopped)cure*=.5;
- const lastTxt=ds===null?'never paid':`last paid ${ds} day${ds===1?'':'s'} ago`;
+ const amtTxt=u.lastAmt>0?` (${fl(u.lastAmt)}${pctLast!==null?`, ${Math.round(pctLast*100)}% of the past due`:''})`:'';
+ const lastTxt=ds===null?'never paid':`last paid ${ds} day${ds===1?'':'s'} ago${amtTxt}`;
  const rec=(u.cty==='AW'?k.aw:k.cw)/100, evI=p*cure, evA=p*rec-k.cost, adv=evA-evI;
+ // the four agency criteria
+ const cr={days:d>=k.send, bal:p>=k.min, nopay:!recent, wins:adv>0};
  let act,why;
- if(d<=30){act='Keep internal – reminders';why=`Only ${d} days late – most users pay on their own at this stage.`}
- else if(p<k.min){act=d>=k.wo?'Small balance – block & write off':'Small balance – keep internal';why=`Only ${fl(p)} principal left – below the ${fl(k.min)} minimum, the agency would cost more than it recovers.`}
- else if(recent&&d<k.wo){act='Keep internal – still paying';why=`${d} days late but ${lastTxt} (${fl(u.a90||0)} collected in last 90 days) – still engaged, push a catch-up plan instead of the agency.`}
- else if(adv<=0){act=u.cty==='AW'?'Keep internal – payment plan':'Keep internal – agency not effective here';why=u.cty==='AW'?`Internal (${fl(evI)}) still beats agency (${fl(evA)}). Offer a payment plan.`:`Agency recovers only ${Math.round(rec*100)}% in ${u.cty}. Final notice / payment plan instead.`}
- else if(d>=k.send||(d>=k.early&&p>=k.big&&ratio<k.fpd/100)){act='Send to agency NOW';why=d>=k.send?`${d} days late, ${lastTxt}, ${fl(p)} at risk. Agency expected ${fl(evA)} vs internal ${fl(evI)}.`:`High risk: ${fl(p)} owed, paid only ${Math.round(ratio*100)}% of installments.`}
- else{act='Final notice – agency at day 61';why=`${lastTxt[0].toUpperCase()+lastTxt.slice(1)}. Agency would win (${fl(evA)} vs ${fl(evI)}). Send final notice; if unpaid by day ${k.send} → agency.`}
- let score=(d<=15?0:d<=30?10:d<=60?25:d<=90?35:45)+(p>=5000?20:p>=3000?15:p>=1500?10:p>=500?5:0)+(ratio<k.fpd/100?15:ratio<.25?10:ratio<.5?5:0)+(u.notes>=2?10:0)+(u.stripe?5:0)+(u.blocked?5:0)+(stopped?10:0);
- return Object.assign(u,{ratio,cure,rec,evI,evA,adv,act,why,score:Math.min(100,score),ds:ds===null?99999:ds,lastShow:u.last?String(u.last).slice(0,10):'never'});
+ if(d<=30){act=ACT.rem;why=`Only ${d} days late – most users pay on their own at this stage.`}
+ else if(p<k.min){act=d>=k.wo?ACT.wo:ACT.small;why=`Only ${fl(p)} principal left – below the ${fl(k.min)} minimum, the agency would cost more than it recovers.`}
+ else if(recent&&d<k.wo){act=ACT.still;why=`${d} days late but ${lastTxt} – still engaged, push a catch-up plan.`}
+ else if(adv<=0){act=u.cty==='AW'?ACT.plan:ACT.noteff;why=u.cty==='AW'?`Internal (${fl(evI)}) still beats the agency (${fl(evA)}). Offer a payment plan.`:`The agency recovers only ${Math.round(rec*100)}% in ${u.cty}. Final notice / payment plan instead.`}
+ else if(d>=k.send){act=ACT.send;why=`${d} days late, ${lastTxt}${token?' – only a token payment':''}, ${fl(p)} at risk. Agency expected ${fl(evA)} vs internal ${fl(evI)}.`}
+ else{act=ACT.final;why=`${lastTxt[0].toUpperCase()+lastTxt.slice(1)}. Agency would win (${fl(evA)} vs ${fl(evI)}). Send final notice; if still unpaid at day ${k.send} → agency.`}
+ const score=(d<=15?0:d<=30?10:d<=60?25:d<=90?35:45)+(p>=5000?20:p>=3000?15:p>=1500?10:p>=500?5:0)+(ratio<k.fpd/100?15:ratio<.25?10:ratio<.5?5:0)+(u.notes>=2?10:0)+(u.stripe?5:0)+(u.blocked?5:0)+(stopped?10:0);
+ return Object.assign(u,{ratio,cure,rec,evI,evA,adv,act,why,cr,pctLast:pctLast===null?-1:pctLast,token,grp:GROUP_OF[act],score:Math.min(100,score),ds:ds===null?99999:ds,lastShow:u.last?String(u.last).slice(0,10):'never'});
 }
 
+// ---------- charts (plain SVG) ----------
+function tipAt(box,html,x,y){
+ let t=box.querySelector('.tip'); if(!t){ t=document.createElement('div'); t.className='tip'; box.appendChild(t); }
+ t.innerHTML=html; t.hidden=false;
+ const bw=box.clientWidth, tw=t.offsetWidth; t.style.left=Math.max(4,Math.min(bw-tw-4,x+12))+'px'; t.style.top=(y+12)+'px';
+}
+function hideTip(box){ const t=box.querySelector('.tip'); if(t) t.hidden=true; }
+function niceMax(v){ if(v<=0)return 1; const p=Math.pow(10,Math.floor(Math.log10(v))); const f=v/p; return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p; }
+
+function chartA(k){
+ const B=[['0–15',0,15],['16–30',16,30],['31–60',31,60],['61–'+(k.send-1),61,k.send-1],[k.send+'–90',k.send,90],['91+',91,1e9]].filter(b=>b[1]<=b[2]);
+ const data=B.map(([lab,a,b])=>{ const o={lab,tot:0,n:0}; GROUPS.forEach(g=>o[g[0]]=0); USERS.forEach(u=>{ if(u.dpd>=a&&u.dpd<=b){ o[u.grp]+=u.op; o.tot+=u.op; o.n++; } }); return o; });
+ const W=640,H=280,ml=56,mr=8,mt=8,mb=34, iw=W-ml-mr, ih=H-mt-mb, max=niceMax(Math.max(...data.map(d=>d.tot))), bw=Math.min(64,iw/data.length*0.6), step=iw/data.length;
+ const y=v=>mt+ih-v/max*ih;
+ let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Principal at risk by days late, stacked by action">`;
+ for(let i=0;i<=4;i++){ const v=max*i/4, yy=y(v); s+=`<line x1="${ml}" x2="${W-mr}" y1="${yy}" y2="${yy}" stroke="#E3ECF4" stroke-width="1"/><text x="${ml-8}" y="${yy+4}" text-anchor="end" font-size="11.5" fill="#5C7286">${flk(v)}</text>`; }
+ data.forEach((d,i)=>{
+  const cx=ml+step*i+step/2, x=cx-bw/2; let base=0; const segs=GROUPS.filter(g=>d[g[0]]>0);
+  s+=`<g class="col" data-i="${i}">`;
+  segs.forEach((g,j)=>{ const v=d[g[0]], top=y(base+v), bot=y(base), h=Math.max(0,bot-top-(j>0?2:0)); const last=j===segs.length-1;
+   if(last&&h>4){ const r=4; s+=`<path class="seg" d="M${x},${bot-(j>0?2:0)} V${top+r} Q${x},${top} ${x+r},${top} H${x+bw-r} Q${x+bw},${top} ${x+bw},${top+r} V${bot-(j>0?2:0)} Z" fill="${g[3]}"/>`; }
+   else s+=`<rect class="seg" x="${x}" y="${top}" width="${bw}" height="${h}" fill="${g[3]}"/>`;
+   base+=v; });
+  s+=`<text x="${cx}" y="${y(d.tot)-6}" text-anchor="middle" font-size="12" font-weight="600" fill="#1C2A36">${d.tot?flk(d.tot):''}</text>`;
+  s+=`<text x="${cx}" y="${H-12}" text-anchor="middle" font-size="12" fill="#5C7286">${d.lab} days</text>`;
+  s+=`<rect class="hit" x="${ml+step*i}" y="${mt}" width="${step}" height="${ih}"/></g>`;
+ });
+ s+=`<line x1="${ml}" x2="${W-mr}" y1="${y(0)}" y2="${y(0)}" stroke="#A9C6DE"/></svg>`;
+ $('svgA').innerHTML=s;
+ $('legendA').innerHTML=GROUPS.map(g=>`<span><i class="sw" style="--c:${g[3]}"></i>${g[1]}</span>`).join('');
+ const box=$('chartA');
+ $('svgA').querySelectorAll('.col').forEach(c=>{ const d=data[+c.dataset.i];
+  c.addEventListener('mousemove',e=>{ const r=box.getBoundingClientRect(); tipAt(box,`<b>${d.lab} days late</b> · ${n(d.n,'user')}<br>`+GROUPS.slice().reverse().filter(g=>d[g[0]]>0).map(g=>`<div class="r"><i class="sw" style="--c:${g[3]}"></i>${g[1]}<b>${fl(d[g[0]])}</b></div>`).join('')+`<div class="r" style="border-top:1px solid #44556a;margin-top:4px;padding-top:4px">Total<b>${fl(d.tot)}</b></div>`,e.clientX-r.left,e.clientY-r.top); });
+  c.addEventListener('mouseleave',()=>hideTip(box)); });
+ $('tblA').innerHTML=`<table class="mini"><tr><th>Days late</th>${GROUPS.map(g=>`<th>${g[1]}</th>`).join('')}<th>Total</th></tr>`+data.map(d=>`<tr><td>${d.lab}</td>${GROUPS.map(g=>`<td>${fl(d[g[0]])}</td>`).join('')}<td>${fl(d.tot)}</td></tr>`).join('')+'</table>';
+}
+function chartB(k){
+ const late=USERS.filter(u=>u.dpd>30);
+ const B=[['≤ 30 days',0,30],['31–60',31,60],['61–90',61,90],['90+',91,99998],['Never paid',99999,99999]];
+ const data=B.map(([lab,a,b])=>{ const us=late.filter(u=>u.ds>=a&&u.ds<=b); return {lab,n:us.length,p:us.reduce((s,u)=>s+u.op,0),send:us.filter(u=>u.grp==='send').length}; });
+ const W=420,H=280,ml=34,mr=8,mt=14,mb=34,iw=W-ml-mr,ih=H-mt-mb,max=niceMax(Math.max(1,...data.map(d=>d.n))),step=iw/data.length,bw=Math.min(48,step*0.6);
+ const y=v=>mt+ih-v/max*ih;
+ let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Users 31+ days late by days since last payment">`;
+ for(let i=0;i<=4;i++){ const v=max*i/4, yy=y(v); s+=`<line x1="${ml}" x2="${W-mr}" y1="${yy}" y2="${yy}" stroke="#E3ECF4"/><text x="${ml-6}" y="${yy+4}" text-anchor="end" font-size="11.5" fill="#5C7286">${Math.round(v)}</text>`; }
+ data.forEach((d,i)=>{ const cx=ml+step*i+step/2,x=cx-bw/2,top=y(d.n),bot=y(0),h=bot-top,r=Math.min(4,h);
+  s+=`<g class="col" data-i="${i}">`;
+  if(h>0) s+=`<path class="seg" d="M${x},${bot} V${top+r} Q${x},${top} ${x+r},${top} H${x+bw-r} Q${x+bw},${top} ${x+bw},${top+r} V${bot} Z" fill="#257de0"/>`;
+  s+=`<text x="${cx}" y="${top-6}" text-anchor="middle" font-size="12" font-weight="600" fill="#1C2A36">${d.n}</text><text x="${cx}" y="${H-12}" text-anchor="middle" font-size="12" fill="#5C7286">${d.lab}</text><rect class="hit" x="${ml+step*i}" y="${mt}" width="${step}" height="${ih}"/></g>`; });
+ s+=`<line x1="${ml}" x2="${W-mr}" y1="${y(0)}" y2="${y(0)}" stroke="#A9C6DE"/></svg>`;
+ $('svgB').innerHTML=s; const box=$('chartB');
+ $('svgB').querySelectorAll('.col').forEach(c=>{ const d=data[+c.dataset.i];
+  c.addEventListener('mousemove',e=>{ const r=box.getBoundingClientRect(); tipAt(box,`<b>Last paid: ${d.lab}</b><div class="r">Users<b>${d.n}</b></div><div class="r">Principal at risk<b>${fl(d.p)}</b></div><div class="r">Of which sent to agency<b>${d.send}</b></div>`,e.clientX-r.left,e.clientY-r.top); });
+  c.addEventListener('mouseleave',()=>hideTip(box)); });
+ $('tblB').innerHTML=`<table class="mini"><tr><th>Last paid</th><th>Users</th><th>Principal at risk</th><th>Sent to agency</th></tr>`+data.map(d=>`<tr><td>${d.lab}</td><td>${d.n}</td><td>${fl(d.p)}</td><td>${d.send}</td></tr>`).join('')+'</table>';
+}
+[['tglA','tblA'],['tglB','tblB']].forEach(([a,t])=>$(a).addEventListener('click',e=>{ e.preventDefault(); $(t).hidden=!$(t).hidden; $(a).textContent=$(t).hidden?'Show as table':'Hide table'; }));
+
+// ---------- render ----------
 function render(){
  const k=K(); USERS.forEach(u=>evaluate(u,k));
- const by={};ACTS.forEach(([a])=>by[a]={n:0,p:0,pd:0});
- USERS.forEach(u=>{by[u.act].n++;by[u.act].p+=u.op;by[u.act].pd+=u.pd});
- const totP=USERS.reduce((s,u)=>s+u.op,0),totPD=USERS.reduce((s,u)=>s+u.pd,0);
- $('kpis').innerHTML=`<div class="kpi ${kpiFilter===''?'on':''}" data-a=""><div class="l">All past due users</div><div class="v">${USERS.length}</div><div class="s">${fl(totP)} principal · ${fl(totPD)} past due</div></div>`+
-  ACTS.filter(([a])=>by[a].n).map(([a,c])=>`<div class="kpi ${kpiFilter===a?'on':''}" data-a="${esc(a)}"><div><span class="pill ${c}">${esc(a)}</span></div><div class="v">${by[a].n}</div><div class="s">${fl(by[a].p)} principal · ${fl(by[a].pd)} past due</div></div>`).join('');
- document.querySelectorAll('.kpi').forEach(e=>e.onclick=()=>{kpiFilter=e.dataset.a;$('fAct').value=kpiFilter;render()});
- const send=USERS.filter(u=>u.act==='Send to agency NOW').sort((a,b)=>b.op-a.op);
- const fin=USERS.filter(u=>u.act.startsWith('Final'));
- const cw=USERS.filter(u=>u.cty!=='AW'&&u.dpd>30&&u.op>=k.min);
- const small=USERS.filter(u=>u.act.startsWith('Small'));
- const fpd=USERS.filter(u=>u.ratio<k.fpd/100&&u.dpd>30&&u.op>=k.min);
- const gain=send.reduce((s,u)=>s+u.adv,0);
- const sendStale=send.filter(u=>u.ds>=k.stale), still=USERS.filter(u=>u.act==='Keep internal – still paying');
- const never=USERS.filter(u=>u.dpd>30&&u.ds===99999), col30=USERS.reduce((s,u)=>s+(u.a30||0),0), col90=USERS.reduce((s,u)=>s+(u.a90||0),0);
+ const has=USERS.length>0; $('noData').hidden=has; $('overview').hidden=!has;
+ const G={}; GROUPS.forEach(g=>G[g[0]]={n:0,p:0,pd:0}); USERS.forEach(u=>{G[u.grp].n++;G[u.grp].p+=u.op;G[u.grp].pd+=u.pd});
+ const send=USERS.filter(u=>u.act===ACT.send).sort((a,b)=>b.op-a.op);
+ $('sendCnt').textContent=send.length; $('allCnt').textContent=USERS.length;
+ const kpiOrder=['send','final','internal','notworth'], kpiTab={send:'send',final:'all',internal:'all',notworth:'all'}, kpiSub={send:`70+ days late, all criteria met`,final:`31–${k.send-1} days, agency would win`,internal:'reminders, still paying, payment plans',notworth:'small balances & Curaçao/SX'};
+ $('kpis').innerHTML=kpiOrder.map(g=>`<button class="kpi" style="--c:${GCOL[g]}" data-g="${g}"><div class="ic"><i></i></div><span class="l">${GNAME[g]}</span><div class="v">${G[g].n}</div><div class="s">${fl(G[g].p)} principal · ${kpiSub[g]}</div></button>`).join('');
+ document.querySelectorAll('.kpi').forEach(b=>b.onclick=()=>{ const g=b.dataset.g; if(g==='send'){openTab('send');return;} $('fAct').value=''; window.__grp=g; openTab('all'); drawTable(); });
+ if(has){ chartA(k); chartB(k); }
+ // findings
  const late=USERS.filter(u=>u.dpd>30), late30=late.filter(u=>u.ds<=30).length;
- const n=(x,w)=>`${x} ${x===1?w:w+'s'}`;
+ const col30=USERS.reduce((s,u)=>s+(u.a30||0),0), col90=USERS.reduce((s,u)=>s+(u.a90||0),0);
+ const near=USERS.filter(u=>u.dpd>=k.send&&u.act!==ACT.send);
+ const sendStale=send.filter(u=>u.ds>=k.stale);
+ const cw=USERS.filter(u=>u.cty!=='AW'&&u.dpd>30&&u.op>=k.min);
+ const fpd=USERS.filter(u=>u.ratio<k.fpd/100&&u.dpd>30&&u.op>=k.min);
  $('insights').innerHTML=[
-  `<b>${n(send.length,'user')} should go to the agency now</b>, holding ${fl(by['Send to agency NOW'].p)} of principal. Sending them is expected to recover about ${fl(gain)} more than continuing internally.`+(send.length?` Largest: ${send.slice(0,3).map(u=>`${esc(u.name)} (${fl(u.op)})`).join(', ')}.`:''),
-  `<b>Last collection:</b> ${late30} of ${late.length} users who are 31+ days late still paid something in the last 30 days. Across the whole list we collected ${fl(col30)} in the last 30 days and ${fl(col90)} in the last 90 days.`,
-  `<b>${sendStale.length} of the ${send.length} agency cases have not paid anything in ${k.stale}+ days</b> – these are the clearest agency cases.`+(never.length?` ${n(never.length,'user')} 31+ days late never made a payment at all.`:''),
-  `<b>${n(still.length,'user')} late but still paying</b> (${fl(still.reduce((s,u)=>s+u.op,0))} principal, last payment within ${k.recent} days) – keep them internal and push a catch-up plan.`,
-  `<b>${n(fin.length,'user')} need${fin.length===1?'s':''} a final notice today</b> – they become agency cases at day ${k.send} if they don't pay (${fl(by['Final notice – agency at day 61'].p)} principal).`,
-  `<b>${n(cw.length,'user')} outside Aruba</b> 31+ days late with ${fl(cw.reduce((s,u)=>s+u.op,0))} principal, but the agency recovers only ~${k.cw}% there – the biggest unprotected risk. Push payment plans, employer/payslip contact or look for a better agency in Curaçao.`,
-  `<b>${n(small.length,'small balance')}</b> (${fl(by['Small balance – keep internal'].p+by['Small balance – block & write off'].p)} principal) not worth the Fl ${k.cost} agency fee – keep reminding, then block and write off at day ${k.wo}.`,
-  `<b>${n(fpd.length,'user')} 31+ days late barely paid anything</b> (&lt;${k.fpd}% of installments) – possible first-payment fraud; review their onboarding/payslips.`,
-  `${n(by['Keep internal – reminders'].n,'user')} 0–30 days late (${fl(by['Keep internal – reminders'].p)} principal) – keep the reminder flow tight, this is where most money is saved.`
+  `<b>${n(send.length,'user')} to send to the agency now</b> (${fl(G.send.p)} principal) – expected to recover about ${fl(send.reduce((s,u)=>s+u.adv,0))} more than continuing internally, after the Fl ${k.cost} fee each.`+(send.length?` Largest: ${send.slice(0,3).map(u=>`${esc(u.name)} (${fl(u.op)})`).join(', ')}.`:''),
+  `<b>${sendStale.length} of them have not paid anything in ${k.stale}+ days</b> – the clearest agency cases.`,
+  `<b>${n(near.length,'user')} 70+ days late are not sent</b> because they miss a criterion – see the Send to agency tab for the reason per user.`,
+  `<b>${n(USERS.filter(u=>u.dpd>30&&u.token).length,'user')} 31+ days late made only a token payment</b> recently (less than ${k.minpct}% of what they owe in past due) – these no longer count as “still paying”.`,
+  `<b>Last collection:</b> ${late30} of ${late.length} users who are 31+ days late still paid something in the last 30 days. Across the list we collected ${fl(col30)} in the last 30 days and ${fl(col90)} in the last 90 days.`,
+  `<b>${n(G.final.n,'user')} need${G.final.n===1?'s':''} a final notice</b> now – they go to the agency at day ${k.send} if still unpaid.`,
+  `<b>${n(cw.length,'user')} outside Aruba</b> are 31+ days late with ${fl(cw.reduce((s,u)=>s+u.op,0))} principal, but the agency recovers only ~${k.cw}% there – the biggest unprotected risk.`,
+  `<b>${n(fpd.length,'user')} 31+ days late barely paid anything</b> (&lt;${k.fpd}% of installments) – possible first-payment fraud; review their onboarding/payslips.`
  ].map(t=>`<li>${t}</li>`).join('');
+ // criteria cards
+ $('crit').innerHTML=[[`${k.send}+ days late`,'on the past due list'],[`≥ ${fl(k.min)} principal at risk`,`worth the ${fl(k.cost)} agency fee`],[`Stopped paying`,`no payment of ≥ ${k.minpct}% of the past due in the last ${k.recent} days`],['Agency recovers more','than chasing internally (Aruba; ~2% in Curaçao/SX)']].map(([a,b])=>`<div><b>${a}</b>${b}</div>`).join('');
+ $('sendTag').textContent=`${n(send.length,'user')} · ${fl(G.send.p)}`; $('nearTag').textContent=n(near.length,'user');
+ drawCrit('tblSend',send); drawCrit('tblNear',near.sort((a,b)=>b.dpd-a.dpd));
  drawTable();
 }
-const COLS=[['id','ID'],['name','Name'],['cty','Ctry'],['dpd','Days late',1],['pd','Past due',2],['op','Principal at risk',2],['ratio','Paid %',3],['lastShow','Last payment'],['ds','Days since',4],['a90','Collected last 90d',2],['notes','Notes',1],['evI','EV internal',2],['evA','EV agency',2],['adv','Agency advantage',2],['score','Risk',1],['act','Recommended action'],['why','Why']];
+const yn=v=>v?'<span class="yes">✓</span>':'<span class="no">✗</span>';
+function drawCrit(id,list){
+ $(id).tHead.innerHTML='<tr><th>ID</th><th>Name</th><th>Ctry</th><th>Days late</th><th>Principal at risk</th><th>Past due</th><th>Last payment</th><th>Paid / % of past due</th><th>70+ days</th><th>≥ min.</th><th>Stopped paying</th><th>Agency wins</th><th>Agency vs internal</th><th>Action / why</th></tr>';
+ $(id).tBodies[0].innerHTML=list.length?list.map(u=>`<tr><td>${esc(u.id)}</td><td>${esc(u.name)}</td><td>${esc(u.cty)}</td><td class="n">${u.dpd}</td><td class="n">${fl(u.op)}</td><td class="n">${fl(u.pd)}</td><td>${u.lastShow}${u.ds<99999?` <span class="hint">(${u.ds}d)</span>`:''}</td><td class="n">${u.lastAmt>0?fl(u.lastAmt):'–'}${u.pctLast>=0?` <span class="hint">(${Math.round(u.pctLast*100)}%)</span>`:''}${u.token?' <span class="no" title="Token payment">●</span>':''}</td><td class="c">${yn(u.cr.days)}</td><td class="c">${yn(u.cr.bal)}</td><td class="c">${yn(u.cr.nopay)}</td><td class="c">${yn(u.cr.wins)}</td><td class="n">${fl(u.evA)} vs ${fl(u.evI)}</td><td><span class="pill ${u.grp}">${esc(u.act)}</span><div class="why">${esc(u.why)}</div></td></tr>`).join(''):'<tr><td colspan="14" class="empty">Nobody here right now.</td></tr>';
+}
+const COLS=[['id','ID'],['name','Name'],['cty','Ctry'],['dpd','Days late',1],['pd','Past due',2],['op','Principal at risk',2],['ratio','Paid %',3],['lastShow','Last payment'],['ds','Days since',4],['lastAmt','Last paid amount',2],['pctLast','% of past due',5],['a90','Collected last 90d',2],['notes','Notes',1],['evI','EV internal',2],['evA','EV agency',2],['adv','Agency advantage',2],['score','Risk',1],['act','Recommended action'],['why','Why']];
 function rows(){
- const q=$('q').value.toLowerCase(),fa=$('fAct').value,fc=$('fCty').value;
- return USERS.filter(u=>(!fa||u.act===fa)&&(!fc||u.cty===fc)&&(!q||String(u.name).toLowerCase().includes(q)||String(u.id).includes(q)))
+ const q=$('q').value.toLowerCase(),fa=$('fAct').value,fc=$('fCty').value,g=window.__grp||'';
+ return USERS.filter(u=>(!fa||u.act===fa)&&(!g||fa||u.grp===g)&&(!fc||u.cty===fc)&&(!q||String(u.name).toLowerCase().includes(q)||String(u.id).includes(q)))
   .sort((a,b)=>{const x=a[sortKey],y=b[sortKey];return (typeof x==='string'?x.localeCompare(y):x-y)*sortDir});
 }
 function drawTable(){
  $('tbl').tHead.innerHTML='<tr>'+COLS.map(([k,l])=>`<th data-k="${k}">${l}${sortKey===k?(sortDir<0?' ▼':' ▲'):''}</th>`).join('')+'</tr>';
  document.querySelectorAll('#tbl th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;sortDir=sortKey===k?-sortDir:-1;sortKey=k;drawTable()});
- const R=rows();$('count').textContent=`${R.length} users shown`;
+ const R=rows(); const g=window.__grp&&!$('fAct').value?` · showing: ${GNAME[window.__grp]} <a href="#" id="clrG">show all</a>`:'';
+ $('count').innerHTML=`${R.length} users shown${g}`; if($('clrG')) $('clrG').onclick=e=>{e.preventDefault();window.__grp='';drawTable();};
  $('tbl').tBodies[0].innerHTML=R.map(u=>'<tr>'+COLS.map(([k,,t])=>{
   const v=u[k];
-  if(k==='act')return `<td><span class="pill ${CLS[v]}">${esc(v)}</span></td>`;
+  if(k==='act')return `<td><span class="pill ${u.grp}">${esc(v)}</span></td>`;
   if(k==='why')return `<td class="why">${esc(v)}</td>`;
   if(t===2)return `<td class="n">${Math.round(v||0).toLocaleString('en-US')}</td>`;
   if(t===3)return `<td class="n">${Math.round(v*100)}%</td>`;
   if(t===1)return `<td class="n">${v}</td>`;
   if(t===4)return `<td class="n">${v===99999?'–':v}</td>`;
+  if(t===5)return `<td class="n">${v<0?'–':Math.round(v*100)+'%'}</td>`;
   return `<td>${esc(v)}</td>`}).join('')+'</tr>').join('');
 }
 ['q','fCty'].forEach(i=>$(i).addEventListener('input',drawTable));
-$('fAct').addEventListener('input',()=>{kpiFilter=$('fAct').value;render()});
+$('fAct').addEventListener('input',()=>{window.__grp='';drawTable()});
 $('levers').addEventListener('input',()=>USERS.length&&render());
-$('csv').onclick=()=>{
- const h=['ID','Name','Country','Days late','Past due','Principal at risk','Paid %','Last payment','Days since last payment','Collected last 90 days','Notes','EV internal','EV agency','Agency advantage','Risk score','Recommended action','Why'];
- const lines=[h].concat(rows().map(u=>[u.id,u.name,u.cty,u.dpd,u.pd.toFixed(2),u.op.toFixed(2),Math.round(u.ratio*100),u.lastShow,u.ds===99999?'':u.ds,(u.a90||0).toFixed(2),u.notes,u.evI.toFixed(0),u.evA.toFixed(0),u.adv.toFixed(0),u.score,u.act,u.why]));
- const csv='﻿'+lines.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(';')).join('\r\n');
- const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='collection-agency-check-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
-};
-const OLD_STORE='suave.agencyCheck.v1', LSTORE='suave.agencyCheck.levers', CONN_KEY='suave.fraude.conn';
+function csvDownload(name,head,rows){
+ const csv='﻿'+[head].concat(rows).map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(';')).join('\r\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=name+'-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+$('csv').onclick=()=>csvDownload('collection-agency-check',['ID','Name','Country','Days late','Past due','Principal at risk','Paid %','Last payment','Days since last payment','Last paid amount','Last payment % of past due','Collected last 90 days','Notes','EV internal','EV agency','Agency advantage','Risk score','Recommended action','Why'],
+ rows().map(u=>[u.id,u.name,u.cty,u.dpd,u.pd.toFixed(2),u.op.toFixed(2),Math.round(u.ratio*100),u.lastShow,u.ds===99999?'':u.ds,num(u.lastAmt).toFixed(2),u.pctLast<0?'':Math.round(u.pctLast*100),(u.a90||0).toFixed(2),u.notes,u.evI.toFixed(0),u.evA.toFixed(0),u.adv.toFixed(0),u.score,u.act,u.why]));
+$('csvSend').onclick=()=>csvDownload('send-to-collection-agency',['ID','Name','Country','Days late','Principal at risk','Past due','Last payment','Days since last payment','Last paid amount','Last payment % of past due','Agency expected','Internal expected','Why'],
+ USERS.filter(u=>u.act===ACT.send).sort((a,b)=>b.op-a.op).map(u=>[u.id,u.name,u.cty,u.dpd,u.op.toFixed(2),u.pd.toFixed(2),u.lastShow,u.ds===99999?'':u.ds,num(u.lastAmt).toFixed(2),u.pctLast<0?'':Math.round(u.pctLast*100),u.evA.toFixed(0),u.evI.toFixed(0),u.why]));
+
+// ---------- Cloudflare storage ----------
+const LSTORE='suave.agencyCheck.levers', CONN_KEY='suave.fraude.conn';
 const WORKER='https://suave-fraude.perezabimael01.workers.dev';
-try{ localStorage.removeItem(OLD_STORE); }catch(e){}  // old browser-only copy – the list now lives in Cloudflare
+try{ localStorage.removeItem('suave.agencyCheck.v1'); }catch(e){}
 let META=null;
 const getConn=()=>{ try{ return JSON.parse(localStorage.getItem(CONN_KEY)||'{}'); }catch(e){ return {}; } };
 const setConn=c=>{ try{ localStorage.setItem(CONN_KEY, JSON.stringify(c)); }catch(e){} };
 let conn=getConn(); conn.url=WORKER;
+function status(t,err){ $('status').hidden=!t; $('status').textContent=t||''; $('status').className='status'+(err?' err':''); }
 async function api(path, body){
  if(!conn.key) throw new Error('LOGIN');
  let r; try{ r=await fetch(WORKER+path,{method:body?'POST':'GET',headers:Object.assign({'X-Fraude-Key':conn.key},body?{'Content-Type':'application/json'}:{}),body:body?JSON.stringify(body):undefined,cache:'no-store'}); }
@@ -358,54 +565,53 @@ async function api(path, body){
  if(!r.ok) throw new Error(j.error||('Cloudflare error '+r.status));
  return j;
 }
-function needLogin(note){ conn.key=''; setConn(conn); $('login').hidden=false; $('loginMsg').textContent=note||''; META=null; showUpdated('Log in to see the saved list.'); }
-function applyServer(j){
- if(j.empty||!j.users||!j.users.length){ META=null; USERS=[]; $('results').classList.add('hide'); showUpdated(); return; }
- META=j.meta; USERS=j.users.map(u=>Object.assign({},u)); show(); showUpdated();
-}
-async function loadSaved(){
- if(!conn.key){ needLogin(); return; }
- try{ const j=await api('/agency'); $('login').hidden=true; applyServer(j); if(META) status(`Showing the saved list from ${fmtDate(META.at)}. Run Agency Check again to replace it.`); }
- catch(e){ if(e.message==='LOGIN') needLogin(conn.key?'Wrong password.':''); else showUpdated(e.message); }
-}
-async function save(){
- status('Saving to Cloudflare – the old list is deleted and replaced…');
- try{
-  const j=await api('/agency/save',{meta:META,users:USERS.map(u=>({id:u.id,name:u.name,cty:u.cty,dpd:u.dpd,pd:u.pd,op:u.op,paid:u.paid,tot:u.tot,last:u.last,a30:u.a30,a90:u.a90,notes:u.notes,stripe:u.stripe,blocked:u.blocked}))});
-  META=j.meta; showUpdated(); status(`Saved in Cloudflare: ${META.n} users. The previous list was deleted.`);
- }catch(e){
-  if(e.message==='LOGIN'){ needLogin('Log in, then load the list again to save it.'); status('Not saved – log in to Cloudflare first.',true); }
-  else status('Not saved in Cloudflare: '+e.message+' The results below are only shown, not saved.',true);
- }
-}
 function fmtDate(d){ return new Date(d).toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
 function ago(d){ const m=Math.round((Date.now()-new Date(d))/6e4); if(m<1)return 'just now'; if(m<60)return m+' min ago'; const h=Math.round(m/60); if(h<24)return h+' hour'+(h===1?'':'s')+' ago'; const dd=Math.round(h/24); return dd+' day'+(dd===1?'':'s')+' ago'; }
 function showUpdated(note){
  const box=$('updated');
- if(!META){ box.className='updated none'; $('updatedTxt').innerHTML='<b>Last update:</b> '+esc(note||'never – no list saved yet.'); $('clearSaved').hidden=true; return; }
+ if(!META){ box.className='bar-row none'; $('updatedTxt').innerHTML='<b>Last update:</b> '+esc(note||'never – no list saved yet.'); $('clearSaved').hidden=true; return; }
  const old=(Date.now()-new Date(META.at))>7*864e5;
- box.className='updated'+(old?' old':'');
- $('updatedTxt').innerHTML=`<b>Last update: ${esc(fmtDate(META.at))}</b> (${ago(META.at)}) · ${esc(META.source)} · ${META.n} user${META.n===1?"":"s"} · saved in Cloudflare`+(old?' · <b style="color:#D9772B">older than a week – run Agency Check again</b>':'');
- $('clearSaved').hidden=false;
+ box.className='bar-row'+(old?' old':'');
+ $('updatedTxt').innerHTML=`<b>Last update: ${esc(fmtDate(META.at))}</b> (${ago(META.at)}) · ${META.n} user${META.n===1?'':'s'} · saved in Cloudflare`+(old?' · <b style="color:#D9772B">older than a week – update the list</b>':'');
+ $('updatedTxt').title=META.source||''; $('clearSaved').hidden=false;
+}
+function needLogin(note){ conn.key=''; setConn(conn); $('login').hidden=false; $('loginMsg').textContent=note||''; META=null; showUpdated('log in to see the saved list.'); }
+function applyServer(j){
+ if(j.empty||!j.users||!j.users.length){ META=null; USERS=[]; render(); showUpdated(); return; }
+ META=j.meta; USERS=j.users.map(u=>Object.assign({},u)); render(); showUpdated();
+}
+async function loadSaved(){
+ if(!conn.key){ needLogin(); render(); return; }
+ try{ const j=await api('/agency'); $('login').hidden=true; applyServer(j); }
+ catch(e){ if(e.message==='LOGIN') needLogin(conn.key?'Wrong password.':''); else showUpdated(e.message); render(); }
+}
+async function save(){
+ status('Saving to Cloudflare – the old list is deleted and replaced…');
+ try{
+  const j=await api('/agency/save',{meta:META,users:USERS.map(u=>({id:u.id,name:u.name,cty:u.cty,dpd:u.dpd,pd:u.pd,op:u.op,paid:u.paid,tot:u.tot,last:u.last,lastAmt:u.lastAmt,a30:u.a30,a90:u.a90,notes:u.notes,stripe:u.stripe,blocked:u.blocked}))});
+  META=j.meta; showUpdated(); status(`Saved in Cloudflare: ${META.n} users. The previous list was deleted.`);
+  setTimeout(()=>status(''),8000);
+ }catch(e){
+  if(e.message==='LOGIN'){ needLogin('Log in, then load the list again to save it.'); status('Not saved – log in to Cloudflare first.',true); }
+  else status('Not saved in Cloudflare: '+e.message+' The results are only shown, not saved.',true);
+ }
 }
 $('clearSaved').addEventListener('click',async()=>{
  if(!confirm('Delete the saved list from Cloudflare for everyone?'))return;
- try{ await api('/agency/delete',{}); META=null; USERS=[]; $('results').classList.add('hide'); status('Saved list deleted.'); showUpdated(); }
+ try{ await api('/agency/delete',{}); META=null; USERS=[]; render(); status('Saved list deleted.'); showUpdated(); }
  catch(e){ status(e.message==='LOGIN'?'Log in first.':e.message,true); }
 });
 $('loginBtn').addEventListener('click',async()=>{ conn={url:WORKER,key:$('sKey').value.trim()}; setConn(conn); $('loginMsg').textContent='Logging in…'; await loadSaved(); });
 $('sKey').addEventListener('keydown',e=>{ if(e.key==='Enter') $('loginBtn').click(); });
 $('levers').addEventListener('change',()=>{ try{ localStorage.setItem(LSTORE, JSON.stringify(K())); }catch(e){} });
 setInterval(()=>META&&showUpdated(),60000);
-function status(t,err){ $('status').textContent=t; $('status').className='status'+(err?' err':''); }
-function show(){ $('results').classList.remove('hide'); render(); }
 
 $('paste').addEventListener('click',async()=>{
  try{
   const j=JSON.parse(await navigator.clipboard.readText());
   if(j.kind!=='suave-agency-check'||!Array.isArray(j.users))throw new Error('x');
-  USERS=j.users.map(u=>({id:u.id,name:u.name,cty:u.cty,dpd:+u.dpd||0,pd:num(u.pd),op:num(u.op),paid:+u.paid||0,tot:+u.tot||0,last:u.last||'',a30:num(u.a30),a90:num(u.a90),notes:+u.notes||0,stripe:+u.stripe||0,blocked:+u.blocked||0}));
-  META={at:j.at,source:'read from Suave with Agency Check',n:USERS.length};show();showUpdated();await save();
+  USERS=j.users.map(u=>({id:u.id,name:u.name,cty:u.cty,dpd:+u.dpd||0,pd:num(u.pd),op:num(u.op),paid:+u.paid||0,tot:+u.tot||0,last:u.last||'',lastAmt:(u.lastAmt==null?null:num(u.lastAmt)),a30:num(u.a30),a90:num(u.a90),notes:+u.notes||0,stripe:+u.stripe||0,blocked:+u.blocked||0}));
+  META={at:j.at,source:'read from Suave with Agency Check',n:USERS.length};render();showUpdated();openTab('overview');await save();
  }catch(e){status('No list found on the clipboard. In Suave, click Agency Check → Read list → Copy for analysis, then try again. (Chrome may ask to allow pasting – choose Allow.)',true)}
 });
 $('file').addEventListener('change',async e=>{
@@ -416,14 +622,15 @@ $('file').addEventListener('change',async e=>{
  const data=XLSX.utils.sheet_to_json(ws,{defval:''});
  const g=(r,...ks)=>{for(const k of ks){const m=Object.keys(r).find(x=>x.toLowerCase().startsWith(k.toLowerCase()));if(m!==undefined&&r[m]!=='')return r[m]}return ''};
  USERS=data.map(r=>({id:g(r,'User ID','ID'),name:g(r,'Name'),cty:String(g(r,'Country','Ctry')).trim(),dpd:num(g(r,'Days past due','Days late')),pd:num(g(r,'Amount past due','Past due')),op:num(g(r,'Outstanding principal','Principal at risk')),paid:num(g(r,'Paid installments')),tot:num(g(r,'Total installments')),notes:num(g(r,'Collection notes','Notes')),stripe:num(g(r,'Stripe')),blocked:num(g(r,'Blocked')),last:(v=>typeof v==='number'?new Date(Math.round((v-25569)*864e5)).toISOString().slice(0,10):String(v||'').slice(0,10))(g(r,'Last payment')),a30:num(g(r,'Collected last 30')),a90:num(g(r,'Collected last 90'))})).filter(u=>u.name||u.id);
- META={at:new Date(f.lastModified||Date.now()).toISOString(),source:'Excel file '+f.name,n:USERS.length};show();showUpdated();await save();
+ META={at:new Date(f.lastModified||Date.now()).toISOString(),source:'Excel file '+f.name,n:USERS.length};render();showUpdated();openTab('overview');await save();
+ e.target.value='';
 });
-</script>
-<script>
-(function(){
- try{ const lv=JSON.parse(localStorage.getItem(LSTORE)||'null'); if(lv) Object.entries(lv).forEach(([k,v])=>{ const el=document.getElementById('k_'+k); if(el) el.value=v; }); }catch(e){}
- loadSaved();
-})();
+
+// ---------- start ----------
+try{ const lv=JSON.parse(localStorage.getItem(LSTORE)||'null'); if(lv) Object.entries(lv).forEach(([k,v])=>{ const el=$('k_'+k); if(el) el.value=v; }); }catch(e){}
+try{ const t=localStorage.getItem('suave.agencyCheck.tab'); if(t&&document.querySelector(`[data-panel="${t}"]`)) openTab(t); }catch(e){}
+loadSaved();
+
 </script>
 <script src="help-chat.js"></script>
 </body>

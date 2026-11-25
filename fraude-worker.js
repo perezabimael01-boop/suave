@@ -91,7 +91,7 @@ function cleanAgencyUser(u){
   const n = v => { const x = Number(v); return isFinite(x) ? Math.round(x * 100) / 100 : 0; };
   return {
     id: String(u.id == null ? "" : u.id).slice(0, 30), name: String(u.name || "").slice(0, 120), cty: String(u.cty || "").slice(0, 4),
-    dpd: n(u.dpd), pd: n(u.pd), op: n(u.op), paid: n(u.paid), tot: n(u.tot), last: String(u.last || "").slice(0, 10),
+    dpd: n(u.dpd), pd: n(u.pd), op: n(u.op), paid: n(u.paid), tot: n(u.tot), last: String(u.last || "").slice(0, 10), lastAmt: u.lastAmt == null || u.lastAmt === "" ? null : n(u.lastAmt),
     a30: n(u.a30), a90: n(u.a90), notes: n(u.notes), stripe: u.stripe ? 1 : 0, blocked: u.blocked ? 1 : 0
   };
 }
@@ -130,26 +130,16 @@ export default {
     if (h["Access-Control-Allow-Origin"] === "null") return json({ error: "Website not allowed: " + (origin || "(unknown)") }, 403, h);
     if (!env.DB || !env.FRAUDE_KEY) return json({ error: "Worker niet ingesteld: D1-binding DB en secret FRAUDE_KEY zijn nodig." }, 500, h);
 
-    // Public, read-only view without password: details are masked so the list
-    // can be looked at but nobody can harvest names, emails or phone numbers.
-    if (request.method === "GET" && url.pathname === "/public"){
-      try {
-        await ensureSchema(env);
-        const rows = (await list(env)).map(r => ({
-          id: r.email ? r.email.slice(-6) + r.added_at : r.added_at,
-          name: maskName(r.name), email: maskEmail(r.email), phone: maskPhone(r.phone),
-          monthly: r.monthly, last_sent: r.last_sent
-        }));
-        return json({ rows, masked: true }, 200, h);
-      } catch (err){ return json({ error: "Databasefout" }, 500, h); }
-    }
-
+    // The masked public view was removed: every page now needs the login (login-gate.js).
     if (!sameKey(request.headers.get("X-Fraude-Key"), env.FRAUDE_KEY)) return json({ error: "Verkeerd wachtwoord." }, 401, h);
 
     try {
       await ensureSchema(env);
       const now = new Date().toISOString();
 
+      if (request.method === "GET" && url.pathname === "/auth"){
+        return json({ ok: true }, 200, h);   // used by login-gate.js to check the password
+      }
       if (request.method === "GET" && url.pathname === "/contacts"){
         return json({ rows: await list(env) }, 200, h);
       }
