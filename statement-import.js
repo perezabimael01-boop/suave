@@ -91,8 +91,16 @@
 
     var acc = /Account\s*:\s*(.+)/i.exec(text);
     if (acc) out.customer = acc[1].trim();
-    var d = /\b(\d{4}-\d{2}-\d{2})\b/.exec(text);
-    if (d) out.date = d[1];
+    // Statement date: the date printed in the header (before the table starts).
+    // Accepts 2025-10-09 and 09-Oct-2025.
+    var cut = text.search(/Contract\s*#|Customer Statement/i);
+    var head = cut > 0 ? text.slice(0, cut) : text;
+    var d = /\b(\d{4})-(\d{2})-(\d{2})\b/.exec(head);
+    if (d) out.date = d[1] + '-' + d[2] + '-' + d[3];
+    else {
+      var d2 = /\b(\d{1,2}-[A-Za-z]{3}-\d{4})\b/.exec(head);
+      if (d2 && parseDmy(d2[1])) out.date = iso(parseDmy(d2[1]));
+    }
     if (/Suave Solutions/i.test(text)) out.issuer = 'suave';
     else if (/Mimi Computer|My Computer/i.test(text)) out.issuer = 'mycomputer';
     out.option = /Legal Fee/i.test(text) ? 'B' : 'A';
@@ -157,9 +165,9 @@
     });
   }
 
-  function fillForm(data, keepOriginalDate) {
+  function fillForm(data) {
     setVal(document.getElementById('customerName'), data.customer);
-    if (keepOriginalDate && data.date) setVal(document.getElementById('statementDate'), data.date);
+    if (data.date) setVal(document.getElementById('statementDate'), data.date);
     var iss = document.querySelector('input[name=issuer][value="' + data.issuer + '"]');
     if (iss) iss.click();
     var opt = document.querySelector('input[name=option][value="' + data.option + '"]');
@@ -218,11 +226,9 @@
     p.innerHTML =
       '<h2 style="margin-top:0">Import an existing statement</h2>' +
       '<p style="margin-top:0">Upload a Customer Statement PDF and every field below is filled in for you. ' +
-      'The new statement shows M1–M12 for each contract with the late fees recalculated.</p>' +
+      'including the statement date. The new statement shows M1–M12 for each contract with the late fees.</p>' +
       '<div class="imp-drop" tabindex="0"><strong>Drop the PDF here</strong> or click to choose a file' +
       '<input type="file" accept="application/pdf,.pdf" id="importFile" hidden></div>' +
-      '<label class="imp-keep"><input type="checkbox" id="importKeepDate"> ' +
-      'Use the original statement date (otherwise fees are updated to the date selected below)</label>' +
       '<div class="imp-status" id="importStatus"></div>' +
       '<div id="importSummary"></div>';
     setup.parentNode.insertBefore(p, setup);
@@ -252,11 +258,11 @@
     pdfToLines(file).then(function (lines) {
       var data = parseStatement(lines);
       if (!data.contracts.length) throw new Error('No contracts were found in this PDF. Is it a Customer Statement?');
-      fillForm(data, document.getElementById('importKeepDate').checked);
+      fillForm(data);
       status('Imported ' + data.contracts.length + ' contract' + (data.contracts.length > 1 ? 's' : '') +
         ' for ' + (data.customer || 'this customer') +
-        (data.date ? ' (original statement dated ' + data.date + ')' : '') +
-        '. Check the details, then press Generate statement.', 'ok');
+        (data.date ? ', statement date set to ' + data.date : '') +
+        '. To update the late fees to a newer date, change the Statement date before pressing Generate statement.', 'ok');
       var rows = data.contracts.map(function (c) {
         return '<tr><td>' + c.number + '</td><td>' + c.vendor + '</td><td>FL ' + c.amount.toFixed(2) +
           '</td><td>' + c.purchaseDate + '</td><td>' + c.completed + ' / ' + c.total + '</td></tr>';
