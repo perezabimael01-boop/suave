@@ -169,6 +169,24 @@
   dl.plan dd.say button{ float:right; margin:0 0 4px 10px; border:1px solid var(--line-strong); background:var(--surface); border-radius:99px; font:inherit; font-size:12px; padding:2px 10px; cursor:pointer; color:var(--brand-ink); }
   dl.plan dd.chk{ color:var(--ink-soft); font-size:13px; } dl.plan dd.chk span{ display:block; } dl.plan dd.chk span::before{ content:'• '; }
   .case .src{ margin-top:8px; font-size:12px; color:var(--ink-soft); }
+  .acc{ border-bottom:1px solid var(--line); } .acc:first-child{ border-top:1px solid var(--line); }
+  .acc-h{ display:flex; align-items:center; gap:8px; width:100%; padding:16px 8px; border:0; background:none; font:inherit; font-size:15px; color:var(--ink); text-align:left; cursor:pointer; }
+  .acc-h:hover{ background:var(--surface-2); } .acc-h .acc-n{ color:var(--ink); } .acc-h .acc-t{ color:var(--ink-soft); }
+  .acc-h .chev, .arow .chev{ margin-left:auto; color:var(--ink-soft); font-size:14px; }
+  .dot-d{ width:10px; height:10px; border-radius:50%; flex:none; } .dot-d.d-agency{ background:#f47230; } .dot-d.d-final{ background:#00b894; } .dot-d.d-settle{ background:#7B61D9; } .dot-d.d-plan{ background:#257de0; } .dot-d.d-keep{ background:#3BA55C; }
+  .acc .tw{ margin:0 0 12px; } table.acc-t2 td, table.acc-t2 th{ font-size:13.5px; } table.acc-t2 th{ cursor:default; }
+  .arow{ cursor:pointer; } .arow:hover td{ background:var(--surface-2); } .arow.open td{ background:var(--brand-soft); } .arow td.num{ white-space:nowrap; }
+  .adet td{ background:var(--surface); padding:12px 14px 16px; border-bottom:2px solid var(--line-strong); }
+  @media (max-width:640px){
+   .acc-h{ flex-wrap:wrap; padding:14px 4px; } .acc-h .acc-t{ width:100%; padding-left:18px; font-size:13px; } .acc-h .chev{ position:absolute; right:12px; } .acc{ position:relative; }
+   table.acc-t2 tr.arow{ display:flex !important; flex-wrap:wrap; align-items:baseline; gap:2px 10px; padding:10px 8px; border-bottom:1px solid var(--line); }
+   table.acc-t2 tr.arow td{ display:inline !important; width:auto !important; padding:0 !important; border:0 !important; font-size:13px; color:var(--ink-soft); }
+   table.acc-t2 tr.arow td:first-child{ width:calc(100% - 24px) !important; font-size:14.5px; color:var(--ink); }
+   table.acc-t2 tr.arow td:nth-child(5), table.acc-t2 tr.arow td:nth-child(6), table.acc-t2 tr.arow td:nth-child(7){ display:none !important; }
+   table.acc-t2 tr.arow td.chev{ order:-1; margin-left:auto; position:absolute; right:12px; } table.acc-t2 tr.arow{ position:relative; }
+   table.acc-t2 tr.arow td:nth-child(8)::before{ content:'by '; }
+   .adet td{ padding:10px 8px 14px !important; }
+  }
   @media (max-width:640px){ dl.plan{ grid-template-columns:1fr; gap:2px; } dl.plan dd{ margin-bottom:8px; } }
   #kfAiOut li b, .case li b{ font-weight:650; }
   .sigs{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 0 12px; } .sigl{ font-size:12.5px; font-weight:600; color:#626262; margin-right:4px; }
@@ -877,21 +895,21 @@ function policy(u){
  const offers=()=>settleOk?[`Settle: ${fl(settle)} in one payment by ${dl()} (instead of ${fl(u.tb)}, we waive ${fl(u.tb-settle)} interest)`,`Payment plan: ${planTxt}`]:[`Payment plan: ${planTxt}`];
  const offerTxt=()=>settleOk?`settle for ${fl(settle)} in one payment by ${dl()}, or pay ${planTxt}`:`pay ${planTxt}`;
  if(u.grp==='send'){ dec='agency'; deadline=addDays(7);
-  steps.push(['Today','Send the last warning by WhatsApp and e-mail: the file goes to the agency on '+dl()+'.']);
+  steps.push(['Today','Reminders and the final notice were already sent. Call once and send the offer message below: last chance before the agency on '+dl()+'.']);
   steps.push(['Today','If the Bevel tot betaling was not sent yet, send it now.']);
   ifNo=`Hand the file to the agency (${fl(k.cost)} fee) and stop internal reminders.`;
  } else if(u.grp==='final'){ dec='final'; deadline=addDays(Math.max(7,toAgency));
-  steps.push(['Today','Send the final notice (WhatsApp + e-mail) and call once.']);
+  steps.push(['Today','The final notice was already sent. Call once and send the offer message below.']);
   if(u.dpd>=k.btb) steps.push(['Today',`Send the Bevel tot betaling (${k.btb}+ days late).`]); else steps.push([dstr(addDays(k.btb-u.dpd)),'Still unpaid: send the Bevel tot betaling.']);
   ifNo='Hand the file to the agency.';
  } else if(paying){ dec='keep'; deadline=addDays(14);
-  steps.push(['Today','Thank them for the recent payment (WhatsApp) and agree how to clear the rest of the past due.']);
-  ifNo='Payment missed or promise broken: send the final notice'+(u.dpd>=k.btb?' and the Bevel tot betaling':'')+'.';
+  steps.push(['Today','Reminders go out automatically. Only send the offer message below to agree how to clear the rest of the past due.']);
+  ifNo='Payment missed or promise broken: '+(u.dpd>=k.btb?'send the Bevel tot betaling.':`send the Bevel tot betaling at day ${k.btb}.`);
  } else { dec=settleOk?'settle':'plan'; deadline=addDays(7);
-  steps.push(['Today','Call, then confirm the offer in writing on WhatsApp.']);
+  steps.push(['Today','Reminders and the final notice were already sent. Call with the offer, then confirm it with the offer message below.']);
   if(u.dpd>=k.btb) steps.push(['Today','Send the Bevel tot betaling together with the offer.']);
-  ifNo=agencyWorth?('Send the final notice'+(toAgency>7?`; agency from ${dstr(addDays(toAgency))} if still unpaid.`:' and hand over to the agency 7 days later if still unpaid.'))
-                  :`Send the final notice. The agency would cost more than it brings in (${fl(u.evA)} after fee), so after 30 more days without payment block the account and propose write-off.`;
+  ifNo=agencyWorth?(u.dpd>=k.btb?'':`Send the Bevel tot betaling at day ${k.btb}. `)+(toAgency>0?`Agency from ${dstr(addDays(toAgency))} if still unpaid.`:'Hand the file to the agency.')
+                  :`The agency would cost more than it brings in (${fl(u.evA)} after fee), so do not send it there: after 30 more days without payment block the account and propose write-off.`;
  }
  const checks=[];
  if(g.slip){ const mo=(TODAY-new Date(g.slip))/(30.4*864e5); if(mo>=4) checks.push(`Payslip is ${Math.floor(mo)} months old – ask for a new one before agreeing a plan.`); }
@@ -913,7 +931,7 @@ function policy(u){
  const D=dl(), hi='Hi, this is Suave. ';
  const sayAuto={
   agency:`${hi}Your account is ${u.dpd} days late with ${fl(pd)} past due. This is our last offer before we hand your file to a collection agency on ${D}: `+(settleOk?`close the account for ${fl(settle)} in one payment, or pay ${planSay}.`:`pay ${planSay}.`)+` Please pay or reply by ${D}.`,
-  final:`${hi}This is a final notice: your account is ${u.dpd} days late with ${fl(pd)} past due. You can bring it up to date by paying ${planSay}`+(settleOk?`, or close it for ${fl(settle)} in one payment`:'')+`. If we receive nothing by ${D}, your file goes to a collection agency.`,
+  final:`${hi}Following our final notice: your account is ${u.dpd} days late with ${fl(pd)} past due. You can bring it up to date by paying ${planSay}`+(settleOk?`, or close it for ${fl(settle)} in one payment`:'')+`. If we receive nothing by ${D}, your file goes to a collection agency.`,
   settle:`${hi}Your account is ${u.dpd} days late. We can close it for ${fl(settle)} in one payment by ${D} – that is ${fl(u.tb-settle)} less than your full balance of ${fl(u.tb)}. Or, if you prefer, pay ${planSay}. Please reply by ${D}.`,
   plan:`${hi}Your account is ${u.dpd} days late with ${fl(pd)} past due. To bring it up to date you can pay ${planSay}. Please reply by ${D} so we can confirm the plan.`,
   keep:`${hi}Thank you for your recent payment. You still have ${fl(pd)} past due – you can clear it by paying ${planSay}. Please confirm by ${D}.`}[dec];
@@ -946,13 +964,11 @@ function caseBody(u){
  return `<dl class="plan"><dt>Why</dt><dd>${esc(why)}</dd>`
   +`<dt>Offer</dt><dd>${P.offers.map((o,i)=>`<div>${P.offers.length>1?`<b>Option ${i+1}</b> – `:''}${esc(o)}</div>`).join('')}</dd>`
   +(()=>{ const g={}; P.steps.forEach(([w,t])=>(g[w]=g[w]||[]).push(t)); return Object.entries(g).map(([w,ts])=>`<dt>${esc(w)}</dt><dd>${ts.length>1?ts.map(t=>`<div>• ${esc(t)}</div>`).join(''):esc(ts[0])}</dd>`).join(''); })()
-  +`<dt>Send this</dt><dd class="say"><button type="button" data-copy="${esc(say)}">Copy</button>${esc(say)}</dd>`
+  +`<dt>Offer message</dt><dd class="say"><button type="button" data-copy="${esc(say)}">Copy</button>${esc(say)}</dd>`
   +`<dt>No payment by ${esc(dstr(P.deadline))}</dt><dd>${esc(P.ifNo)}</dd>`
   +((watch.length||P.checks.length)?`<dt>Check</dt><dd class="chk">${watch.concat(P.checks).map(c=>`<span>${esc(c)}</span>`).join('')}</dd>`:'')
   +`</dl>${a?'<div class="src">Why, message and first check written by Claude · decision and offer from Suave policy</div>':''}`;
 }
-function caseHtml(u){ const P=policy(u);
- return `<div class="case"><div class="case-top"><div><h4>${esc(u.name||('User '+u.id))} <span class="tag">${esc(u.cty||'')}</span></h4><div class="meta">${u.dpd} days late · ${fl(u.tb)} owed · ${fl(u.pd)} past due · ${u.ds===99999?'never paid':'last paid '+u.ds+' days ago'}</div></div><span class="decision d-${P.dec}">${DEC_NAME[P.dec]}${P.dec==='settle'?' · '+fl(P.settle):''} · by ${dstr(P.deadline)}</span></div>${caseBody(u)}</div>`; }
 var ADV={}, advStop=false, advBusy=false;
 const CLAUDE_PER_CASE=false; $('aiBtn').hidden=true; // Team summary = same as Refresh key findings, but one big call that usually came back empty
  // the worker gives Claude only 900 tokens, too little for per-case text; set true after raising max_tokens
@@ -969,14 +985,28 @@ function advFiltered(){
  const L=advCases().filter(u=>(!d||advDecision(u)===d)&&u.dpd>=lo&&u.dpd<=hi&&(!c||u.cty===c)&&(!q||String(u.name).toLowerCase().includes(q)||String(u.id).includes(q)));
  const cmp={dpd:(a,b)=>b.dpd-a.dpd||b.tb-a.tb, tb:(a,b)=>b.tb-a.tb, pd:(a,b)=>b.pd-a.pd, ds:(a,b)=>b.ds-a.ds||b.dpd-a.dpd}[so]||byPastDue;
  return L.sort(cmp); }
+// Accordion like the Past due list in Suave admin: one line per decision group (count + total, ⌄ on the right), a compact table inside, one row opens the full advice.
+var ADV_OPEN={}, ADV_ROW=null;
+function offerShort(P){ return P.dec==='settle'||P.settle?`Settle ${fl(P.settle)}`+(P.plan.months?` or plan`:''):(P.plan.months?`${fl(P.plan.first)} now + ${P.plan.months} mo.`:'Full past due'); }
+function rowHtml(u){ const P=policy(u), open=ADV_ROW===String(u.id);
+ return `<tr class="arow${open?' open':''}" data-row="${esc(u.id)}"><td><b>${esc(u.name||('User '+u.id))}</b></td><td>${esc(u.cty||'')}</td><td class="num">${u.dpd} days</td><td class="num">${fl(u.tb)}</td><td class="num">${fl(u.pd)}</td><td>${u.ds===99999?'never':u.ds+' days ago'}</td><td>${esc(offerShort(P))}</td><td>${dstr(P.deadline)}</td><td class="chev">${open?'⌃':'⌄'}</td></tr>`
+  +(open?`<tr class="adet"><td colspan="9">${caseBody(u)}</td></tr>`:''); }
 function drawCases(){
  $('aiExport').hidden=!advCases().length;
  const all=advCases(); $('advTools').hidden=!all.length; if(!all.length){ $('aiCases').innerHTML=''; $('advCount').textContent=''; return; }
- drawChips(); const L=advFiltered();
- $('advCount').textContent=`Showing ${L.length} of ${all.length} customers more than ${AI_MIN_DPD} days late`+(L.length?` · ${fl(L.reduce((s,u)=>s+u.tb,0))} owed`:'');
+ drawChips(); const L=advFiltered(), filtered=L.length!==all.length;
+ $('advCount').textContent=`${L.length} of ${all.length} customers more than ${AI_MIN_DPD} days late`+(L.length?` · ${fl(L.reduce((s,u)=>s+u.tb,0))} owed`:'');
  const by={}; L.forEach(u=>{ (by[advDecision(u)]=by[advDecision(u)]||[]).push(u); });
- $('aiCases').innerHTML=L.length?DEC_ORDER.filter(d=>by[d]).map(d=>`<h3 class="case-grp">${DEC_NAME[d]} <span class="hint">(${by[d].length} · ${fl(by[d].reduce((s,u)=>s+u.tb,0))})</span></h3>`+by[d].map(caseHtml).join('')).join(''):'<p class="hint">No customers match these filters.</p>';
+ $('aiCases').innerHTML=L.length?DEC_ORDER.filter(d=>by[d]).map(d=>{ const open=ADV_OPEN[d]||(filtered&&$('aQ').value.trim()!=='');
+  return `<div class="acc${open?' open':''}"><button type="button" class="acc-h" data-acc="${d}"><span class="dot-d d-${d}"></span>${DEC_NAME[d]} <span class="acc-n">(${by[d].length})</span> <span class="acc-t">(Total: ${fl(by[d].reduce((s,u)=>s+u.tb,0))})</span><span class="chev">${open?'⌃':'⌄'}</span></button>`
+   +(open?`<div class="tw"><table class="d acc-t2"><thead><tr><th>Name</th><th>Island</th><th>Days late</th><th>Owed</th><th>Past due</th><th>Last paid</th><th>Offer</th><th>Deadline</th><th></th></tr></thead><tbody>${by[d].map(rowHtml).join('')}</tbody></table></div>`:'')+'</div>'; }).join('')
+  :'<p class="hint">No customers match these filters.</p>';
 }
+$('aiCases').addEventListener('click',e=>{
+ if(e.target.closest('[data-copy]')) return;
+ const h=e.target.closest('[data-acc]'); if(h){ ADV_OPEN[h.dataset.acc]=!ADV_OPEN[h.dataset.acc]; drawCases(); return; }
+ const r=e.target.closest('[data-row]'); if(r){ ADV_ROW=ADV_ROW===r.dataset.row?null:r.dataset.row; drawCases(); }
+});
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-copy]'); if(!b) return; navigator.clipboard.writeText(b.dataset.copy).then(()=>{ b.textContent='Copied'; setTimeout(()=>b.textContent='Copy',1500); },()=>{}); });
 async function askCustomer(id,btn){
  const u=VIS.find(x=>String(x.id)===String(id)); if(!u) return;
