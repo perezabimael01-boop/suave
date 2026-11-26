@@ -1086,12 +1086,13 @@ async function keyFindings(){
  const clean=t=>String(t||'').split(/\n+/).map(l=>l.replace(/^[-*•]\s*/,'').replace(/^\d+[.)]\s+/,'').replace(/\*\*/g,'').trim()).filter(l=>l&&/[.!)%]$/.test(l))[0]||'';
  const got=new Array(topics.length).fill('');
  try{
-  for(let round=0;round<2&&got.some(x=>!x);round++){ // one retry, only for questions that came back empty
+  for(let round=0;round<1&&got.some(x=>!x);round++){ // no retries: an empty answer still costs tokens; gaps are filled from the numbers below
    if(round) $('kfAiState').textContent='Claude is analysing… (second try for '+got.filter(x=>!x).length+' of '+topics.length+')';
    await Promise.all(topics.map(async(t,i)=>{ if(!got[i]){ const j=await askKf(t); if(j) got[i]=clean(j.text); } }));
   }
  }catch(e){ if(e.message==='LOGIN'){ $('kfAiState').textContent='Log in to get the key findings from Claude.'; kfBusy=false; $('kfBtn').disabled=false; return; } }
  const lines=got.filter(Boolean);
+ if(lines.length&&lines.length<4){ const own=toolFindings(V).split('\n'); lines.push(...own.slice(0,5-lines.length).map(l=>l.replace(/:/,' (from the numbers):'))); }
  if(lines.length) KF[key]={text:lines.join('\n'),at:new Date().toISOString(),n:V.length,rows,withAdvice};
  else KF[key]={text:toolFindings(V),at:new Date().toISOString(),n:V.length,rows:null,tool:true};
  saveAiStore(); kfBusy=false; $('kfBtn').disabled=false; showKf();
