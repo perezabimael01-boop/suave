@@ -862,7 +862,7 @@ function policy(u){
  const mo=m=>m+' month'+(m>1?'s':'');
  if(months&&inst&&future<inst*months){ // few installments left: spread the whole remaining balance instead
   const left=tb-first; months=Math.min(pmax,Math.max(1,Math.ceil(left/Math.max(50,inst)))); const pm=r5(left/months);
-  planTxt=`${fl(first)} now, then ${fl(pm)} a month for ${mo(months)} (clears the full balance of ${fl(tb)})`; planSay=`${fl(first)} now and then ${fl(pm)} a month for ${mo(months)}, which clears your full balance`;
+  const then=months===1?`${fl(pm)} next month`:`${fl(pm)} a month for ${mo(months)}`; planTxt=`${fl(first)} now, then ${then} (clears the full balance of ${fl(tb)})`; planSay=`${fl(first)} now and ${then}, which clears your full balance`;
  } else if(months){
   planTxt=inst?`${fl(first)} now, then ${fl(inst+extra)} a month for ${mo(months)} (installment ${fl(inst)} + ${fl(extra)} catch-up)`:`${fl(first)} now, then the normal installment + ${fl(extra)} a month for ${mo(months)}`;
   planSay=inst?`${fl(first)} now and then ${fl(inst+extra)} a month for ${mo(months)} (your normal ${fl(inst)} plus ${fl(extra)})`:`${fl(first)} now and then your normal installment plus ${fl(extra)} a month for ${mo(months)}`;
@@ -907,7 +907,7 @@ function policy(u){
  const whyAuto={
   agency:`${u.dpd} days late, ${last}, ${col}. Only ${odds}. The agency is expected to bring in ${fl(u.evA)} after its fee, against ${fl(u.evI)} if we keep chasing.`,
   final:`${u.dpd} days late, ${last}, ${col}. The agency would bring in ${fl(u.evA)} after its fee against ${fl(u.evI)} internally, so give one formal last chance before day ${k.send}.`,
-  settle:`${u.dpd} days late, ${last}, ${col}. ${fl(interest)} of the ${fl(u.tb)} owed is interest. Collecting ${fl(settle)} now beats the agency (${fl(u.evA)} after fee, ~${k.wait} months) and chasing (${fl(u.evI)}).`,
+  settle:`${u.dpd} days late, ${last}, ${col}. ${op<1?`All ${fl(u.tb)} owed is interest (the principal is repaid).`:`${fl(interest)} of the ${fl(u.tb)} owed is interest.`} Collecting ${fl(settle)} now beats the agency (${fl(u.evA)} after fee, ~${k.wait} months) and chasing (${fl(u.evI)}).`,
   plan:`${u.dpd} days late, ${last}, ${col}. Chasing ourselves is expected to bring in ${fl(u.evI)}, the agency only ${fl(u.evA)} after its fee${plus.length?` – and the customer ${plus.slice(0,2).join(', ')}`:''}.`,
   keep:`Still paying: ${last}, ${fl(u.a30||0)} collected in the last 30 days. Keep them on track and clear the rest of the past due.`}[dec];
  const D=dl(), hi='Hi, this is Suave. ';
