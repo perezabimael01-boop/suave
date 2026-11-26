@@ -142,6 +142,10 @@
   .tools{ flex-wrap:wrap; } .tools > input, .tools > select, .tools > .btn{ width:auto !important; flex:0 0 auto; margin:0 !important; } .tools > #q{ flex:1 1 220px !important; }
   b.no{ color:#B42318; }
   .aiu{ margin:0 0 12px; } .aiu .insight{ margin-top:8px; }
+  .prog-wrap{ height:6px; background:rgba(0,0,0,.06); border-radius:3px; margin-top:12px; overflow:hidden; } .prog-bar{ height:100%; width:0; background:var(--brand,#2f6fed); transition:width .3s; }
+  .case{ border:1px solid rgba(0,0,0,.08); border-radius:12px; padding:12px 14px; margin:8px 0; } .case h4{ margin:0 0 4px; font-size:15px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .case .meta{ font-size:13px; color:var(--ink-soft); margin-bottom:6px; } .case ul{ margin:0; padding-left:18px; line-height:1.55; } .case li{ margin:3px 0; }
+  .case-grp{ margin:18px 0 6px; font-size:15px; }
   .sigs{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 0 12px; } .sigl{ font-size:12.5px; font-weight:600; color:#626262; margin-right:4px; }
   .chips{ display:flex; flex-wrap:wrap; gap:4px; max-width:300px; }
   .chip{ font-size:11.5px; font-weight:600; padding:2px 8px; border-radius:99px; white-space:nowrap; }
@@ -247,8 +251,10 @@
         <ul class="insight" id="insights"></ul>
       </section>
       <section class="section">
-        <h2 class="section-title">AI recommendations <span class="tag">Claude</span> <span class="qm" tabindex="0" aria-label="About AI insights">?<span class="qtip">Claude reads the totals of this list (per group, days late, last payment, signals, island and your logic settings) and gives recommendations for the collections team. For one customer: open the customer row and click <b>Ask Claude about this customer</b> (only that customer's numbers are sent, no name). Only totals are sent – no names, e-mails or phone numbers. The Claude API key is stored as a secret in your Cloudflare worker, never on this website.</span></span></h2>
-        <div class="row-btns"><button type="button" class="btn btn-primary" id="aiBtn">Get recommendations</button><span class="hint" id="aiState"></span></div>
+        <h2 class="section-title">AI recommendations <span class="tag">Claude</span> <span class="qm" tabindex="0" aria-label="About AI insights">?<span class="qtip"><b>Get advice per case</b>: for every customer on the send-to-agency and final-notice lists and everyone else 31+ days late, Claude says what to do, why, what to offer and say, and what to do if they don't pay within 7 days. <b>Team summary</b>: Claude reads the totals of this list and gives recommendations for the collections team. For one customer: open the customer row and click <b>Ask Claude about this customer</b> (only that customer's numbers are sent, no name). Only totals are sent – no names, e-mails or phone numbers. The Claude API key is stored as a secret in your Cloudflare worker, never on this website.</span></span></h2>
+        <div class="row-btns"><button type="button" class="btn btn-primary" id="aiCasesBtn">Get advice per case</button><button type="button" class="btn btn-secondary" id="aiBtn">Team summary</button><button type="button" class="btn btn-secondary" id="aiStop" hidden>Stop</button><span class="hint" id="aiState"></span></div>
+        <div class="prog-wrap" id="aiProgWrap" hidden><div class="prog-bar" id="aiProg"></div></div>
+        <div id="aiCases" style="margin-top:12px"></div>
         <ul class="insight" id="aiOut" style="margin-top:12px"></ul>
       </section>
     </div>
@@ -334,7 +340,7 @@
         <summary>Logic levers (change and everything recalculates)</summary>
         <div class="lev" id="levers"></div>
       </details>
-      <p class="hint" style="margin-top:12px">Balance owed = what is still unpaid on the open plans: principal balance + interest balance. Both the internal and the agency recovery are calculated on that full balance. Agency figures come from the Deurwaarder dashboard (only 45% of agency cases ever paid anything; first payment after ~13 months). Cure chances are estimates. The latest list is saved in Suave's Cloudflare database (password protected, the same login as Fraud Contacts); loading a new list deletes the old one.</p>
+      <p class="hint" style="margin-top:12px"><b>Principal balance</b> is calculated by the Agency Check button, not taken from the loan tape: the plan amount shown on top in User Management minus the monthly payments already paid (per open plan). Balance owed = what is still unpaid on the open plans: principal balance + interest balance. Both the internal and the agency recovery are calculated on that full balance. Agency figures come from the Deurwaarder dashboard (only 45% of agency cases ever paid anything; first payment after ~13 months). Cure chances are estimates. The latest list is saved in Suave's Cloudflare database (password protected, the same login as Fraud Contacts); loading a new list deletes the old one.</p>
     </section>
   </div>
 </main>
@@ -413,7 +419,7 @@ function agencyCheck(){
               if (pl.is_completed || pl.is_paid_off) sig.done++;
               const ms = (pl.payment_monthly || []).filter(m => !m.is_canceled), N = ms.length || 1, pd = ms.filter(m => m.status === 1).length;
               paid += pd; tot += ms.length;
-              if (!pl.is_completed && !pl.is_paid_off && !pl.is_canceled){ op += num(pl.amount) * Math.max(0, N - pd) / N; ms.forEach(m => { if (m.status !== 1) rem += num(m.amount); }); const nx = ms.find(m => m.status !== 1); if (nx) sig.inst += num(nx.amount); }
+              if (!pl.is_completed && !pl.is_paid_off && !pl.is_canceled){ /* Principal = plan amount (shown on top in User Management) minus the monthly payments already paid */ op += Math.max(0, num(pl.amount) - ms.filter(m => m.status === 1).reduce((s, m) => s + num(m.amount), 0)); ms.forEach(m => { if (m.status !== 1) rem += num(m.amount); }); const nx = ms.find(m => m.status !== 1); if (nx) sig.inst += num(nx.amount); }
               ms.forEach(m => {
                 if (m.status === 1 && m.payment_date && m.payable_date){ sig.paidN++; if ((new Date(m.payment_date) - new Date(m.payable_date)) / 864e5 <= 7) sig.onTime++; }
                 if (m.status === -1 && m.decline_code && String(m.updated_at || "") >= sig.declAt){ sig.decl = String(m.decline_code).slice(0, 40); sig.declAt = String(m.updated_at || ""); }
@@ -422,16 +428,16 @@ function agencyCheck(){
             });
           } catch(e){ fails++; }
           pays.forEach(x => { if (x[0] === last) lastAmt += x[1]; });
-          // Fallback: take the interest from the loan tape (Suave principal + interest balance per open plan).
+          // Fallback: take only the interest from the loan tape. The principal is never taken from the loan tape (it is not correct) – it is calculated above.
           if (op > 0 && rem <= op + 0.01 && u.email){
             try {
               const lt = await (await fetch("/api/v1/admin/subscription/list", { method: "POST", headers: H(), body: JSON.stringify({ search: u.email }) })).json();
-              let r2 = 0, p2 = 0;
+              let r2 = 0;
               (lt.data || []).filter(x => String(x.email || "").toLowerCase() === u.email && (x.status === "active" || x.status === "collection")).forEach(x => {
                 const N = parseInt(x.months) || 1, pd = Math.min(+x.paid_count || 0, N);
-                r2 += num(x.interest) * (N - pd) / N; p2 += num(x.principal) * (N - pd) / N;
+                r2 += num(x.interest) * (N - pd) / N;
               });
-              if (r2 > rem){ rem = r2; if (!op) op = p2; }
+              if (r2 > rem) rem = r2;
             } catch(e){}
           }
           Object.assign(u, { op: Math.round(op * 100) / 100, rem: Math.round(Math.max(rem, op) * 100) / 100, paid, tot, last, lastAmt: Math.round(lastAmt * 100) / 100, a30: Math.round(a30 * 100) / 100, a90: Math.round(a90 * 100) / 100, sig: { done: sig.done, ontime: sig.paidN ? Math.round(100 * sig.onTime / sig.paidN) / 100 : null, emp: sig.emp, phone: sig.phone, since: sig.since, cardExp: sig.cardExp, noCard: sig.noCard, decl: sig.decl, sal: sig.sal || null, slip: sig.slip || "", inst: Math.round(sig.inst || 0) } });
@@ -638,7 +644,7 @@ function render(){
  $('crit').innerHTML=[[`${k.send}+ days late`,'on the past due list'],[`≥ ${fl(k.min)} still owed`,'principal + interest balance'],[`Stopped paying`,`no payment of ≥ ${k.minpct}% of the past due in the last ${k.recent} days`],['Not better internally',`we expect to collect more via the agency (after its ${fl(k.cost)} fee) than by handling it ourselves`]].map(([a,b])=>`<div><b>${a}</b>${b}</div>`).join('');
  $('sendTag').textContent=`${n(send.length,'user')} · ${fl(G.send.p)}`; $('nearTag').textContent=n(near.length,'user');
  $('islTag').textContent={'':'All islands',AW:'Aruba',CW:'Curaçao',SX:'St. Maarten'}[island()]||'All islands';
- drawIc(); drawAccuracy(k); showAi();
+ drawIc(); drawAccuracy(k); showAi(); drawCases();
  drawCrit('tblSend',send); drawCrit('tblNear',near.sort(byPastDue));
  drawTable();
 }
@@ -808,7 +814,7 @@ function aiSummary(){
 }
 let AI_CACHE={};
 // One customer: only numbers and signals - no name, ID, e-mail or phone.
-function customerFacts(u){ const k=K(); return { question:'Recommend for THIS ONE customer: send to the collection agency now, send a final notice, or keep collecting internally (and how). Start with the recommendation in one line, then the 2-4 most important reasons, then the next concrete step.',
+function customerFacts(u){ const k=K(); return { question:'Advise how to deal with THIS ONE customer. Line 1: the decision (send to the collection agency now, send a final notice, offer a payment plan, or keep collecting internally) and why in one sentence. Line 2: what to do this week, step by step (who contacts them, how – WhatsApp, call or e-mail – and what to offer, e.g. a payment plan amount per month). Line 3: what to say to the customer in one or two short sentences. Line 4: what to do if they do not respond or pay within 7 days.',
  island:u.cty, days_late:u.dpd, past_due:Math.round(u.pd), balance_owed:Math.round(u.tb), principal:Math.round(u.op), interest:u.interest==null?null:Math.round(u.interest),
  installments_paid:u.paid+' of '+u.tot, last_payment_days_ago:u.ds===99999?'never':u.ds, last_payment_pct_of_past_due:u.pctLast>=0?Math.round(u.pctLast*100):null,
  collected_last_30_days:Math.round(u.a30||0), collected_last_90_days:Math.round(u.a90||0), collection_notes:u.notes, signals:(u.sigs||[]).map(x=>x[0]+' '+x[1]),
@@ -824,7 +830,51 @@ async function askCustomer(id,btn){
  catch(e){ out.innerHTML='<li class="no">'+esc(e.message==='LOGIN'?'Log in first.':'Could not get an answer: '+e.message)+'</li>'; }
  btn.disabled=false;
 }
-function showAi(){ const c=AI_CACHE[island()||'all']; $('aiOut').innerHTML=c?c.text.split(/\n+/).map(l=>l.replace(/^[-•*]\s*/,'').trim()).filter(Boolean).map(l=>`<li>${esc(l)}</li>`).join(''):''; $('aiState').textContent=c?`Answer from ${fmtDate(c.at)}${c.model?' · '+c.model:''}`:'Click to let Claude analyse this list (only totals are sent).'; }
+// ---------- AI advice per case (only numbers are sent, never name, ID, e-mail or phone) ----------
+var ADV={}, advStop=false, advBusy=false;
+var ADV_GROUPS=[['send','Send to the agency now'],['final','Final notice'],['internal','Keep collecting internally (31+ days late)']];
+function advCases(){ return VIS.filter(u=>u.grp==='send'||u.grp==='final'||(u.grp==='internal'&&u.dpd>30)).sort(byPastDue); }
+function caseFacts(u){ const f=customerFacts(u); delete f.question; delete f.settings; return f; }
+function caseHtml(u){
+ const a=ADV[u.id];
+ const body=a?a.map(l=>'<li>'+esc(l)+'</li>').join(''):'<li class="hint">Waiting for Claude…</li>';
+ return `<div class="case"><h4>${esc(u.name||('User '+u.id))} <span class="tag">${esc(u.cty||'')}</span> <span class="pill ${u.grp}">${esc(u.act)}</span></h4><div class="meta">${u.dpd} days late · ${fl(u.tb)} owed (${fl(u.op)} principal) · paid ${u.paid} of ${u.tot} · last payment ${u.ds===99999?'never':u.ds+' days ago'}</div><ul>${body}</ul></div>`;
+}
+function drawCases(){
+ const L=advCases(); if(!L.length){ $('aiCases').innerHTML=''; return; }
+ if(!L.some(u=>ADV[u.id])&&!advBusy){ $('aiCases').innerHTML=''; return; }
+ $('aiCases').innerHTML=ADV_GROUPS.map(([g,t])=>{ const G=L.filter(u=>u.grp===g); return G.length?`<h3 class="case-grp">${t} <span class="hint">(${G.length})</span></h3>`+G.map(caseHtml).join(''):''; }).join('');
+}
+async function adviseBatch(batch){
+ const cases=batch.map((u,i)=>Object.assign({case:'C'+(i+1)},caseFacts(u)));
+ const k=K();
+ const summary={ question:'For EACH case below give advice on how to deal with that customer. Write exactly one line per case, starting with its case code, in this format: "C1: <decision: send to agency now / final notice / payment plan / keep reminding> – <why, in a few words> – <what to do this week: who contacts them, how (WhatsApp, call or e-mail) and what to offer, e.g. a payment plan of Fl X per month> – <what to do if no payment within 7 days>". Use only the numbers given. Do not skip any case.',
+  cases, settings:{agency_fee:k.cost, agency_collects_pct:k.aw, agency_wait_months:k.wait} };
+ const j=await api('/agency/ai',{summary});
+ const lines=(j.text||'').split(/\n+/).map(l=>l.replace(/^[-*•]\s*/,'').trim()).filter(Boolean);
+ batch.forEach((u,i)=>{ const code='C'+(i+1); const l=lines.find(x=>new RegExp('^\\**'+code+'\\b').test(x));
+  if(l){ const txt=l.replace(new RegExp('^\\**'+code+'\\**\\s*[:.\\-–]\\s*'),''); ADV[u.id]=txt.split(/\s+[–—]\s+/).map(x=>x.trim()).filter(Boolean); } });
+ // Anything Claude skipped: ask for that one customer on its own.
+ for(const u of batch){ if(ADV[u.id]||advStop) continue;
+  try{ const j2=await api('/agency/ai',{summary:customerFacts(u)}); ADV[u.id]=(j2.text||'').split(/\n+/).map(l=>l.replace(/^[-*•]\s*/,'').trim()).filter(Boolean); }catch(e){ ADV[u.id]=['Could not get advice: '+e.message]; } }
+}
+$('aiCasesBtn').addEventListener('click',async()=>{
+ if(!VIS.length){ $('aiState').textContent='Load a list first.'; return; }
+ const todo=advCases().filter(u=>!ADV[u.id]);
+ if(!todo.length){ drawCases(); $('aiState').textContent='Advice is ready for all '+advCases().length+' cases.'; return; }
+ advBusy=true; advStop=false; $('aiCasesBtn').disabled=true; $('aiStop').hidden=false; $('aiProgWrap').hidden=false;
+ const SIZE=5, batches=[]; for(let i=0;i<todo.length;i+=SIZE) batches.push(todo.slice(i,i+SIZE));
+ let next=0, done=0, err='';
+ const upd=()=>{ $('aiState').textContent=`Claude is advising… ${Math.min(done*SIZE,todo.length)} of ${todo.length} cases`; $('aiProg').style.width=(100*done/batches.length)+'%'; };
+ upd(); drawCases();
+ async function worker(){ while(next<batches.length&&!advStop){ const b=batches[next++]; try{ await adviseBatch(b); }catch(e){ if(e.message==='LOGIN'){ advStop=true; err='Log in first.'; } else err='Some cases failed: '+e.message; } done++; upd(); drawCases(); } }
+ await Promise.all([worker(),worker(),worker()]);
+ advBusy=false; $('aiCasesBtn').disabled=false; $('aiStop').hidden=true; $('aiProgWrap').hidden=true; drawCases();
+ const n2=advCases().filter(u=>ADV[u.id]).length;
+ $('aiState').textContent=err||(advStop?`Stopped – advice for ${n2} of ${advCases().length} cases. Click again to continue.`:`Advice for ${n2} cases (send to agency, final notice and 31+ days late). Only numbers were sent – no names.`);
+});
+$('aiStop').addEventListener('click',()=>{ advStop=true; $('aiState').textContent='Stopping after the current cases…'; });
+function showAi(){ const c=AI_CACHE[island()||'all']; $('aiOut').innerHTML=c?c.text.split(/\n+/).map(l=>l.replace(/^[-•*]\s*/,'').trim()).filter(Boolean).map(l=>`<li>${esc(l)}</li>`).join(''):''; $('aiState').textContent=c?`Answer from ${fmtDate(c.at)}${c.model?' · '+c.model:''}`:'Get advice per case: Claude says how to deal with each customer who is 31+ days late (only numbers are sent, no names).'; }
 $('aiBtn').addEventListener('click',async()=>{
  if(!VIS.length){ $('aiState').textContent='Load a list first.'; return; }
  $('aiBtn').disabled=true; $('aiState').textContent='Claude is thinking… (10–30 seconds)';
