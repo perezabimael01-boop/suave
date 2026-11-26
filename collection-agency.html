@@ -278,7 +278,7 @@
         <ul class="insight" id="insights"></ul>
       </section>
       <section class="section">
-        <h2 class="section-title">AI recommendations <span class="tag">Claude</span> <span class="qm" tabindex="0" aria-label="About AI insights">?<span class="qtip"><b>How the advice works</b>: the page applies Suave's collections policy to every customer more than 45 days late – decision, offer (payment plan or settlement), legal step and deadline. The rules are under Logic levers on the Setup &amp; logic tab. <b>Get advice per case</b>: Claude adds, per customer, why (from the data only), the WhatsApp message to send and one thing to check. Only numbers are sent – no names, e-mails or phone numbers. <b>Team summary</b>: Claude's key findings for the whole list.</span></span></h2>
+        <h2 class="section-title">Advice per customer <span class="tag">46+ days late</span> <span class="qm" tabindex="0" aria-label="About AI insights">?<span class="qtip"><b>How the advice works</b>: the page applies Suave's collections policy to every customer more than 45 days late – decision, offer (payment plan or settlement), legal step and deadline. The rules are under Logic levers on the Setup &amp; logic tab. Each card shows why, the offer, what to do today, the WhatsApp message to send (Copy button), what to do if there is no payment by the deadline, and what to check. <b>Team summary</b>: Claude's key findings for the whole list (only numbers are sent – no names, e-mails or phone numbers).</span></span></h2>
         <div class="row-btns"><button type="button" class="btn btn-primary" id="aiCasesBtn">Get advice per case</button><button type="button" class="btn btn-secondary" id="aiBtn">Team summary</button><button type="button" class="btn btn-secondary" id="aiStop" hidden>Stop</button><button type="button" class="btn btn-secondary" id="aiExport" hidden>Export advice (Excel/CSV)</button><span class="hint" id="aiState"></span></div>
         <div class="prog-wrap" id="aiProgWrap" hidden><div class="prog-bar" id="aiProg"></div></div>
         <div class="adv-tools" id="advTools" hidden>
@@ -854,11 +854,19 @@ function policy(u){
  const k=K(), g=u.sig||{}, inst=num(g.inst)>0?num(g.inst):0, pd=Math.max(0,num(u.pd)), interest=Math.max(0,u.interest||0), op=num(u.op);
  const paying=u.act===ACT.still;
  // Payment plan: a first payment now, the rest of the past due spread over at most pmax months on top of the normal installment.
- const first=Math.min(pd, r5(Math.max(pd*k.pfirst/100, inst)));
+ const pmax=Math.max(1,k.pmax), tb=Math.max(pd,u.tb), future=Math.max(0,tb-pd);
+ const first=Math.min(pd, r5(Math.max(pd*k.pfirst/100, Math.min(inst, pd/2))));
  const rest=Math.max(0,pd-first);
- const months=rest>0?Math.min(Math.max(1,k.pmax), Math.max(1, Math.ceil(rest/Math.max(50,(inst||rest/Math.max(1,k.pmax))*0.5)))):0;
- const extra=months?r5(rest/months):0;
- const planTxt=months?(inst?`${fl(first)} now, then ${fl(inst+extra)} a month for ${months} month${months>1?'s':''} (installment ${fl(inst)} + ${fl(extra)} catch-up)`:`${fl(first)} now, then the normal installment + ${fl(extra)} a month for ${months} month${months>1?'s':''}`):`the full past due of ${fl(pd)} now`;
+ let months=rest>0?Math.min(pmax, Math.max(1, Math.ceil(rest/Math.max(50,(inst||rest/pmax)*0.5)))):0;
+ let extra=months?r5(rest/months):0, planTxt, planSay;
+ const mo=m=>m+' month'+(m>1?'s':'');
+ if(months&&inst&&future<inst*months){ // few installments left: spread the whole remaining balance instead
+  const left=tb-first; months=Math.min(pmax,Math.max(1,Math.ceil(left/Math.max(50,inst)))); const pm=r5(left/months);
+  planTxt=`${fl(first)} now, then ${fl(pm)} a month for ${mo(months)} (clears the full balance of ${fl(tb)})`; planSay=`${fl(first)} now and then ${fl(pm)} a month for ${mo(months)}, which clears your full balance`;
+ } else if(months){
+  planTxt=inst?`${fl(first)} now, then ${fl(inst+extra)} a month for ${mo(months)} (installment ${fl(inst)} + ${fl(extra)} catch-up)`:`${fl(first)} now, then the normal installment + ${fl(extra)} a month for ${mo(months)}`;
+  planSay=inst?`${fl(first)} now and then ${fl(inst+extra)} a month for ${mo(months)} (your normal ${fl(inst)} plus ${fl(extra)})`:`${fl(first)} now and then your normal installment plus ${fl(extra)} a month for ${mo(months)}`;
+ } else { planTxt=`the full past due of ${fl(pd)} now`; planSay=`the past due amount of ${fl(pd)}`; }
  // Settlement: one payment of the principal plus part of the interest – from the Bevel tot betaling day, only when interest is a large part and it beats the agency.
  const canSettle=k.setl>0&&u.dpd>=k.btb&&interest>0&&interest>=0.3*u.tb&&!paying;
  const settle=canSettle?r10(op+interest*(1-k.setl/100)):0;
@@ -892,13 +900,23 @@ function policy(u){
  if(op<1&&interest>0) checks.push('Principal is fully repaid – only interest is left.');
  if(u.token) checks.push('Last payment was only a token amount – do not count it as paying.');
  if(g.emp) checks.push('Employer known – contact the employer only if the contract allows it.');
- const last=u.ds===99999?'never paid':`last payment ${u.ds} days ago`+(u.pctLast>=0?` (${Math.round(u.pctLast*100)}% of past due)`:'');
- const whyAuto={agency:`${u.dpd} days late, ${last}. Only ${Math.round(u.cure*100)}% chance they pay if we keep chasing; agency expected ${fl(u.evA)} after fee vs ${fl(u.evI)} internally.`,
-  final:`${u.dpd} days late, ${last}. Agency expected ${fl(u.evA)} after fee vs ${fl(u.evI)} internally – one formal last chance first.`,
-  settle:`${u.dpd} days late, ${last}. ${fl(interest)} of the ${fl(u.tb)} is interest; the settlement (${fl(settle)}) beats the agency (${fl(u.evA)} after fee).`,
-  plan:`${u.dpd} days late, ${last}. Internally we expect ${fl(u.evI)} vs ${fl(u.evA)} via the agency after fee.`,
-  keep:`Still paying: ${last}. ${fl(u.a30||0)} collected in the last 30 days.`}[dec];
- const sayAuto=`Hi, your Suave account is ${u.dpd} days late with ${fl(pd)} past due. We can solve this together: ${offerTxt()}. Please reply by ${dl()}`+(dec==='agency'||dec==='final'?', otherwise we must hand your file to a collection agency.':'.');
+ const last=u.ds===99999?'never paid':`last payment ${u.ds} days ago`+(u.pctLast>=0?` (${Math.round(u.pctLast*100)}% of the past due)`:'');
+ const col=num(u.a90)>0?`${fl(u.a90)} collected in 90 days`:'nothing collected in 90 days';
+ const plus=(u.sigs||[]).filter(x=>x[0]==='+').map(x=>x[1].toLowerCase()), minus=(u.sigs||[]).filter(x=>x[0]==='–').map(x=>x[1].toLowerCase());
+ const odds=`${Math.round(u.cure*100)}% chance they pay if we keep chasing`;
+ const whyAuto={
+  agency:`${u.dpd} days late, ${last}, ${col}. Only ${odds}. The agency is expected to bring in ${fl(u.evA)} after its fee, against ${fl(u.evI)} if we keep chasing.`,
+  final:`${u.dpd} days late, ${last}, ${col}. The agency would bring in ${fl(u.evA)} after its fee against ${fl(u.evI)} internally, so give one formal last chance before day ${k.send}.`,
+  settle:`${u.dpd} days late, ${last}, ${col}. ${fl(interest)} of the ${fl(u.tb)} owed is interest. Collecting ${fl(settle)} now beats the agency (${fl(u.evA)} after fee, ~${k.wait} months) and chasing (${fl(u.evI)}).`,
+  plan:`${u.dpd} days late, ${last}, ${col}. Chasing ourselves is expected to bring in ${fl(u.evI)}, the agency only ${fl(u.evA)} after its fee${plus.length?` – and the customer ${plus.slice(0,2).join(', ')}`:''}.`,
+  keep:`Still paying: ${last}, ${fl(u.a30||0)} collected in the last 30 days. Keep them on track and clear the rest of the past due.`}[dec];
+ const D=dl(), hi='Hi, this is Suave. ';
+ const sayAuto={
+  agency:`${hi}Your account is ${u.dpd} days late with ${fl(pd)} past due. This is our last offer before we hand your file to a collection agency on ${D}: `+(settleOk?`close the account for ${fl(settle)} in one payment, or pay ${planSay}.`:`pay ${planSay}.`)+` Please pay or reply by ${D}.`,
+  final:`${hi}This is a final notice: your account is ${u.dpd} days late with ${fl(pd)} past due. You can bring it up to date by paying ${planSay}`+(settleOk?`, or close it for ${fl(settle)} in one payment`:'')+`. If we receive nothing by ${D}, your file goes to a collection agency.`,
+  settle:`${hi}Your account is ${u.dpd} days late. We can close it for ${fl(settle)} in one payment by ${D} – that is ${fl(u.tb-settle)} less than your full balance of ${fl(u.tb)}. Or, if you prefer, pay ${planSay}. Please reply by ${D}.`,
+  plan:`${hi}Your account is ${u.dpd} days late with ${fl(pd)} past due. To bring it up to date you can pay ${planSay}. Please reply by ${D} so we can confirm the plan.`,
+  keep:`${hi}Thank you for your recent payment. You still have ${fl(pd)} past due – you can clear it by paying ${planSay}. Please confirm by ${D}.`}[dec];
  return {dec,steps,ifNo,deadline,offer:offerTxt(),offers:offers(),settle:settleOk?settle:0,plan:{first,months,extra,inst},checks,whyAuto,sayAuto};
 }
 function advDecision(u){ return policy(u).dec; }
@@ -931,11 +949,13 @@ function caseBody(u){
   +`<dt>Send this</dt><dd class="say"><button type="button" data-copy="${esc(say)}">Copy</button>${esc(say)}</dd>`
   +`<dt>No payment by ${esc(dstr(P.deadline))}</dt><dd>${esc(P.ifNo)}</dd>`
   +((watch.length||P.checks.length)?`<dt>Check</dt><dd class="chk">${watch.concat(P.checks).map(c=>`<span>${esc(c)}</span>`).join('')}</dd>`:'')
-  +`</dl><div class="src">${a?'Why, message and first check written by Claude · decision and offer from Suave policy':(advBusy?'Waiting for Claude…':'Decision and offer from Suave policy · click Get advice per case to let Claude write the why and the message')}</div>`;
+  +`</dl>${a?'<div class="src">Why, message and first check written by Claude · decision and offer from Suave policy</div>':''}`;
 }
 function caseHtml(u){ const P=policy(u);
  return `<div class="case"><div class="case-top"><div><h4>${esc(u.name||('User '+u.id))} <span class="tag">${esc(u.cty||'')}</span></h4><div class="meta">${u.dpd} days late · ${fl(u.tb)} owed · ${fl(u.pd)} past due · ${u.ds===99999?'never paid':'last paid '+u.ds+' days ago'}</div></div><span class="decision d-${P.dec}">${DEC_NAME[P.dec]}${P.dec==='settle'?' · '+fl(P.settle):''} · by ${dstr(P.deadline)}</span></div>${caseBody(u)}</div>`; }
 var ADV={}, advStop=false, advBusy=false;
+const CLAUDE_PER_CASE=false; // the worker gives Claude only 900 tokens, too little for per-case text; set true after raising max_tokens
+if(!CLAUDE_PER_CASE) $('aiCasesBtn').hidden=true;
 function advCases(){ return VIS.filter(u=>u.dpd>AI_MIN_DPD&&(u.grp==='send'||u.grp==='final'||u.grp==='internal')).sort(byPastDue); }
 // light formatting of Claude's text: **bold** and a leading "Label:" become bold; #12 row references become names
 function fmtAi(l,rows){ let h=esc(String(l).replace(/^#+\s*/,'')); h=h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\*/g,'');
@@ -961,7 +981,7 @@ async function askCustomer(id,btn){
  const u=VIS.find(x=>String(x.id)===String(id)); if(!u) return;
  const out=btn.parentElement.querySelector('[data-aiout]');
  const head=()=>{ const P=policy(u); return `<span class="decision d-${P.dec}" style="margin-bottom:8px">${DEC_NAME[P.dec]} · by ${dstr(P.deadline)}</span>`; };
- out.innerHTML=head()+caseBody(u); if(ADV[u.id]) return;
+ out.innerHTML=head()+caseBody(u); if(ADV[u.id]||!CLAUDE_PER_CASE) return;
  btn.disabled=true; btn.textContent='Claude is writing…';
  try{ await adviseBatch([u]); saveAiStore(); drawCases(); }catch(e){ if(e.message==='LOGIN') btn.textContent='Log in first'; }
  out.innerHTML=head()+caseBody(u); btn.disabled=false; btn.textContent='Advice for this customer';
@@ -1084,7 +1104,7 @@ function showKf(){ const c=KF[island()||'all'];
  $('kfAiState').innerHTML=(c.tool?'<b>From the numbers of '+c.n+' customers more than '+AI_MIN_DPD+' days late</b> (Claude did not answer – click Refresh key findings to try again)':'<b>Claude, after analysing '+c.n+' customers more than '+AI_MIN_DPD+' days late</b>'+(c.withAdvice?' and the advice per case':''))+(c.at?' · '+esc(fmtDate(c.at)):'');
  $('kfAiOut').innerHTML=c.text.split(/\n+/).map(l=>l.replace(/^[-*•]\s*/,'').replace(/^\d+[.)]\s+/,'').trim()).filter(Boolean).map(l=>'<li>'+fmtAi(l,c.rows)+'</li>').join(''); }
 $('kfBtn').addEventListener('click',keyFindings);
-function showAi(){ const c=AI_CACHE[island()||'all']; $('aiOut').innerHTML=c?c.text.split(/\n+/).map(l=>l.replace(/^[-•*]\s*/,'').trim()).filter(Boolean).map(l=>`<li>${fmtAi(l,c.rows)}</li>`).join(''):''; $('aiState').textContent=c?`Answer from ${fmtDate(c.at)}${c.model?' · '+c.model:''}`:'Decision and offer per customer below follow Suave policy. Get advice per case: Claude adds the why and the message to send (only numbers are sent, no names).'; }
+function showAi(){ const c=AI_CACHE[island()||'all']; $('aiOut').innerHTML=c?c.text.split(/\n+/).map(l=>l.replace(/^[-•*]\s*/,'').trim()).filter(Boolean).map(l=>`<li>${fmtAi(l,c.rows)}</li>`).join(''):''; $('aiState').textContent=c?`Answer from ${fmtDate(c.at)}${c.model?' · '+c.model:''}`:'Advice for every customer more than '+AI_MIN_DPD+' days late, following Suave collections policy (rules under Logic levers).'; }
 $('aiBtn').addEventListener('click',async()=>{
  if(!VIS.length){ $('aiState').textContent='Load a list first.'; return; }
  $('aiBtn').disabled=true; $('aiState').textContent='Claude is thinking… (10–30 seconds)';
