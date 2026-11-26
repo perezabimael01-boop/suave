@@ -928,24 +928,47 @@ var KF={}, kfBusy=false, KF_TRIED={};
 // Claude's key findings and advice are kept in this browser for the current list, so a reload does not ask Claude again.
 const AISTORE='suave.agencyCheck.ai';
 function loadAiStore(){ if(!META||!META.at||loadAiStore.at===META.at) return; loadAiStore.at=META.at;
- try{ const j=JSON.parse(localStorage.getItem(AISTORE)||'null'); if(j&&j.at===META.at){ KF=j.kf||{}; Object.assign(ADV,j.adv||{}); } else { KF={}; } }catch(e){} }
+ try{ const j=JSON.parse(localStorage.getItem(AISTORE)||'null'); if(j&&j.at===META.at){ KF=j.kf||{}; Object.keys(KF).forEach(x=>{ if(!KF[x]||!String(KF[x].text||'').trim()) delete KF[x]; }); Object.assign(ADV,j.adv||{}); } else { KF={}; } }catch(e){} }
 function saveAiStore(){ if(!META||!META.at) return; try{ localStorage.setItem(AISTORE,JSON.stringify({at:META.at,kf:KF,adv:ADV})); }catch(e){} }
+// Numbers-based findings for users more than 45 days late: shown when Claude does not answer.
+function toolFindings(V){ const k=K(), send=V.filter(u=>u.act===ACT.send), fin=V.filter(u=>u.grp==='final'), plan=V.filter(u=>u.act===ACT.plan), sum=L=>L.reduce((s,u)=>s+u.tb,0);
+ const near=V.filter(u=>u.dpd>=k.send&&u.act!==ACT.send), paid30=V.filter(u=>u.ds<=30).length, never=V.filter(u=>u.ds>=90).length;
+ return [
+  `Send to agency: ${n(send.length,'user')} (${fl(sum(send))} owed) – about ${fl(send.reduce((s,u)=>s+u.adv,0))} more expected than collecting internally, after the ${fl(k.cost)} fee each.`+(send.length?` Largest: ${[...send].sort((a,b)=>b.tb-a.tb).slice(0,3).map(u=>`${u.name} (${fl(u.tb)})`).join(', ')}.`:''),
+  `Final notice: ${n(fin.length,'user')} 46–${k.send-1} days late (${fl(sum(fin))} owed) – they go to the agency at day ${k.send} if still unpaid.`,
+  `Better internally: ${n(plan.length,'user')} (${fl(sum(plan))} owed) – we expect to collect more ourselves than via the agency; offer a payment plan.`,
+  `Still paying: ${paid30} of ${V.length} users paid something in the last 30 days; ${never} paid nothing in 90+ days.`,
+  `Collected: ${fl(V.reduce((s,u)=>s+(u.a30||0),0))} in the last 30 days and ${fl(V.reduce((s,u)=>s+(u.a90||0),0))} in the last 90 days from these users.`,
+  `Not sent: ${n(near.length,'user')} ${k.send}+ days late miss a criterion – see the Send to agency tab.`,
+  `Employer known: ${n(send.filter(u=>u.sig&&u.sig.emp).length,'agency case')} – a call or letter to the employer is a cheap last try.`,
+  `Token payments: ${n(V.filter(u=>u.token).length,'user')} paid less than ${k.minpct}% of their past due recently – these no longer count as still paying.`
+ ].join('\n'); }
+async function askKf(summary){ try{ const j=await api('/agency/ai',{summary}); return (j.text||'').trim()?j:null; }catch(e){ if(e.message==='LOGIN') throw e; return null; } }
 async function keyFindings(){
  if(kfBusy) return; const key=island()||'all', V=aiUsers();
  if(!V.length){ $('kfAiState').textContent='No users are more than '+AI_MIN_DPD+' days late on this list.'; $('kfAiOut').innerHTML=''; return; }
  kfBusy=true; $('kfBtn').disabled=true; $('kfAiState').textContent='Claude is analysing '+V.length+' customers more than '+AI_MIN_DPD+' days late… (10–40 seconds)'; $('kfAiOut').innerHTML='';
- try{ const data=allData(), rows=data.__rows; delete data.__rows; let j=await api('/agency/ai',{summary:data}).catch(e=>({text:'',err:e}));
-  // Large answers can come back empty: try again with the totals only (no rows), then give up with a clear message.
-  if(!(j.text||'').trim()){ $('kfAiState').textContent='Claude is analysing (second try, totals only)…'; const lite=Object.assign({},data); delete lite.customers; delete lite.customer_columns; lite.question=data.question.replace(/ Refer to individual customers only as #row \(e\.g\. #12\)\./,''); j=await api('/agency/ai',{summary:lite}).catch(e=>({text:'',err:e})); }
-  if(!(j.text||'').trim()) throw (j.err||new Error('Claude returned an empty answer – click Refresh key findings to try again.'));
-  KF[key]={text:j.text||'',at:j.at||new Date().toISOString(),n:V.length,rows,withAdvice:Object.keys(data.advice_decisions).length>0}; saveAiStore(); showKf(); }
- catch(e){ $('kfAiState').textContent=e.message==='LOGIN'?'Log in to get the key findings from Claude.':'Could not get the key findings: '+e.message; }
- kfBusy=false; $('kfBtn').disabled=false;
+ const data=allData(), rows=data.__rows; delete data.__rows; const withAdvice=Object.keys(data.advice_decisions).length>0;
+ // Claude's answer is sometimes empty when the data is large, so ask several versions at once (full, totals only, short) and use the richest answer.
+ const lite=Object.assign({},data); delete lite.customers; delete lite.customer_columns; delete lite.top_signals_send_to_agency; delete lite.top_signals_internal; delete lite.measured_caught_up_since_previous_lists;
+ lite.question=data.question.replace(/ Refer to individual customers only as #row \(e\.g\. #12\)\./,'');
+ const small={question:'Key findings for the collections team about customers MORE than '+AI_MIN_DPD+' days past due. 5 to 7 findings, one per line, each starting with a short headline and a colon, with the concrete Fl amounts and user counts. No markdown.', scope:data.scope, users_analysed:data.users_analysed, groups:data.groups, by_days_late:data.by_days_late, last_payment:data.last_payment, tool_facts:data.tool_facts, users_by_country:data.users_by_country, collected_last_30_days:data.collected_last_30_days, collected_last_90_days:data.collected_last_90_days, advice_decisions:data.advice_decisions};
+ let pick=null, src='';
+ try{
+  for(let round=0;round<3&&!pick;round++){
+   if(round) $('kfAiState').textContent='Claude is analysing… (try '+(round+1)+' of 3)';
+   const [a,b,c]=await Promise.all([askKf(data),askKf(lite),askKf(small)]);
+   pick=a||b||c; src=a?'rows':'';
+  }
+ }catch(e){ if(e.message==='LOGIN'){ $('kfAiState').textContent='Log in to get the key findings from Claude.'; kfBusy=false; $('kfBtn').disabled=false; return; } }
+ if(pick) KF[key]={text:pick.text,at:pick.at||new Date().toISOString(),n:V.length,rows:src?rows:null,withAdvice};
+ else KF[key]={text:toolFindings(V),at:new Date().toISOString(),n:V.length,rows:null,tool:true};
+ saveAiStore(); kfBusy=false; $('kfBtn').disabled=false; showKf();
 }
 function autoKf(){ const key=(island()||'all')+'|'+(META&&META.at); if(!USERS.length||!conn.key||kfBusy||KF[island()||'all']||KF_TRIED[key]||!aiUsers().length) return; KF_TRIED[key]=1; keyFindings(); }
 function showKf(){ const c=KF[island()||'all'];
  if(!c){ if(!kfBusy){ $('kfAiOut').innerHTML=''; $('kfAiState').textContent=USERS.length?'Claude writes the key findings for users more than '+AI_MIN_DPD+' days late.':''; } return; }
- $('kfAiState').innerHTML='<b>Claude, after analysing '+c.n+' customers more than '+AI_MIN_DPD+' days late</b>'+(c.withAdvice?' and the advice per case':'')+(c.at?' · '+esc(fmtDate(c.at)):'');
+ $('kfAiState').innerHTML=(c.tool?'<b>From the numbers of '+c.n+' customers more than '+AI_MIN_DPD+' days late</b> (Claude did not answer – click Refresh key findings to try again)':'<b>Claude, after analysing '+c.n+' customers more than '+AI_MIN_DPD+' days late</b>'+(c.withAdvice?' and the advice per case':''))+(c.at?' · '+esc(fmtDate(c.at)):'');
  $('kfAiOut').innerHTML=c.text.split(/\n+/).map(l=>l.replace(/^[-*•]\s*/,'').replace(/^\d+[.)]\s+/,'').trim()).filter(Boolean).map(l=>'<li>'+fmtAi(l,c.rows)+'</li>').join(''); }
 $('kfBtn').addEventListener('click',keyFindings);
 function showAi(){ const c=AI_CACHE[island()||'all']; $('aiOut').innerHTML=c?c.text.split(/\n+/).map(l=>l.replace(/^[-•*]\s*/,'').trim()).filter(Boolean).map(l=>`<li>${fmtAi(l,c.rows)}</li>`).join(''):''; $('aiState').textContent=c?`Answer from ${fmtDate(c.at)}${c.model?' · '+c.model:''}`:'Get advice per case: Claude says how to deal with each customer who is more than '+AI_MIN_DPD+' days late (only numbers are sent, no names).'; }
