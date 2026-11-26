@@ -146,7 +146,19 @@
   .case{ border:1px solid rgba(0,0,0,.08); border-radius:12px; padding:12px 14px; margin:8px 0; } .case h4{ margin:0 0 4px; font-size:15px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
   .case .meta{ font-size:13px; color:var(--ink-soft); margin-bottom:6px; } .case ul{ margin:0; padding-left:18px; line-height:1.55; } .case li{ margin:3px 0; }
   .case-grp{ margin:18px 0 6px; font-size:15px; }
-  .adv-tools{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:12px 0 4px; } .adv-tools input{ flex:1; min-width:160px; } .adv-tools select{ max-width:100%; }
+  .adv-tools{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:12px 0 4px; } .adv-tools select{ display:none; }
+  .adv-search{ position:relative; } .adv-search svg{ position:absolute; left:9px; top:50%; transform:translateY(-50%); width:13px; height:13px; color:var(--ink-soft); pointer-events:none; }
+  .adv-tools input.adv-q{ width:190px; min-height:0; height:28px; padding:0 10px 0 27px; font-size:13px; border-radius:99px; border:1px solid var(--line-strong); }
+  .chip{ display:inline-flex; align-items:center; gap:5px; height:28px; padding:0 10px 0 6px; border:1px dashed var(--line-strong); border-radius:99px; background:transparent; font:inherit; font-size:13px; font-weight:500; color:var(--ink-soft); cursor:pointer; white-space:nowrap; }
+  .chip:hover{ background:var(--surface-2); } .chip.on{ border-style:solid; background:var(--surface); color:var(--ink); }
+  .chip .ci{ display:inline-grid; place-items:center; width:15px; height:15px; border-radius:50%; border:1px solid currentColor; font-size:11px; line-height:1; flex:none; }
+  .chip.on .ci{ border-color:var(--line-strong); } .chip.on .ci:hover{ background:var(--line); }
+  .chip b{ color:var(--brand-ink); font-weight:600; } .chip .sep{ width:1px; height:12px; background:var(--line-strong); }
+  .chip.sort{ border-style:solid; margin-left:auto; padding:0 10px; } .chip-clear{ border:0; background:none; font:inherit; font-size:13px; color:var(--brand-ink); cursor:pointer; padding:0 4px; }
+  .chip-pop{ position:absolute; z-index:60; min-width:210px; padding:6px; background:var(--surface); border:1px solid var(--line); border-radius:10px; box-shadow:0 10px 28px rgba(15,40,70,.16); }
+  .chip-pop h5{ margin:4px 8px 6px; font-size:12px; color:var(--ink-soft); font-weight:600; }
+  .chip-pop button{ display:flex; justify-content:space-between; gap:12px; width:100%; padding:7px 9px; border:0; background:none; border-radius:6px; font:inherit; font-size:13.5px; color:var(--ink); text-align:left; cursor:pointer; } .chip-pop button:hover{ background:var(--surface-2); } .chip-pop button[aria-checked="true"]::after{ content:'✓'; color:var(--brand-ink); font-weight:700; }
+  @media (max-width:640px){ .chip.sort{ margin-left:0; } .adv-tools input.adv-q{ width:100%; } .adv-search{ width:100%; } }
   .pill.dec{ background:#F1EEF9; color:#4B3A8C; } .pill.diff{ background:#FFF4D6; color:#7A5A00; }
   #kfAiOut li b, .case li b{ font-weight:650; }
   .sigs{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 0 12px; } .sigl{ font-size:12.5px; font-weight:600; color:#626262; margin-right:4px; }
@@ -260,14 +272,15 @@
         <div class="row-btns"><button type="button" class="btn btn-primary" id="aiCasesBtn">Get advice per case</button><button type="button" class="btn btn-secondary" id="aiBtn">Team summary</button><button type="button" class="btn btn-secondary" id="aiStop" hidden>Stop</button><button type="button" class="btn btn-secondary" id="aiExport" hidden>Export advice (Excel/CSV)</button><span class="hint" id="aiState"></span></div>
         <div class="prog-wrap" id="aiProgWrap" hidden><div class="prog-bar" id="aiProg"></div></div>
         <div class="adv-tools" id="advTools" hidden>
-          <input id="aQ" placeholder="Search name or ID">
+          <span class="adv-search"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="5"/><path d="m11 11 3.5 3.5"/></svg><input id="aQ" class="adv-q" type="search" placeholder="Search name or ID"></span>
+          <span id="advChips" style="display:contents"></span>
           <select id="aGrp" title="Tool group"><option value="">All groups</option><option value="send">Send to agency</option><option value="final">Final notice</option><option value="internal">Keep internal</option></select>
           <select id="aDec" title="Claude's decision"><option value="">All Claude decisions</option><option value="agency">Claude: send to agency</option><option value="final">Claude: final notice</option><option value="plan">Claude: payment plan</option><option value="keep">Claude: keep collecting</option><option value="none">No advice yet</option></select>
           <select id="aDays" title="Days late"><option value="">All days late</option><option value="46-60">46–60 days</option><option value="61-69">61–69 days</option><option value="70-90">70–90 days</option><option value="91-99999">91+ days</option></select>
           <select id="aCty" title="Island"><option value="">All islands</option><option value="AW">Aruba</option><option value="CW">Curaçao</option><option value="SX">St. Maarten</option></select>
           <select id="aDiff" title="Claude vs. tool"><option value="">Claude and tool: all</option><option value="diff">Claude disagrees with the tool</option><option value="same">Claude agrees with the tool</option></select>
           <select id="aSort" title="Sort"><option value="dpd">Sort: most days late</option><option value="tb">Sort: highest balance owed</option><option value="ds">Sort: longest since last payment</option></select>
-          <button type="button" class="btn btn-secondary" id="aReset" style="min-height:36px;padding:4px 12px">Clear filters</button>
+          <button type="button" class="chip-clear" id="aReset" hidden>Clear filters</button>
         </div>
         <div class="hint" id="advCount"></div>
         <div id="aiCases" style="margin-top:8px"></div>
@@ -871,7 +884,7 @@ function drawCases(){
  $('aiExport').hidden=!VIS.some(u=>ADV[u.id]);
  const all=advCases(); const show=all.length&&(all.some(u=>ADV[u.id])||advBusy);
  $('advTools').hidden=!show; if(!show){ $('aiCases').innerHTML=''; $('advCount').textContent=''; return; }
- const L=advFiltered();
+ drawChips(); const L=advFiltered();
  $('advCount').textContent=`Showing ${L.length} of ${all.length} cases (more than ${AI_MIN_DPD} days late)`+(L.length?` · ${fl(L.reduce((s,u)=>s+u.tb,0))} owed`:'');
  $('aiCases').innerHTML=L.length?ADV_GROUPS.map(([g,t])=>{ const G=L.filter(u=>u.grp===g); return G.length?`<h3 class="case-grp">${t} <span class="hint">(${G.length})</span></h3>`+G.map(caseHtml).join(''):''; }).join(''):'<p class="hint">No cases match these filters.</p>';
 }
@@ -911,8 +924,33 @@ $('aiExport').addEventListener('click',()=>{
  csvDownload('ai-advice-per-case',['Group','ID','Name','Country','E-mail','Phone','Days late','Balance owed','Principal balance','Past due','Paid installments','Last payment','Tool recommendation','Decision','Why','What to do this week','If no payment within 7 days','Full advice'],
   L.map(u=>{ const a=ADV[u.id]||[]; return [G[u.grp]||u.grp,u.id,u.name,u.cty,u.email||'',u.phone||'',u.dpd,u.tb.toFixed(2),num(u.op).toFixed(2),u.pd.toFixed(2),u.paid+' of '+u.tot,u.lastShow||'',u.act,a[0]||'',a.length>3?a[1]:'',a.length>3?a.slice(2,-1).join(' – '):(a[1]||''),a.length>2?a[a.length-1]:'',a.join(' | ')]; }));
 });
-['aQ','aGrp','aDec','aDays','aCty','aDiff','aSort'].forEach(id=>$(id).addEventListener('input',drawCases));
-$('aReset').addEventListener('click',()=>{ $('aQ').value=''; ['aGrp','aDec','aDays','aCty','aDiff'].forEach(id=>$(id).value=''); $('aSort').value='dpd'; drawCases(); });
+// ---- Stripe-style filter pills: dashed "+ Filter" pill when empty, solid "Filter | value ×" when set; the hidden selects hold the state ----
+const CHIPS=[['aGrp','Group'],['aDec','Claude decision'],['aDays','Days late'],['aCty','Island'],['aDiff','Claude vs tool']];
+const optLabel=o=>o.textContent.replace(/^(Claude: |Sort: )/,'').replace(/^./,c=>c.toUpperCase());
+function drawChips(){
+ $('advChips').innerHTML=CHIPS.map(([id,name])=>{ const el=$(id), v=el.value, o=el.selectedOptions[0];
+  return v?`<button type="button" class="chip on" data-chip="${id}"><span class="ci" data-clear="${id}" title="Remove filter">×</span>${name}<span class="sep"></span><b>${esc(optLabel(o))}</b> ▾</button>`
+          :`<button type="button" class="chip" data-chip="${id}"><span class="ci">+</span>${name}</button>`; }).join('')
+  +`<button type="button" class="chip sort" data-chip="aSort">Sort: <b>${esc(optLabel($('aSort').selectedOptions[0]))}</b> ▾</button>`;
+ $('aReset').hidden=!(CHIPS.some(([id])=>$(id).value)||$('aQ').value);
+}
+function closePop(){ const p=document.querySelector('.chip-pop'); if(p) p.remove(); }
+function openPop(btn,id){
+ closePop(); const el=$(id), name=(CHIPS.find(c=>c[0]===id)||[,'Sort by'])[1];
+ const pop=document.createElement('div'); pop.className='chip-pop'; pop.setAttribute('role','menu');
+ pop.innerHTML=`<h5>${id==='aSort'?'Sort by':'Filter by '+name.replace(/^(Group|Days late|Island)/,m=>m.toLowerCase())}</h5>`+[...el.options].filter(o=>id==='aSort'||o.value).map(o=>`<button type="button" role="menuitemradio" aria-checked="${o.value===el.value}" data-v="${esc(o.value)}">${esc(optLabel(o))}</button>`).join('');
+ document.body.appendChild(pop);
+ const r=btn.getBoundingClientRect(), w=pop.offsetWidth; pop.style.top=(r.bottom+window.scrollY+6)+'px'; pop.style.left=Math.max(8,Math.min(r.left+window.scrollX,window.scrollX+document.documentElement.clientWidth-w-8))+'px';
+ pop.addEventListener('click',e=>{ const b=e.target.closest('[data-v]'); if(!b) return; el.value=(el.value===b.dataset.v&&id!=='aSort')?'':b.dataset.v; closePop(); drawCases(); });
+ const f=pop.querySelector('[aria-checked="true"]')||pop.querySelector('button'); if(f) f.focus();
+}
+$('advChips').addEventListener('click',e=>{ e.stopPropagation(); const c=e.target.closest('[data-clear]'); if(c){ $(c.dataset.clear).value=''; closePop(); drawCases(); return; }
+ const b=e.target.closest('[data-chip]'); if(!b) return; const open=document.querySelector('.chip-pop'); if(open&&open.dataset.for===b.dataset.chip){ closePop(); return; } openPop(b,b.dataset.chip); document.querySelector('.chip-pop').dataset.for=b.dataset.chip; });
+document.addEventListener('click',e=>{ if(!e.target.closest('.chip-pop')) closePop(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closePop(); });
+window.addEventListener('resize',closePop);
+$('aQ').addEventListener('input',drawCases);
+$('aReset').addEventListener('click',()=>{ $('aQ').value=''; CHIPS.forEach(([id])=>$(id).value=''); drawCases(); });
 $('aiStop').addEventListener('click',()=>{ advStop=true; $('aiState').textContent='Stopping after the current cases…'; });
 // ---------- Key findings after analysing ALL the data (every customer's numbers + the advice per case; no names) ----------
 function allData(){
