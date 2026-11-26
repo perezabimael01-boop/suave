@@ -926,7 +926,7 @@ function allData(){
 }
 var KF={}, kfBusy=false, KF_TRIED={};
 // Claude's key findings and advice are kept in this browser for the current list, so a reload does not ask Claude again.
-const AISTORE='suave.agencyCheck.ai';
+const AISTORE='suave.agencyCheck.ai.v2';
 function loadAiStore(){ if(!META||!META.at||loadAiStore.at===META.at) return; loadAiStore.at=META.at;
  try{ const j=JSON.parse(localStorage.getItem(AISTORE)||'null'); if(j&&j.at===META.at){ KF=j.kf||{}; Object.keys(KF).forEach(x=>{ if(!KF[x]||!String(KF[x].text||'').trim()) delete KF[x]; }); Object.assign(ADV,j.adv||{}); } else { KF={}; } }catch(e){} }
 function saveAiStore(){ if(!META||!META.at) return; try{ localStorage.setItem(AISTORE,JSON.stringify({at:META.at,kf:KF,adv:ADV})); }catch(e){} }
@@ -949,19 +949,31 @@ async function keyFindings(){
  if(!V.length){ $('kfAiState').textContent='No users are more than '+AI_MIN_DPD+' days late on this list.'; $('kfAiOut').innerHTML=''; return; }
  kfBusy=true; $('kfBtn').disabled=true; $('kfAiState').textContent='Claude is analysing '+V.length+' customers more than '+AI_MIN_DPD+' days late… (10–40 seconds)'; $('kfAiOut').innerHTML='';
  const data=allData(), rows=data.__rows; delete data.__rows; const withAdvice=Object.keys(data.advice_decisions).length>0;
- // Claude's answer is sometimes empty when the data is large, so ask several versions at once (full, totals only, short) and use the richest answer.
- const lite=Object.assign({},data); delete lite.customers; delete lite.customer_columns; delete lite.top_signals_send_to_agency; delete lite.top_signals_internal; delete lite.measured_caught_up_since_previous_lists;
- lite.question=data.question.replace(/ Refer to individual customers only as #row \(e\.g\. #12\)\./,'');
- const small={question:'Key findings for the collections team about customers MORE than '+AI_MIN_DPD+' days past due. 5 to 7 findings, one per line, each starting with a short headline and a colon, with the concrete Fl amounts and user counts. No markdown.', scope:data.scope, users_analysed:data.users_analysed, groups:data.groups, by_days_late:data.by_days_late, last_payment:data.last_payment, tool_facts:data.tool_facts, users_by_country:data.users_by_country, collected_last_30_days:data.collected_last_30_days, collected_last_90_days:data.collected_last_90_days, advice_decisions:data.advice_decisions};
- let pick=null, src='';
+ // The worker lets Claude write only a short answer, so ask one finding per question, all at once, and combine them.
+ const common={scope:data.scope, users_analysed:data.users_analysed, groups:data.groups, by_days_late:data.by_days_late, tool_facts:data.tool_facts};
+ const rule=' Only customers MORE than '+AI_MIN_DPD+' days past due are included. Reply with ONE line only: a short headline (2–5 words), a colon, then one sentence of at most 30 words with the concrete Fl amounts and user counts. No markdown.';
+ const top=data.customers.slice().sort((x,y)=>y[3]-x[3]).slice(0,12);
+ const T=(q,extra)=>Object.assign({question:q+rule},common,extra||{});
+ const topics=[
+  T('The most important finding about the customers to send to the collection agency now.',{top_signals_send_to_agency:(data.top_signals_send_to_agency||[]).slice(0,6)}),
+  T('The most important finding about the final-notice group.'),
+  T('The most important finding about who is still paying and how much was collected recently.',{last_payment:data.last_payment,collected_last_30_days:data.collected_last_30_days,collected_last_90_days:data.collected_last_90_days}),
+  T('Where can money still be collected internally with payment plans?',{top_signals_internal:(data.top_signals_internal||[]).slice(0,6)}),
+  T('The most important difference between the islands.',{island:data.island,by_island:(()=>{ const o={}; V.forEach(u=>{ const c=o[u.cty]||(o[u.cty]={users:0,balance_owed:0,past_due:0,to_agency:0,paid_last_30_days:0}); c.users++; c.balance_owed+=Math.round(u.tb); c.past_due+=Math.round(u.pd); if(u.grp==='send') c.to_agency++; if(u.ds<=30) c.paid_last_30_days++; }); return o; })()}),
+  T('The biggest risk or warning sign in these numbers.',{last_payment:data.last_payment,token_payments:data.token_payments,top_signals_internal:(data.top_signals_internal||[]).slice(0,6)}),
+  T('Which customers need action first this week and what to do? Refer to customers only as #row (e.g. #12).',{customer_columns:data.customer_columns,largest_customers:top}),
+  ...(withAdvice?[T('What stands out when comparing the advice per case with the tool groups?',{advice_decisions:data.advice_decisions})]:[])
+ ];
+ const clean=t=>String(t||'').split(/\n+/).map(l=>l.replace(/^[-*•]\s*/,'').replace(/^\d+[.)]\s+/,'').replace(/\*\*/g,'').trim()).filter(l=>l&&/[.!)%]$/.test(l))[0]||'';
+ const got=new Array(topics.length).fill('');
  try{
-  for(let round=0;round<3&&!pick;round++){
+  for(let round=0;round<3&&got.some(x=>!x);round++){
    if(round) $('kfAiState').textContent='Claude is analysing… (try '+(round+1)+' of 3)';
-   const [a,b,c]=await Promise.all([askKf(data),askKf(lite),askKf(small)]);
-   pick=a||b||c; src=a?'rows':'';
+   await Promise.all(topics.map(async(t,i)=>{ if(!got[i]){ const j=await askKf(t); if(j) got[i]=clean(j.text); } }));
   }
  }catch(e){ if(e.message==='LOGIN'){ $('kfAiState').textContent='Log in to get the key findings from Claude.'; kfBusy=false; $('kfBtn').disabled=false; return; } }
- if(pick) KF[key]={text:pick.text,at:pick.at||new Date().toISOString(),n:V.length,rows:src?rows:null,withAdvice};
+ const lines=got.filter(Boolean);
+ if(lines.length) KF[key]={text:lines.join('\n'),at:new Date().toISOString(),n:V.length,rows,withAdvice};
  else KF[key]={text:toolFindings(V),at:new Date().toISOString(),n:V.length,rows:null,tool:true};
  saveAiStore(); kfBusy=false; $('kfBtn').disabled=false; showKf();
 }
