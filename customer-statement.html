@@ -95,37 +95,27 @@
     justify-content:space-between;
     align-items:flex-start;
     gap:24px;
-    border-bottom:2px solid #000;
-    padding-bottom:18px;
+    padding-bottom:8px;
     margin-bottom:22px;
   }
   .doc-head img{height:176px;display:block;}
-  .company-block{font-size:13px;color:#000;margin-top:8px;line-height:1.6;}
-  .company-block .name{color:#000;font-weight:700;font-size:14.5px;}
+  .company-block{font-size:14px;color:#000;margin-top:8px;line-height:1.6;}
+  .company-block .name{color:#000;font-weight:700;font-size:14px;}
   .doc-head .meta{text-align:right;font-size:14px;color:#000;margin-top:184px;}
   .doc-head.issuer-suave img{height:72px;}
   .doc-head.issuer-suave .meta{margin-top:80px;}
-  .doc-head .meta .stmt-date{color:#000;font-weight:400;font-size:14.5px;margin-top:2px;}
+  .doc-head .meta .stmt-date{color:#000;font-weight:400;font-size:14px;margin-top:2px;}
 
   .doc-title{
-    font-size:34px;
+    font-size:30px;
     font-weight:700;
     color:#000;
-    margin:0 0 16px;
+    margin:0 0 12px;
   }
-  .account-line{font-size:14px;margin-bottom:6px;color:#000;font-weight:400;}
-  .account-line b{color:#000;}
-  .open-balance{
-    font-size:14px;
-    margin:12px 0 24px;
-    font-weight:400;
-    color:#000;
-  }
-  .open-balance .amt{
-    font-weight:700;
-    text-decoration:underline;
-    color:#000;
-  }
+  .stmt-info{display:grid;grid-template-columns:max-content auto;column-gap:12px;row-gap:4px;
+    font-size:16px;color:#000;margin:0 0 24px;}
+  .stmt-info span{font-weight:400;}
+  .stmt-info b{font-weight:700;}
 
   table{
     width:100%;
@@ -306,8 +296,10 @@
       </div>
 
       <div class="doc-title">Customer Statement</div>
-      <div class="account-line"><b>Account:</b> <span id="outCustomer"></span></div>
-      <div class="open-balance">Open Balance : <span class="amt" id="outOpenBalance"></span></div>
+      <div class="stmt-info">
+        <span>Account:</span><b id="outCustomer"></b>
+        <span>Open Balance:</span><b id="outOpenBalance"></b>
+      </div>
 
       <table>
         <thead>
@@ -897,51 +889,37 @@ function downloadPDF(){
 
     // ---- Company block ----
     let leftY = margin + logoH + 16;
+    // One size for the whole header block (10.5pt); only the name is bold.
+    const HEAD = 10.5, LINE = 14;
     doc.setFont('times', 'bold');
-    doc.setFontSize(11);
+    doc.setFontSize(HEAD);
     doc.text(iss.name, margin, leftY);
     doc.setFont('times', 'normal');
-    doc.setFontSize(10);
-    doc.text(iss.address, margin, leftY + 14);
-    doc.text(iss.email, margin, leftY + 28);
+    doc.text(iss.address, margin, leftY + LINE);
+    doc.text(iss.email, margin, leftY + LINE * 2);
 
-    // ---- Statement date (top right, aligned with company name line) ----
-    doc.setFont('times', 'normal');
-    doc.setFontSize(11);
+    // ---- Statement date (top right, same size, aligned with company name) ----
     doc.text(fmtDate(data.statementDate), pageWidth - margin, leftY, { align: 'right' });
 
-    // ---- Divider ----
-    const headBottom = Math.max(leftY + 40, margin + logoH + 20) + 6;
-    doc.setLineWidth(1.2);
-    doc.line(margin, headBottom, pageWidth - margin, headBottom);
-
-    let y = headBottom + 32;
+    let y = leftY + LINE * 2 + 40;
 
     // ---- Title ----
     doc.setFont('times', 'bold');
-    doc.setFontSize(26);
+    doc.setFontSize(22);
     doc.text('Customer Statement', margin, y);
-    y += 26;
+    y += 24;
 
-    // ---- Account ----
+    // ---- Account + Open balance: same size, labels aligned, values bold ----
+    doc.setFontSize(12);
     doc.setFont('times', 'normal');
-    doc.setFontSize(14);
-    doc.text(`Account: ${data.customerName}`, margin, y);
-    y += 22;
-
-    // ---- Open balance (label normal, amount bold + underlined) ----
-    doc.setFont('times', 'normal');
-    doc.setFontSize(14);
-    const obLabel = 'Open Balance : ';
-    const obAmount = fmtMoney(data.total);
-    doc.text(obLabel, margin, y);
-    const labelW = doc.getTextWidth(obLabel);
+    const labels = ['Account:', 'Open Balance:'];
+    const valueX = margin + Math.max.apply(null, labels.map(l => doc.getTextWidth(l))) + 10;
+    doc.text(labels[0], margin, y);
+    doc.text(labels[1], margin, y + 17);
     doc.setFont('times', 'bold');
-    doc.text(obAmount, margin + labelW, y);
-    const amtW = doc.getTextWidth(obAmount);
-    doc.setLineWidth(1);
-    doc.line(margin + labelW, y + 3, margin + labelW + amtW, y + 3);
-    y += 20;
+    doc.text(String(data.customerName), valueX, y);
+    doc.text(fmtMoney(data.total), valueX, y + 17);
+    y += 17 + 22;
 
     // ---- Table rows ----
     const dataBody = [];
