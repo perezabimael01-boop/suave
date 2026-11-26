@@ -934,7 +934,11 @@ async function keyFindings(){
  if(kfBusy) return; const key=island()||'all', V=aiUsers();
  if(!V.length){ $('kfAiState').textContent='No users are more than '+AI_MIN_DPD+' days late on this list.'; $('kfAiOut').innerHTML=''; return; }
  kfBusy=true; $('kfBtn').disabled=true; $('kfAiState').textContent='Claude is analysing '+V.length+' customers more than '+AI_MIN_DPD+' days late… (10–40 seconds)'; $('kfAiOut').innerHTML='';
- try{ const data=allData(), rows=data.__rows; delete data.__rows; const j=await api('/agency/ai',{summary:data}); KF[key]={text:j.text||'',at:j.at||new Date().toISOString(),n:V.length,rows,withAdvice:Object.keys(data.advice_decisions).length>0}; saveAiStore(); showKf(); }
+ try{ const data=allData(), rows=data.__rows; delete data.__rows; let j=await api('/agency/ai',{summary:data}).catch(e=>({text:'',err:e}));
+  // Large answers can come back empty: try again with the totals only (no rows), then give up with a clear message.
+  if(!(j.text||'').trim()){ $('kfAiState').textContent='Claude is analysing (second try, totals only)…'; const lite=Object.assign({},data); delete lite.customers; delete lite.customer_columns; lite.question=data.question.replace(/ Refer to individual customers only as #row \(e\.g\. #12\)\./,''); j=await api('/agency/ai',{summary:lite}).catch(e=>({text:'',err:e})); }
+  if(!(j.text||'').trim()) throw (j.err||new Error('Claude returned an empty answer – click Refresh key findings to try again.'));
+  KF[key]={text:j.text||'',at:j.at||new Date().toISOString(),n:V.length,rows,withAdvice:Object.keys(data.advice_decisions).length>0}; saveAiStore(); showKf(); }
  catch(e){ $('kfAiState').textContent=e.message==='LOGIN'?'Log in to get the key findings from Claude.':'Could not get the key findings: '+e.message; }
  kfBusy=false; $('kfBtn').disabled=false;
 }

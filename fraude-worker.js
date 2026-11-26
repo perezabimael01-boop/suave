@@ -142,12 +142,13 @@ async function aiInsights(env, summary){
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": apiKey(env), "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model, max_tokens: 900, system, messages: [{ role: "user", content: "Data (JSON):\n" + JSON.stringify(summary).slice(0, 60000) }] })
+    body: JSON.stringify({ model, max_tokens: 8000, system, messages: [{ role: "user", content: "Data (JSON):\n" + JSON.stringify(summary).slice(0, 60000) }] })
   });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error((j.error && j.error.message) || ("Claude error " + r.status));
   const text = (j.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim();
-  return { text, model };
+  if (!text) throw new Error("Claude returned no text (stop reason: " + (j.stop_reason || "unknown") + ")");
+  return { text, model, stop: j.stop_reason };
 }
 
 async function agencyStats(env){
