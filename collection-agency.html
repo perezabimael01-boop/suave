@@ -248,11 +248,12 @@
       </div>
       <section class="section" style="margin-top:16px">
         <h2 class="section-title">Key findings <span class="tag" id="islTag">All islands</span></h2>
+        <div id="kfAi" hidden><p class="hint" id="kfAiState" style="margin:0 0 4px"></p><ul class="insight" id="kfAiOut"></ul><h3 style="margin:14px 0 4px;font-size:15px">Numbers from the tool</h3></div>
         <ul class="insight" id="insights"></ul>
       </section>
       <section class="section">
-        <h2 class="section-title">AI recommendations <span class="tag">Claude</span> <span class="qm" tabindex="0" aria-label="About AI insights">?<span class="qtip"><b>Get advice per case</b>: for every customer on the send-to-agency and final-notice lists and everyone else 31+ days late, Claude says what to do, why, what to offer and say, and what to do if they don't pay within 7 days. <b>Team summary</b>: Claude reads the totals of this list and gives recommendations for the collections team. For one customer: open the customer row and click <b>Ask Claude about this customer</b> (only that customer's numbers are sent, no name). Only totals are sent – no names, e-mails or phone numbers. The Claude API key is stored as a secret in your Cloudflare worker, never on this website.</span></span></h2>
-        <div class="row-btns"><button type="button" class="btn btn-primary" id="aiCasesBtn">Get advice per case</button><button type="button" class="btn btn-secondary" id="aiBtn">Team summary</button><button type="button" class="btn btn-secondary" id="aiStop" hidden>Stop</button><span class="hint" id="aiState"></span></div>
+        <h2 class="section-title">AI recommendations <span class="tag">Claude</span> <span class="qm" tabindex="0" aria-label="About AI insights">?<span class="qtip"><b>Get advice per case</b>: for every customer on the send-to-agency and final-notice lists and everyone else 31+ days late, Claude says what to do, why, what to offer and say, and what to do if they don't pay within 7 days. <b>Team summary</b>: Claude analyses every customer's numbers (no names) plus the totals and gives the key findings; they also appear under Key findings. After <b>Get advice per case</b> finishes, the key findings are made automatically from all the data and the advice. For one customer: open the customer row and click <b>Ask Claude about this customer</b> (only that customer's numbers are sent, no name). Only totals are sent – no names, e-mails or phone numbers. The Claude API key is stored as a secret in your Cloudflare worker, never on this website.</span></span></h2>
+        <div class="row-btns"><button type="button" class="btn btn-primary" id="aiCasesBtn">Get advice per case</button><button type="button" class="btn btn-secondary" id="aiBtn">Team summary</button><button type="button" class="btn btn-secondary" id="aiStop" hidden>Stop</button><button type="button" class="btn btn-secondary" id="aiExport" hidden>Export advice (Excel/CSV)</button><span class="hint" id="aiState"></span></div>
         <div class="prog-wrap" id="aiProgWrap" hidden><div class="prog-bar" id="aiProg"></div></div>
         <div id="aiCases" style="margin-top:12px"></div>
         <ul class="insight" id="aiOut" style="margin-top:12px"></ul>
@@ -644,7 +645,7 @@ function render(){
  $('crit').innerHTML=[[`${k.send}+ days late`,'on the past due list'],[`≥ ${fl(k.min)} still owed`,'principal + interest balance'],[`Stopped paying`,`no payment of ≥ ${k.minpct}% of the past due in the last ${k.recent} days`],['Not better internally',`we expect to collect more via the agency (after its ${fl(k.cost)} fee) than by handling it ourselves`]].map(([a,b])=>`<div><b>${a}</b>${b}</div>`).join('');
  $('sendTag').textContent=`${n(send.length,'user')} · ${fl(G.send.p)}`; $('nearTag').textContent=n(near.length,'user');
  $('islTag').textContent={'':'All islands',AW:'Aruba',CW:'Curaçao',SX:'St. Maarten'}[island()]||'All islands';
- drawIc(); drawAccuracy(k); showAi(); drawCases();
+ drawIc(); drawAccuracy(k); showAi(); drawCases(); showKf();
  drawCrit('tblSend',send); drawCrit('tblNear',near.sort(byPastDue));
  drawTable();
 }
@@ -826,7 +827,7 @@ async function askCustomer(id,btn){
  const out=btn.parentElement.querySelector('[data-aiout]');
  if(AIU[id]){ out.innerHTML=AIU[id]; return; }
  btn.disabled=true; out.innerHTML='<li>Claude is thinking...</li>';
- try{ const j=await api('/agency/ai',{summary:customerFacts(u)}); AIU[id]=(j.text||'').split(/\n+/).map(l=>l.replace(/^[-*\u2022]\s*/,'').trim()).filter(Boolean).map(l=>'<li>'+esc(l)+'</li>').join(''); out.innerHTML=AIU[id]; }
+ try{ const j=await api('/agency/ai',{summary:customerFacts(u)}); ADV[id]=(j.text||'').split(/\n+/).map(l=>l.replace(/^[-*\u2022]\s*/,'').trim()).filter(Boolean); AIU[id]=ADV[id].map(l=>'<li>'+esc(l)+'</li>').join(''); drawCases(); out.innerHTML=AIU[id]; }
  catch(e){ out.innerHTML='<li class="no">'+esc(e.message==='LOGIN'?'Log in first.':'Could not get an answer: '+e.message)+'</li>'; }
  btn.disabled=false;
 }
@@ -841,6 +842,7 @@ function caseHtml(u){
  return `<div class="case"><h4>${esc(u.name||('User '+u.id))} <span class="tag">${esc(u.cty||'')}</span> <span class="pill ${u.grp}">${esc(u.act)}</span></h4><div class="meta">${u.dpd} days late · ${fl(u.tb)} owed (${fl(u.op)} principal) · paid ${u.paid} of ${u.tot} · last payment ${u.ds===99999?'never':u.ds+' days ago'}</div><ul>${body}</ul></div>`;
 }
 function drawCases(){
+ $('aiExport').hidden=!VIS.some(u=>ADV[u.id]);
  const L=advCases(); if(!L.length){ $('aiCases').innerHTML=''; return; }
  if(!L.some(u=>ADV[u.id])&&!advBusy){ $('aiCases').innerHTML=''; return; }
  $('aiCases').innerHTML=ADV_GROUPS.map(([g,t])=>{ const G=L.filter(u=>u.grp===g); return G.length?`<h3 class="case-grp">${t} <span class="hint">(${G.length})</span></h3>`+G.map(caseHtml).join(''):''; }).join('');
@@ -870,15 +872,42 @@ $('aiCasesBtn').addEventListener('click',async()=>{
  async function worker(){ while(next<batches.length&&!advStop){ const b=batches[next++]; try{ await adviseBatch(b); }catch(e){ if(e.message==='LOGIN'){ advStop=true; err='Log in first.'; } else err='Some cases failed: '+e.message; } done++; upd(); drawCases(); } }
  await Promise.all([worker(),worker(),worker()]);
  advBusy=false; $('aiCasesBtn').disabled=false; $('aiStop').hidden=true; $('aiProgWrap').hidden=true; drawCases();
+ if(!advStop&&!err) await keyFindings();
  const n2=advCases().filter(u=>ADV[u.id]).length;
  $('aiState').textContent=err||(advStop?`Stopped – advice for ${n2} of ${advCases().length} cases. Click again to continue.`:`Advice for ${n2} cases (send to agency, final notice and 31+ days late). Only numbers were sent – no names.`);
 });
+$('aiExport').addEventListener('click',()=>{
+ const G={send:'Send to agency',final:'Final notice',internal:'Keep internal'};
+ const L=VIS.filter(u=>ADV[u.id]).sort((a,b)=>(['send','final','internal'].indexOf(a.grp)-['send','final','internal'].indexOf(b.grp))||byPastDue(a,b));
+ if(!L.length) return;
+ csvDownload('ai-advice-per-case',['Group','ID','Name','Country','E-mail','Phone','Days late','Balance owed','Principal balance','Past due','Paid installments','Last payment','Tool recommendation','Decision','Why','What to do this week','If no payment within 7 days','Full advice'],
+  L.map(u=>{ const a=ADV[u.id]||[]; return [G[u.grp]||u.grp,u.id,u.name,u.cty,u.email||'',u.phone||'',u.dpd,u.tb.toFixed(2),num(u.op).toFixed(2),u.pd.toFixed(2),u.paid+' of '+u.tot,u.lastShow||'',u.act,a[0]||'',a.length>3?a[1]:'',a.length>3?a.slice(2,-1).join(' – '):(a[1]||''),a.length>2?a[a.length-1]:'',a.join(' | ')]; }));
+});
 $('aiStop').addEventListener('click',()=>{ advStop=true; $('aiState').textContent='Stopping after the current cases…'; });
+// ---------- Key findings after analysing ALL the data (every customer's numbers + the advice per case; no names) ----------
+function allData(){
+ const base=aiSummary();
+ base.question='Analyse ALL customers below (every row is one customer) together with the totals and the advice already given per case. Give the key findings for the collections team: the biggest risks, patterns between groups and islands, where money can still be collected, which customers need action first (refer to them by row number), and what to do this week.';
+ base.customer_columns=['row','island','days_late','balance_owed','principal','past_due','installments_paid','installments_total','days_since_last_payment','collected_30d','collected_90d','notes','tool_group','advice_decision'];
+ base.customers=VIS.slice().sort(byPastDue).map((u,i)=>[i+1,u.cty,u.dpd,Math.round(u.tb),Math.round(u.op),Math.round(u.pd),u.paid,u.tot,u.ds===99999?-1:u.ds,Math.round(u.a30||0),Math.round(u.a90||0),u.notes,u.grp,ADV[u.id]?String(ADV[u.id][0]).slice(0,60):'']);
+ const d={}; VIS.forEach(u=>{ if(ADV[u.id]){ const k=String(ADV[u.id][0]).toLowerCase(); const t=/agency/.test(k)?'send to agency':/final/.test(k)?'final notice':/plan/.test(k)?'payment plan':'keep reminding'; d[t]=(d[t]||0)+1; } });
+ base.advice_decisions=d;
+ return base;
+}
+var KF={};
+async function keyFindings(){
+ const key=island()||'all'; $('kfAi').hidden=false; $('kfAiState').textContent='Claude is analysing all '+VIS.length+' customers…'; $('kfAiOut').innerHTML='';
+ try{ const j=await api('/agency/ai',{summary:allData()}); KF[key]={text:j.text||'',at:j.at,n:VIS.length}; showKf(); }
+ catch(e){ $('kfAiState').textContent=e.message==='LOGIN'?'Log in first.':'Could not get the key findings: '+e.message; }
+}
+function showKf(){ const c=KF[island()||'all']; if(!c){ $('kfAi').hidden=true; return; } $('kfAi').hidden=false;
+ $('kfAiState').innerHTML='<b>Claude, after analysing all '+c.n+' customers</b>'+(c.at?' · '+esc(fmtDate(c.at)):'');
+ $('kfAiOut').innerHTML=c.text.split(/\n+/).map(l=>l.replace(/^[-*•]\s*/,'').trim()).filter(Boolean).map(l=>'<li>'+esc(l)+'</li>').join(''); }
 function showAi(){ const c=AI_CACHE[island()||'all']; $('aiOut').innerHTML=c?c.text.split(/\n+/).map(l=>l.replace(/^[-•*]\s*/,'').trim()).filter(Boolean).map(l=>`<li>${esc(l)}</li>`).join(''):''; $('aiState').textContent=c?`Answer from ${fmtDate(c.at)}${c.model?' · '+c.model:''}`:'Get advice per case: Claude says how to deal with each customer who is 31+ days late (only numbers are sent, no names).'; }
 $('aiBtn').addEventListener('click',async()=>{
  if(!VIS.length){ $('aiState').textContent='Load a list first.'; return; }
  $('aiBtn').disabled=true; $('aiState').textContent='Claude is thinking… (10–30 seconds)';
- try{ const j=await api('/agency/ai',{summary:aiSummary()}); AI_CACHE[island()||'all']={text:j.text||'',at:j.at,model:j.model}; showAi(); }
+ try{ const j=await api('/agency/ai',{summary:allData()}); AI_CACHE[island()||'all']={text:j.text||'',at:j.at,model:j.model}; KF[island()||'all']={text:j.text||'',at:j.at,n:VIS.length}; showAi(); showKf(); }
  catch(e){ $('aiState').textContent=e.message==='LOGIN'?'Log in first.':('Could not get an answer: '+e.message); }
  $('aiBtn').disabled=false;
 });
